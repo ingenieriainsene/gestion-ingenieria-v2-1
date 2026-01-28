@@ -1,0 +1,48 @@
+package com.ingenieria.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+@Entity
+@Table(name = "TRAMITES_CONTRATO")
+public class Tramite {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_tramite")
+    private Long idTramite;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_contrato", nullable = false)
+    private Contrato contrato;
+
+    @Column(name = "tipo_tramite", nullable = false)
+    private String tipoTramite;
+
+    @Column(name = "estado", length = 50)
+    private String estado;
+
+    @Column(name = "tecnico_asignado")
+    private String tecnicoAsignado; // Legacy field, might be replaced by relations but kept for DDL compliance
+
+    @Column(name = "fecha_seguimiento")
+    private LocalDate fechaSeguimiento;
+
+    @Column(name = "es_urgente")
+    private Boolean esUrgente;
+
+    @Column(name = "detalle_seguimiento", columnDefinition = "TEXT")
+    private String detalleSeguimiento;
+
+    @Column(name = "fecha_creacion", insertable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @Column(name = "fecha_ejecucion")
+    private LocalDateTime fechaEjecucion;
+
+    // El concepto de "Venta Pendiente" se gestiona ahora a través del estado:
+    // estado = "Pendiente" -> Venta Pendiente
+    // estado = "En proceso" / "Terminado" -> Intervención Activa/Finalizada
+}

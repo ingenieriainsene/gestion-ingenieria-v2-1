@@ -1,0 +1,27 @@
+# --- Backend (Spring Boot / Java) ---
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/.classpath
+backend/.project
+backend/.settings/
+backend/bin/
+backend/*.log
+backend/help.md
+
+# --- Frontend (Angular) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.vscode/
+frontend/.editorconfig
+frontend/package-lock.json
+
+# --- Sistema e IDEs ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.zip
+*.rar
