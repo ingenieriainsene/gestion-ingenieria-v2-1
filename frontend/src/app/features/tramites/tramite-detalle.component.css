@@ -98,6 +98,25 @@
   align-items: center;
 }
 
+.checks-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.checks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 24px;
+}
+
+.checks-grid .check-item {
+  margin-bottom: 0;
+}
+
 .form-control {
   width: 100%;
   padding: 8px 12px;

@@ -38,20 +38,24 @@ public class SeguimientoService {
      * Si el trámite no tiene hitos, crea el primero («Iniciar Actividad»). Luego devuelve la lista.
      * Replica acciones_tramites.php?accion=iniciar_seguimiento (auto-crear al entrar al detalle).
      */
+    private static SeguimientoListResponse toListResponse(Seguimiento s) {
+        return new SeguimientoListResponse(
+                s.getIdSeguimiento(),
+                s.getTramite() != null ? s.getTramite().getIdTramite() : null,
+                s.getComentario(),
+                s.getFechaSeguimiento(),
+                s.getEsUrgente(),
+                s.getEstado(),
+                s.getFechaRegistro(),
+                s.getUsuarioAsignado() != null ? s.getUsuarioAsignado().getNombreUsuario() : null,
+                s.getCreador() != null ? s.getCreador().getNombreUsuario() : null);
+    }
+
     @Transactional
     public List<SeguimientoListResponse> findDtosByTramite(Long idTramite) {
         ensurePrimerHito(idTramite);
         return seguimientoRepo.findByTramite_IdTramiteOrderByFechaRegistroDesc(idTramite).stream()
-                .map(s -> new SeguimientoListResponse(
-                        s.getIdSeguimiento(),
-                        s.getTramite() != null ? s.getTramite().getIdTramite() : null,
-                        s.getComentario(),
-                        s.getFechaSeguimiento(),
-                        s.getEsUrgente(),
-                        s.getEstado(),
-                        s.getFechaRegistro(),
-                        s.getUsuarioAsignado() != null ? s.getUsuarioAsignado().getNombreUsuario() : null,
-                        s.getCreador() != null ? s.getCreador().getNombreUsuario() : null))
+                .map(SeguimientoService::toListResponse)
                 .collect(Collectors.toList());
     }
 
@@ -83,7 +87,7 @@ public class SeguimientoService {
     }
 
     @Transactional
-    public Seguimiento create(SeguimientoDTO dto) {
+    public SeguimientoListResponse create(SeguimientoDTO dto) {
         Seguimiento s = new Seguimiento();
         
         Tramite t = tramiteRepo.findById(dto.getIdTramite())
@@ -106,20 +110,34 @@ public class SeguimientoService {
         }
         s.setCreador(creador);
 
+        Usuario asignado;
         if (dto.getIdProveedor() != null) {
             Proveedor p = proveedorRepo.findById(dto.getIdProveedor())
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
             s.setProveedor(p);
             s.setUsuarioAsignado(creador);
+            asignado = creador;
         } else if (dto.getIdUsuarioAsignado() != null) {
             Usuario u = usuarioRepo.findById(dto.getIdUsuarioAsignado())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
             s.setUsuarioAsignado(u);
+            asignado = u;
         } else {
             s.setUsuarioAsignado(creador);
+            asignado = creador;
         }
 
-        return seguimientoRepo.save(s);
+        Seguimiento saved = seguimientoRepo.save(s);
+        return new SeguimientoListResponse(
+                saved.getIdSeguimiento(),
+                dto.getIdTramite(),
+                saved.getComentario(),
+                saved.getFechaSeguimiento(),
+                saved.getEsUrgente(),
+                saved.getEstado(),
+                saved.getFechaRegistro(),
+                asignado != null ? asignado.getNombreUsuario() : null,
+                creador != null ? creador.getNombreUsuario() : null);
     }
 
     @Transactional

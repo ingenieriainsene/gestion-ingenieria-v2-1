@@ -2,7 +2,6 @@ package com.ingenieria.controller;
 
 import com.ingenieria.dto.SeguimientoDTO;
 import com.ingenieria.dto.SeguimientoListResponse;
-import com.ingenieria.model.Seguimiento;
 import com.ingenieria.service.SeguimientoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +23,7 @@ public class SeguimientoController {
     }
 
     @PostMapping
-    public ResponseEntity<Seguimiento> create(@RequestBody SeguimientoDTO dto) {
+    public ResponseEntity<SeguimientoListResponse> create(@RequestBody SeguimientoDTO dto) {
         return ResponseEntity.ok(service.create(dto));
     }
 

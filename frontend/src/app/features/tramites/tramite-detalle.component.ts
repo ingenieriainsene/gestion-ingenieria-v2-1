@@ -59,6 +59,15 @@ export class TramiteDetalleComponent implements OnInit {
       detalleSeguimiento: [''],
       fechaSeguimiento: [''],
       observacionesContrato: [''],
+      // Checkboxes información general (legacy detalle_tramite.php)
+      cePrevio: [false],
+      cePost: [false],
+      mtd: [false],
+      planos: [false],
+      enviadoCeePost: [false],
+      licenciaObras: [false],
+      subvencionEstado: [false],
+      libroEdifIncluido: [false],
     });
     this.formHito = this.fb.group({
       comentario: ['', Validators.required],
@@ -100,6 +109,14 @@ export class TramiteDetalleComponent implements OnInit {
           detalleSeguimiento: d.detalleSeguimiento || '',
           fechaSeguimiento: fStr || '',
           observacionesContrato: d.observacionesContrato || '',
+          cePrevio: d.cePrevio === 'Realizado',
+          cePost: d.cePost === 'Realizado',
+          mtd: !!d.mtd,
+          planos: !!d.planos,
+          enviadoCeePost: !!d.enviadoCeePost,
+          licenciaObras: d.licenciaObras === 'Concedida',
+          subvencionEstado: d.subvencionEstado === 'Concedida',
+          libroEdifIncluido: !!d.libroEdifIncluido,
         });
       },
       error: (err) => {
@@ -158,9 +175,8 @@ export class TramiteDetalleComponent implements OnInit {
     };
     this.tramiteService.update(this.idTramite, tramitePayload).subscribe({
       next: () => {
-        const obs = v.observacionesContrato;
         const idCon = this.detalle?.idContrato;
-        if (obs !== undefined && idCon) {
+        if (idCon) {
           this.contratoService.getById(idCon).subscribe((c) => {
             const body: Record<string, unknown> = {
               idCliente: c.idCliente ?? c.cliente?.idCliente,
@@ -168,19 +184,19 @@ export class TramiteDetalleComponent implements OnInit {
               fechaInicio: c.fechaInicio,
               fechaVencimiento: c.fechaVencimiento,
               tipoContrato: c.tipoContrato,
-              cePrevio: c.cePrevio,
-              cePost: c.cePost,
-              enviadoCeePost: c.enviadoCeePost,
-              licenciaObras: c.licenciaObras,
-              mtd: c.mtd,
-              planos: c.planos,
-              subvencionEstado: c.subvencionEstado,
-              libroEdifIncluido: c.libroEdifIncluido,
-              observaciones: obs,
+              cePrevio: v.cePrevio ? 'Realizado' : 'Pendiente',
+              cePost: v.cePost ? 'Realizado' : 'Pendiente',
+              enviadoCeePost: !!v.enviadoCeePost,
+              licenciaObras: v.licenciaObras ? 'Concedida' : 'No requerida',
+              mtd: !!v.mtd,
+              planos: !!v.planos,
+              subvencionEstado: v.subvencionEstado ? 'Concedida' : 'No solicitada',
+              libroEdifIncluido: !!v.libroEdifIncluido,
+              observaciones: v.observacionesContrato ?? c.observaciones,
             };
             this.contratoService.update(idCon, body).subscribe({
               next: () => { this.finGuardarInfo(); },
-              error: (e) => Swal.fire('Error', e?.error?.message || 'Error al guardar observaciones.', 'error'),
+              error: (e) => Swal.fire('Error', e?.error?.message || 'Error al guardar datos del contrato.', 'error'),
             });
           });
         } else {
@@ -229,8 +245,10 @@ export class TramiteDetalleComponent implements OnInit {
         this.showNuevoHito = false;
         Swal.fire('Registrado', 'Hito de seguimiento añadido correctamente.', 'success');
       },
-      error: (e) =>
-        Swal.fire('Error', e?.error?.message || 'No se pudo guardar el hito.', 'error'),
+      error: (e) => {
+        const msg = (e?.error && (e.error['message'] ?? e.error['error'])) || 'No se pudo guardar el hito.';
+        Swal.fire('Error', msg, 'error');
+      },
     });
   }
 

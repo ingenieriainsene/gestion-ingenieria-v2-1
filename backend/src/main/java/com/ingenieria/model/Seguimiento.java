@@ -1,5 +1,6 @@
 package com.ingenieria.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -16,21 +17,25 @@ public class Seguimiento {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tramite", nullable = false)
+    @JsonIgnore
     private Tramite tramite;
 
-    // Técnico asignado
+    /** Técnico asignado. No serializar (LAZY); usar DTO. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
+    @JsonIgnore
     private Usuario usuarioAsignado;
 
-    // Creador del hito
+    /** Creador del hito. No serializar (LAZY); usar DTO. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_creador", nullable = false)
+    @JsonIgnore
     private Usuario creador;
 
-    // Proveedor (Subcontrata)
+    /** Proveedor (subcontrata). No serializar (LAZY); usar DTO. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_proveedor")
+    @JsonIgnore
     private Proveedor proveedor;
 
     @Column(columnDefinition = "TEXT")

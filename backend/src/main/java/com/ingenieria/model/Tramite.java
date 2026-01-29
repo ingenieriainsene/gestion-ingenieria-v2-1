@@ -1,5 +1,6 @@
 package com.ingenieria.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -16,6 +17,7 @@ public class Tramite {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_contrato", nullable = false)
+    @JsonIgnore
     private Contrato contrato;
 
     @Column(name = "tipo_tramite", nullable = false)
