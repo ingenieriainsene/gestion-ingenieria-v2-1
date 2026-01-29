@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Cliente, ClienteService } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
 @Component({
     selector: 'app-cliente-list',
     standalone: true,
-    imports: [CommonModule, RouterLink, FormsModule],
+    imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule],
     template: `
     <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
       <h1>Gestión de Clientes</h1>
-      <a routerLink="/clientes/nuevo" class="btn-primary">+ Nuevo Cliente</a>
+      <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Cliente</button>
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 25px;">
@@ -75,19 +75,135 @@ import Swal from 'sweetalert2';
         </tr>
       </tbody>
     </table>
+
+    <div class="modal-overlay" *ngIf="modalVisible" (click)="onOverlayClick($event)">
+      <div class="modal-bubble modal-form" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Nuevo Cliente</h2>
+          <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+        </div>
+        <form [formGroup]="formModal" (ngSubmit)="guardarNuevo()">
+          <div class="modal-grid">
+            <div class="modal-field">
+              <label>Nombre *</label>
+              <input type="text" formControlName="nombre" />
+            </div>
+            <div class="modal-field">
+              <label>Primer apellido *</label>
+              <input type="text" formControlName="apellido1" />
+            </div>
+            <div class="modal-field">
+              <label>Segundo apellido</label>
+              <input type="text" formControlName="apellido2" />
+            </div>
+            <div class="modal-field">
+              <label>DNI/CIF *</label>
+              <input type="text" formControlName="dni" />
+            </div>
+            <div class="modal-field">
+              <label>Código postal</label>
+              <input type="text" formControlName="codigoPostal" />
+            </div>
+            <div class="modal-field full">
+              <label>Dirección fiscal completa</label>
+              <input type="text" formControlName="direccionFiscalCompleta" />
+            </div>
+            <div class="modal-field full">
+              <label>Cuenta bancaria (IBAN)</label>
+              <input type="text" formControlName="cuentaBancaria" />
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="formModal.invalid || guardando">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
   `
+  ,
+  styles: [`
+    .modal-form { max-width: 680px; width: 90%; text-align: left; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .modal-field { display: flex; flex-direction: column; gap: 6px; }
+    .modal-field.full { grid-column: span 2; }
+    .modal-field input {
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-family: inherit;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-secondary {
+      background: #94a3b8;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  `]
 })
 export class ClienteListComponent implements OnInit {
     clientes: Cliente[] = [];
     filtrados: Cliente[] = [];
     filtro = '';
+    modalVisible = false;
+    guardando = false;
+    formModal: FormGroup;
 
-    constructor(private service: ClienteService) { }
+    constructor(private service: ClienteService, private fb: FormBuilder) {
+        this.formModal = this.fb.group({
+            nombre: ['', Validators.required],
+            apellido1: ['', Validators.required],
+            apellido2: [''],
+            dni: ['', Validators.required],
+            codigoPostal: [''],
+            direccionFiscalCompleta: [''],
+            cuentaBancaria: [''],
+        });
+    }
 
     ngOnInit() {
         this.service.getAll().subscribe(data => {
             this.clientes = data;
             this.filtrados = data;
+        });
+    }
+
+    abrirModalNuevo() {
+        this.guardando = false;
+        this.formModal.reset();
+        this.modalVisible = true;
+    }
+
+    cerrarModal() {
+        this.modalVisible = false;
+    }
+
+    onOverlayClick(e: Event) {
+        if ((e.target as HTMLElement).classList.contains('modal-overlay')) this.cerrarModal();
+    }
+
+    guardarNuevo() {
+        if (this.formModal.invalid || this.guardando) return;
+        this.guardando = true;
+        const payload = this.formModal.value;
+        this.service.create(payload).subscribe({
+            next: (created) => {
+                this.guardando = false;
+                this.cerrarModal();
+                this.clientes = [created, ...this.clientes];
+                this.aplicarFiltro();
+                Swal.fire('Guardado', 'Cliente creado correctamente.', 'success');
+            },
+            error: (e) => {
+                this.guardando = false;
+                Swal.fire('Error', e?.error?.message || 'No se pudo crear el cliente.', 'error');
+            }
         });
     }
 

@@ -80,8 +80,8 @@ interface ProveedorRow {
       </tbody>
     </table>
 
-    <div class="modal-overlay" [class.active]="modalAbierto" (click)="onOverlayClick($event)">
-      <div class="modal-content modal-form" (click)="$event.stopPropagation()">
+    <div class="modal-overlay" *ngIf="modalAbierto" (click)="onOverlayClick($event)">
+      <div class="modal-bubble modal-form" (click)="$event.stopPropagation()">
         <h2 style="margin-bottom: 20px; text-align: left;">Nuevo Proveedor</h2>
         <form [formGroup]="formModal" (ngSubmit)="guardarNuevo()">
           <div class="form-row">
@@ -129,7 +129,7 @@ interface ProveedorRow {
   `,
   styles: [
     `.muted { color: #94a3b8; }`,
-    `.modal-form { max-width: 520px; text-align: left; }`,
+    `.modal-form { max-width: 520px; text-align: left; width: 90%; }`,
     `.form-row { margin-bottom: 16px; }`,
     `.form-label { display: block; font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 6px; }`,
     `.form-input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; }`,

@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LocalService, Local } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
 @Component({
     selector: 'app-local-list',
     standalone: true,
-    imports: [CommonModule, RouterLink, FormsModule],
+    imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule],
     template: `
     <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
       <h1>Gestión de Locales</h1>
-      <a routerLink="/locales/nuevo" class="btn-primary">+ Nuevo Local</a>
+      <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Local</button>
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 25px;">
@@ -98,19 +98,144 @@ import Swal from 'sweetalert2';
         </tr>
       </tbody>
     </table>
+
+    <div class="modal-overlay" *ngIf="modalVisible" (click)="onOverlayClick($event)">
+      <div class="modal-bubble modal-form" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Nuevo Local</h2>
+          <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+        </div>
+        <form [formGroup]="formModal" (ngSubmit)="guardarNuevo()">
+          <div class="modal-grid">
+            <div class="modal-field">
+              <label>ID Cliente *</label>
+              <input type="number" formControlName="idCliente" />
+            </div>
+            <div class="modal-field">
+              <label>Nombre titular *</label>
+              <input type="text" formControlName="nombreTitular" />
+            </div>
+            <div class="modal-field">
+              <label>Apellido1 titular *</label>
+              <input type="text" formControlName="apellido1Titular" />
+            </div>
+            <div class="modal-field">
+              <label>Apellido2 titular</label>
+              <input type="text" formControlName="apellido2Titular" />
+            </div>
+            <div class="modal-field full">
+              <label>Dirección completa *</label>
+              <input type="text" formControlName="direccionCompleta" />
+            </div>
+            <div class="modal-field">
+              <label>CUPS</label>
+              <input type="text" formControlName="cups" />
+            </div>
+            <div class="modal-field">
+              <label>Ref. catastral</label>
+              <input type="text" formControlName="referenciaCatastral" />
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="formModal.invalid || guardando">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
   `
+  ,
+  styles: [`
+    .modal-form { max-width: 720px; width: 90%; text-align: left; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .modal-field { display: flex; flex-direction: column; gap: 6px; }
+    .modal-field.full { grid-column: span 2; }
+    .modal-field input {
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-family: inherit;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-secondary {
+      background: #94a3b8;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  `]
 })
 export class LocalListComponent implements OnInit {
     locales: Local[] = [];
     filtrados: Local[] = [];
     filtro = '';
+    modalVisible = false;
+    guardando = false;
+    formModal: FormGroup;
 
-    constructor(private service: LocalService) { }
+    constructor(private service: LocalService, private fb: FormBuilder) {
+        this.formModal = this.fb.group({
+            idCliente: [null, Validators.required],
+            nombreTitular: ['', Validators.required],
+            apellido1Titular: ['', Validators.required],
+            apellido2Titular: [''],
+            direccionCompleta: ['', Validators.required],
+            cups: [''],
+            referenciaCatastral: [''],
+        });
+    }
 
     ngOnInit() {
         this.service.getAll().subscribe(data => {
             this.locales = data;
             this.filtrados = data;
+        });
+    }
+
+    abrirModalNuevo() {
+        this.guardando = false;
+        this.formModal.reset();
+        this.modalVisible = true;
+    }
+
+    cerrarModal() {
+        this.modalVisible = false;
+    }
+
+    onOverlayClick(e: Event) {
+        if ((e.target as HTMLElement).classList.contains('modal-overlay')) this.cerrarModal();
+    }
+
+    guardarNuevo() {
+        if (this.formModal.invalid || this.guardando) return;
+        this.guardando = true;
+        const v = this.formModal.value;
+        const payload = {
+            idCliente: v.idCliente,
+            nombreTitular: v.nombreTitular,
+            apellido1Titular: v.apellido1Titular,
+            apellido2Titular: v.apellido2Titular || null,
+            direccionCompleta: v.direccionCompleta,
+            cups: v.cups || null,
+            referenciaCatastral: v.referenciaCatastral || null
+        };
+        this.service.create(payload as any).subscribe({
+            next: (created) => {
+                this.guardando = false;
+                this.cerrarModal();
+                this.locales = [created, ...this.locales];
+                this.aplicarFiltro();
+                Swal.fire('Guardado', 'Local creado correctamente.', 'success');
+            },
+            error: (e) => {
+                this.guardando = false;
+                Swal.fire('Error', e?.error?.message || 'No se pudo crear el local.', 'error');
+            }
         });
     }
 
