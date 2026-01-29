@@ -11,6 +11,11 @@
     --transition-speed: 0.3s;
 }
 
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
 * {
     margin: 0;
     padding: 0;

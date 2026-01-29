@@ -10,6 +10,7 @@ import {
   Seguimiento,
 } from '../../services/domain.services';
 import { UsuarioService as UsuarioApi, Usuario } from '../../services/usuario.service';
+import { ProveedorService, ProveedorDTO } from '../../services/proveedor.service';
 import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 
@@ -32,6 +33,7 @@ export class TramiteDetalleComponent implements OnInit {
   detalle: TramiteDetalleResponse | null = null;
   hitos: Seguimiento[] = [];
   tecnicos: Usuario[] = [];
+  proveedores: { id: number; nombre: string }[] = [];
   archivos: ArchivoTramite[] = [];
   showNuevoHito = false;
   idTramite: number | null = null;
@@ -48,6 +50,7 @@ export class TramiteDetalleComponent implements OnInit {
     private seguimientoService: SeguimientoService,
     private contratoService: ContratoService,
     private usuarioService: UsuarioApi,
+    private proveedorService: ProveedorService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
@@ -75,6 +78,7 @@ export class TramiteDetalleComponent implements OnInit {
       estado: ['Pendiente'],
       esUrgente: [false],
       idUsuarioAsignado: [null as number | null],
+      idProveedor: [null as number | null],
     });
   }
 
@@ -89,6 +93,7 @@ export class TramiteDetalleComponent implements OnInit {
       this.cargarDetalle();
       this.cargarHitos();
       this.cargarTecnicos();
+      this.cargarProveedores();
       this.cargarArchivos();
     });
   }
@@ -152,6 +157,21 @@ export class TramiteDetalleComponent implements OnInit {
   cargarTecnicos() {
     this.usuarioService.getTecnicos().subscribe({
       next: (list) => (this.tecnicos = list || []),
+      error: () => {},
+    });
+  }
+
+  cargarProveedores() {
+    this.proveedorService.getAll().subscribe({
+      next: (list: ProveedorDTO[] | any[]) => {
+        const raw = Array.isArray(list) ? list : [];
+        this.proveedores = raw
+          .map((p: any) => ({
+            id: p.idProveedor ?? p.id,
+            nombre: p.nombreComercial ?? p.razonSocial ?? 'Proveedor',
+          }))
+          .filter((p: any) => typeof p.id === 'number');
+      },
       error: () => {},
     });
   }
@@ -223,6 +243,7 @@ export class TramiteDetalleComponent implements OnInit {
         estado: 'Pendiente',
         esUrgente: false,
         idUsuarioAsignado: this.tecnicos[0]?.idUsuario ?? null,
+        idProveedor: null,
       });
     }
   }
@@ -237,6 +258,7 @@ export class TramiteDetalleComponent implements OnInit {
       estado: v.estado || 'Pendiente',
       esUrgente: !!v.esUrgente,
       idUsuarioAsignado: v.idUsuarioAsignado ?? undefined,
+      idProveedor: v.idProveedor ?? undefined,
     };
     this.seguimientoService.create(payload).subscribe({
       next: () => {

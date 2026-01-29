@@ -154,13 +154,13 @@ import Swal from 'sweetalert2';
     </div>
   `,
   styles: [`
-    .main-container { max-width: 1150px; margin: 0 auto; }
+    .main-container { max-width: 98%; width: 100%; margin: 0 auto; padding: 1rem; box-sizing: border-box; }
     .user-stamp {
       text-align: right; font-size: 0.75rem; color: #64748b; margin-bottom: 15px;
       background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; float: right;
     }
     .gestion-container {
-      clear: both; margin-top: 20px; background: white; width: 100%; max-width: 1150px;
+      clear: both; margin-top: 20px; background: white; width: 100%; max-width: 98%;
       border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid #1e293b;
       overflow: hidden; margin-bottom: 50px;
     }
@@ -180,7 +180,9 @@ import Swal from 'sweetalert2';
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 25px;
-      padding: 30px;
+      padding: 1rem;
+      width: 100%;
+      box-sizing: border-box;
     }
     .panel-section {
       background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 15px;
@@ -192,6 +194,7 @@ import Swal from 'sweetalert2';
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
+      width: 100%;
     }
     .formulario-intervencion {
       background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 15px;

@@ -85,6 +85,7 @@ export interface Seguimiento {
     esUrgente?: boolean;
     estado?: string;
     nombreAsignado?: string;
+    nombreProveedor?: string;
     nombreCreador?: string;
     fechaRegistro?: string;
 }

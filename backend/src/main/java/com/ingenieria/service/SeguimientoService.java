@@ -48,7 +48,9 @@ public class SeguimientoService {
                 s.getEstado(),
                 s.getFechaRegistro(),
                 s.getUsuarioAsignado() != null ? s.getUsuarioAsignado().getNombreUsuario() : null,
-                s.getCreador() != null ? s.getCreador().getNombreUsuario() : null);
+                s.getCreador() != null ? s.getCreador().getNombreUsuario() : null,
+                s.getProveedor() != null ? s.getProveedor().getIdProveedor() : null,
+                s.getProveedor() != null ? s.getProveedor().getNombreComercial() : null);
     }
 
     @Transactional
@@ -137,7 +139,9 @@ public class SeguimientoService {
                 saved.getEstado(),
                 saved.getFechaRegistro(),
                 asignado != null ? asignado.getNombreUsuario() : null,
-                creador != null ? creador.getNombreUsuario() : null);
+                creador != null ? creador.getNombreUsuario() : null,
+                saved.getProveedor() != null ? saved.getProveedor().getIdProveedor() : null,
+                saved.getProveedor() != null ? saved.getProveedor().getNombreComercial() : null);
     }
 
     @Transactional

@@ -89,6 +89,13 @@
             </select>
           </div>
           <div class="field">
+            <label>Proveedor</label>
+            <select class="form-control" formControlName="idProveedor">
+              <option [ngValue]="null">—</option>
+              <option *ngFor="let p of proveedores" [ngValue]="p.id">{{ p.nombre }}</option>
+            </select>
+          </div>
+          <div class="field">
             <label>Estado</label>
             <select class="form-control" formControlName="estado">
               <option value="Pendiente">🔴 Pendiente</option>
@@ -112,7 +119,8 @@
           <tr>
             <th style="width: 140px;">Fecha Registro</th>
             <th>Comentario</th>
-            <th style="width: 180px;">Técnico/Proveedor</th>
+            <th style="width: 180px;">Técnico</th>
+            <th style="width: 200px;">Proveedor</th>
             <th style="width: 130px;">Próximo Seg.</th>
             <th style="width: 60px; text-align: center;">Urg.</th>
             <th style="width: 130px;">Estado</th>
@@ -128,6 +136,7 @@
             </td>
             <td>{{ h.comentario }}</td>
             <td>{{ h.nombreAsignado || '—' }}</td>
+            <td>{{ h.nombreProveedor || '—' }}</td>
             <td>{{ h.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
             <td class="center"><span *ngIf="h.esUrgente" class="badge-urg">URG</span></td>
             <td><span class="badge" [ngClass]="h.estado === 'Terminado' ? 'badge-ok' : 'badge-pend'">{{ h.estado }}</span></td>
@@ -136,7 +145,7 @@
             </td>
           </tr>
           <tr *ngIf="hitos.length === 0">
-            <td colspan="7" class="empty">No hay hitos. Añade uno con «+ Nuevo seguimiento».</td>
+            <td colspan="8" class="empty">No hay hitos. Añade uno con «+ Nuevo seguimiento».</td>
           </tr>
         </tbody>
       </table>

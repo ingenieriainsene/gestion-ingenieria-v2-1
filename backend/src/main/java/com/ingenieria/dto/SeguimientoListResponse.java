@@ -21,4 +21,6 @@ public class SeguimientoListResponse {
     private LocalDateTime fechaRegistro;
     private String nombreAsignado;
     private String nombreCreador;
+    private Long idProveedor;
+    private String nombreProveedor;
 }
