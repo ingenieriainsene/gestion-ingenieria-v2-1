@@ -13,11 +13,14 @@ export interface Cliente {
     codigoPostal?: string;
     cuentaBancaria?: string;
     fechaAlta?: string;
+    creadoPor?: string;
+    modificadoPor?: string;
+    fechaModificacion?: string;
 }
 
 export interface Local {
     idLocal?: number;
-    idCliente: number;
+    idCliente?: number;
     nombreTitular: string;
     apellido1Titular: string;
     apellido2Titular?: string;
@@ -28,6 +31,8 @@ export interface Local {
     latitud?: number;
     longitud?: number;
     fechaAlta?: string;
+    /** Cuando el backend devuelve el local con cliente anidado (GET por id). */
+    cliente?: Cliente;
 }
 
 export interface Contrato {
@@ -139,7 +144,10 @@ export class LocalService {
     constructor(private api: ApiService) { }
     getAll(): Observable<Local[]> { return this.api.get<Local[]>(this.endpoint); }
     getById(id: number): Observable<Local> { return this.api.get<Local>(`${this.endpoint}/${id}`); }
-    create(data: Local): Observable<Local> { return this.api.post<Local>(this.endpoint, data); }
+    create(data: Partial<Local> & { idCliente: number }): Observable<Local> { return this.api.post<Local>(this.endpoint, data); }
+    update(id: number, data: Record<string, unknown>): Observable<Local> {
+        return this.api.put<Local>(`${this.endpoint}/${id}`, data);
+    }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
 }
 

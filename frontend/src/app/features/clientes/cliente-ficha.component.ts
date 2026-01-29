@@ -11,7 +11,9 @@ import Swal from 'sweetalert2';
     imports: [CommonModule, ReactiveFormsModule, RouterLink],
     template: `
     <div class="mb-3">
-       <a routerLink="/clientes" class="direct-link">&larr; Volver al listado</a>
+       <a [routerLink]="idCliente ? ['/clientes', idCliente] : ['/clientes']" class="direct-link">
+         &larr; {{ idCliente ? 'Volver a la ficha' : 'Volver al listado' }}
+       </a>
     </div>
 
     <div class="main-container">

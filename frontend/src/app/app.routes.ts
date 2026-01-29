@@ -3,8 +3,10 @@ import { ProveedorListComponent } from './features/proveedores/proveedor-list.co
 import { ProveedorFichaComponent } from './features/proveedores/proveedor-ficha.component';
 import { ClienteListComponent } from './features/clientes/cliente-list.component';
 import { ClienteFichaComponent } from './features/clientes/cliente-ficha.component';
+import { ClienteFichaViewComponent } from './features/clientes/cliente-ficha-view.component';
 import { LocalListComponent } from './features/locales/local-list.component';
 import { LocalFichaComponent } from './features/locales/local-ficha.component';
+import { LocalFichaViewComponent } from './features/locales/local-ficha-view.component';
 import { ContratoListComponent } from './features/contratos/contrato-list.component';
 import { ContratoFichaComponent } from './features/contratos/contrato-ficha.component';
 import { TramiteListComponent } from './features/tramites/tramite-list.component';
@@ -29,11 +31,13 @@ export const routes: Routes = [
 
             { path: 'clientes', component: ClienteListComponent },
             { path: 'clientes/nuevo', component: ClienteFichaComponent },
-            { path: 'clientes/:id', component: ClienteFichaComponent },
+            { path: 'clientes/:id/editar', component: ClienteFichaComponent },
+            { path: 'clientes/:id', component: ClienteFichaViewComponent },
 
             { path: 'locales', component: LocalListComponent },
             { path: 'locales/nuevo', component: LocalFichaComponent },
-            { path: 'locales/:id', component: LocalFichaComponent },
+            { path: 'locales/:id/editar', component: LocalFichaComponent },
+            { path: 'locales/:id', component: LocalFichaViewComponent },
 
             { path: 'contratos', component: ContratoListComponent },
             { path: 'contratos/nuevo', component: ContratoFichaComponent },

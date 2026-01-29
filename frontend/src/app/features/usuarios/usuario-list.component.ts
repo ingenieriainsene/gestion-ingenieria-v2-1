@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Usuario, UsuarioService } from '../../services/usuario.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-usuario-list',
@@ -76,8 +77,23 @@ export class UsuarioListComponent implements OnInit {
 
   eliminar(u: Usuario): void {
     if (!u.idUsuario) return;
-    if (!confirm('¿Borrar cuenta?')) return;
-    this.usuarioService.delete(u.idUsuario).subscribe(() => this.cargar());
+    Swal.fire({
+      title: '¿Eliminar usuario?',
+      text: '¿Estás seguro de que deseas eliminar este usuario? Esta acción podría afectar al acceso del sistema.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#1e293b',
+      cancelButtonText: 'Cancelar',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.usuarioService.delete(u.idUsuario!).subscribe({
+        next: () => {
+          this.cargar();
+          Swal.fire('Eliminado', 'Usuario borrado correctamente.', 'success');
+        },
+        error: () => Swal.fire('Error', 'No se pudo eliminar el usuario.', 'error'),
+      });
+    });
   }
 }
 

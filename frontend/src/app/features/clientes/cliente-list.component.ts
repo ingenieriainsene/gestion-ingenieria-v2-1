@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Cliente, ClienteService } from '../../services/domain.services';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'app-cliente-list',
@@ -52,10 +53,10 @@ import { Cliente, ClienteService } from '../../services/domain.services';
               [routerLink]="['/clientes', c.idCliente]"
               class="action-badge"
               style="background:#3498db;"
-              title="Ver ficha técnica"
+              title="Ver ficha"
             >👁️</a>
             <a
-              [routerLink]="['/clientes', c.idCliente]"
+              [routerLink]="['/clientes', c.idCliente, 'editar']"
               class="action-badge badge-edit"
               title="Editar cliente"
             >✏️</a>
@@ -105,12 +106,23 @@ export class ClienteListComponent implements OnInit {
 
     eliminar(c: Cliente) {
         if (!c.idCliente) return;
-        if (!confirm(`¿Eliminar al cliente ${c.nombre} ${c.apellido1}? Se borrarán también sus contratos y locales vinculados.`)) {
-            return;
-        }
-        this.service.delete(c.idCliente).subscribe(() => {
-            this.clientes = this.clientes.filter(x => x.idCliente !== c.idCliente);
-            this.aplicarFiltro();
+        Swal.fire({
+            title: '¿Eliminar cliente?',
+            text: `¿Seguro que deseas eliminar al cliente ${c.nombre} ${c.apellido1}? Se borrarán también sus contratos y locales vinculados.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1e293b',
+            cancelButtonText: 'Cancelar',
+        }).then((res) => {
+            if (!res.isConfirmed) return;
+            this.service.delete(c.idCliente!).subscribe({
+                next: () => {
+                    this.clientes = this.clientes.filter(x => x.idCliente !== c.idCliente);
+                    this.aplicarFiltro();
+                    Swal.fire('Eliminado', 'Cliente borrado correctamente.', 'success');
+                },
+                error: () => Swal.fire('Error', 'No se pudo eliminar el cliente.', 'error'),
+            });
         });
     }
 }

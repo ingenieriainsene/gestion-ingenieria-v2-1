@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ContratoService, Contrato } from '../../services/domain.services';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'app-contrato-list',
@@ -87,9 +88,22 @@ export class ContratoListComponent implements OnInit {
 
     eliminar(c: Contrato) {
         if (!c.idContrato) return;
-        if (!confirm(`¿Eliminar el contrato #${c.idContrato}?`)) return;
-        this.service.delete(c.idContrato).subscribe(() => {
-            this.contratos = this.contratos.filter(x => x.idContrato !== c.idContrato);
+        Swal.fire({
+            title: '¿Eliminar contrato?',
+            text: `¿Seguro que deseas eliminar el contrato #${c.idContrato}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1e293b',
+            cancelButtonText: 'Cancelar',
+        }).then((res) => {
+            if (!res.isConfirmed) return;
+            this.service.delete(c.idContrato!).subscribe({
+                next: () => {
+                    this.contratos = this.contratos.filter(x => x.idContrato !== c.idContrato);
+                    Swal.fire('Eliminado', 'Contrato borrado correctamente.', 'success');
+                },
+                error: () => Swal.fire('Error', 'No se pudo eliminar el contrato.', 'error'),
+            });
         });
     }
 }

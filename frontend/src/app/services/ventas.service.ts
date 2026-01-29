@@ -31,7 +31,7 @@ export class VentasService {
     });
   }
 
-  añadirVenta(tramite: Tramite) {
+  agregarVenta(tramite: Tramite) {
     const actuales = this.ventasSubject.value;
     if (!actuales.find(t => t.idTramite === tramite.idTramite)) {
       this.ventasSubject.next([...actuales, tramite]);

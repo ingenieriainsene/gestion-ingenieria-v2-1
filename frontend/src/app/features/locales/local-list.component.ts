@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LocalService, Local } from '../../services/domain.services';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'app-local-list',
@@ -78,7 +79,7 @@ import { LocalService, Local } from '../../services/domain.services';
               title="Ver ficha técnica"
             >👁️</a>
             <a
-              [routerLink]="['/locales', l.idLocal]"
+              [routerLink]="['/locales', l.idLocal, 'editar']"
               class="action-badge badge-edit"
               title="Editar local"
             >✏️</a>
@@ -130,12 +131,23 @@ export class LocalListComponent implements OnInit {
 
     eliminar(l: Local) {
         if (!l.idLocal) return;
-        if (!confirm(`¿Eliminar el local #${l.idLocal}? Se borrarán también sus contratos asociados.`)) {
-            return;
-        }
-        this.service.delete(l.idLocal).subscribe(() => {
-            this.locales = this.locales.filter(x => x.idLocal !== l.idLocal);
-            this.aplicarFiltro();
+        Swal.fire({
+            title: '¿Eliminar local?',
+            text: `¿Seguro que deseas eliminar el local #${l.idLocal}? Se borrarán también sus contratos asociados.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1e293b',
+            cancelButtonText: 'Cancelar',
+        }).then((res) => {
+            if (!res.isConfirmed) return;
+            this.service.delete(l.idLocal!).subscribe({
+                next: () => {
+                    this.locales = this.locales.filter(x => x.idLocal !== l.idLocal);
+                    this.aplicarFiltro();
+                    Swal.fire('Eliminado', 'Local borrado correctamente.', 'success');
+                },
+                error: () => Swal.fire('Error', 'No se pudo eliminar el local.', 'error'),
+            });
         });
     }
 
