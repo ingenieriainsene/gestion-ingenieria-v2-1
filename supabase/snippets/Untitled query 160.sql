@@ -192,6 +192,8 @@ CREATE TABLE IF NOT EXISTS presupuestos (
     codigo_referencia VARCHAR(50) NOT NULL,
     fecha DATE NOT NULL,
     total NUMERIC(12, 2) DEFAULT 0,
+    total_sin_iva NUMERIC(12, 2) DEFAULT 0,
+    total_con_iva NUMERIC(12, 2) DEFAULT 0,
     estado VARCHAR(30) DEFAULT 'Borrador',
     CONSTRAINT fk_presupuesto_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
     CONSTRAINT fk_presupuesto_vivienda FOREIGN KEY (vivienda_id) REFERENCES locales(id_local) ON DELETE RESTRICT
@@ -205,6 +207,7 @@ CREATE TABLE IF NOT EXISTS presupuesto_lineas (
     producto_id BIGINT NULL,
     producto_texto VARCHAR(255) NULL,
     concepto VARCHAR(255) NOT NULL,
+    iva_porcentaje NUMERIC(5, 2) DEFAULT 21,
     cantidad NUMERIC(12, 2) NOT NULL,
     precio_unitario NUMERIC(12, 2) NOT NULL,
     total_linea NUMERIC(12, 2) NOT NULL,
@@ -214,6 +217,15 @@ CREATE TABLE IF NOT EXISTS presupuesto_lineas (
 -- Si la tabla ya existia previamente, aseguramos la columna nueva
 ALTER TABLE presupuesto_lineas
     ADD COLUMN IF NOT EXISTS producto_texto VARCHAR(255);
+
+ALTER TABLE presupuesto_lineas
+    ADD COLUMN IF NOT EXISTS iva_porcentaje NUMERIC(5, 2) DEFAULT 21;
+
+ALTER TABLE presupuestos
+    ADD COLUMN IF NOT EXISTS total_sin_iva NUMERIC(12, 2) DEFAULT 0;
+
+ALTER TABLE presupuestos
+    ADD COLUMN IF NOT EXISTS total_con_iva NUMERIC(12, 2) DEFAULT 0;
 
 -- ======================================================
 -- 2. VISTAS
@@ -381,43 +393,43 @@ WHERE NOT EXISTS (
       AND COALESCE(pc.email, '') = COALESCE(v.email, '')
 );
 
--- Presupuestos (idempotente por codigo_referencia)
-INSERT INTO presupuestos (cliente_id, vivienda_id, codigo_referencia, fecha, total, estado)
-SELECT *
-FROM (VALUES
-    (1, 1, 'PRES-2026-001', '2026-01-10'::date, 1250.00, 'Borrador'),
-    (2, 2, 'PRES-2026-002', '2026-01-15'::date, 800.00, 'Enviado'),
-    (3, 3, 'PRES-2026-003', '2026-01-20'::date, 450.00, 'Borrador')
-) AS v(cliente_id, vivienda_id, codigo_referencia, fecha, total, estado)
-WHERE NOT EXISTS (
-    SELECT 1 FROM presupuestos p WHERE p.codigo_referencia = v.codigo_referencia
-);
+-- Presupuestos (reset y datos reales sector solar)
+TRUNCATE TABLE presupuesto_lineas, presupuestos RESTART IDENTITY CASCADE;
 
--- Lineas de presupuestos (idempotente por referencia+orden+concepto)
+INSERT INTO presupuestos (cliente_id, vivienda_id, codigo_referencia, fecha, total, total_sin_iva, total_con_iva, estado)
+VALUES
+    (1, 1, 'PRES-SOLAR-001', '2026-02-01'::date, 4114.00, 3400.00, 4114.00, 'Borrador'),
+    (2, 2, 'PRES-SOLAR-002', '2026-02-03'::date, 9002.40, 7440.00, 9002.40, 'Enviado'),
+    (3, 3, 'PRES-SOLAR-003', '2026-02-05'::date, 520.30, 430.00, 520.30, 'Borrador'),
+    (4, 4, 'PRES-SOLAR-004', '2026-02-07'::date, 10950.50, 9050.00, 10950.50, 'Aceptado');
+
 INSERT INTO presupuesto_lineas (
-    presupuesto_id, orden, producto_id, producto_texto, concepto, cantidad, precio_unitario, total_linea
+    presupuesto_id, orden, producto_id, producto_texto, concepto, iva_porcentaje, cantidad, precio_unitario, total_linea
 )
-SELECT p.id_presupuesto, v.orden, v.producto_id, v.producto_texto, v.concepto, v.cantidad, v.precio_unitario, v.total_linea
+SELECT p.id_presupuesto, v.orden, v.producto_id, v.producto_texto, v.concepto, v.iva_porcentaje, v.cantidad, v.precio_unitario, v.total_linea
 FROM (VALUES
-    ('PRES-2026-001', 1, NULL::bigint, 'Visita tecnica', 'Trabajo', 1.00, 150.00, 150.00),
-    ('PRES-2026-001', 2, NULL::bigint, 'Paneles solares', 'Material', 1.00, 1000.00, 1000.00),
-    ('PRES-2026-001', 3, NULL::bigint, 'Materiales varios', 'Material', 2.00, 50.00, 100.00),
-    ('PRES-2026-002', 1, NULL::bigint, 'Proyecto y memoria', 'Servicio', 1.00, 300.00, 300.00),
-    ('PRES-2026-002', 2, NULL::bigint, 'Mano de obra', 'Trabajo', 1.00, 400.00, 400.00),
-    ('PRES-2026-002', 3, NULL::bigint, 'Desplazamiento', 'Gasto', 1.00, 100.00, 100.00),
-    ('PRES-2026-003', 1, NULL::bigint, 'Revision tecnica', 'Servicio', 1.00, 150.00, 150.00),
-    ('PRES-2026-003', 2, NULL::bigint, 'Documentacion', 'Servicio', 1.00, 200.00, 200.00),
-    ('PRES-2026-003', 3, NULL::bigint, 'Tasa municipal', 'Gasto', 1.00, 100.00, 100.00)
-) AS v(codigo_referencia, orden, producto_id, producto_texto, concepto, cantidad, precio_unitario, total_linea)
-JOIN presupuestos p ON p.codigo_referencia = v.codigo_referencia
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM presupuesto_lineas pl
-    JOIN presupuestos p2 ON p2.id_presupuesto = pl.presupuesto_id
-    WHERE p2.codigo_referencia = v.codigo_referencia
-      AND pl.orden = v.orden
-      AND pl.concepto = v.concepto
-);
+    -- Caso 1: Autoconsumo Residencial Básico (3kWp)
+    ('PRES-SOLAR-001', 1, NULL::bigint, '8x Módulo Fotovoltaico JA Solar 455W Mono PERC', 'Línea 1', 21, 8.00, 150.00, 1200.00),
+    ('PRES-SOLAR-001', 2, NULL::bigint, 'Inversor Huawei SUN2000-3KTL-L1 Híbrido', 'Línea 2', 21, 1.00, 950.00, 950.00),
+    ('PRES-SOLAR-001', 3, NULL::bigint, 'Estructura Coplanar Aluminio 8 Módulos', 'Línea 3', 21, 1.00, 350.00, 350.00),
+    ('PRES-SOLAR-001', 4, NULL::bigint, 'Instalación, Montaje y Legalización (CIE)', 'Línea 4', 21, 1.00, 900.00, 900.00),
+
+    -- Caso 2: Vivienda Unifamiliar con Batería (5kWp + Acumulación)
+    ('PRES-SOLAR-002', 1, NULL::bigint, '12x Panel Canadian Solar 550W HiKu6', 'Línea 1', 21, 12.00, 170.00, 2040.00),
+    ('PRES-SOLAR-002', 2, NULL::bigint, 'Inversor Fronius Primo GEN24 5.0 Plus', 'Línea 2', 21, 1.00, 1200.00, 1200.00),
+    ('PRES-SOLAR-002', 3, NULL::bigint, 'Batería BYD Battery-Box Premium HVS 5.1', 'Línea 3', 21, 1.00, 3000.00, 3000.00),
+    ('PRES-SOLAR-002', 4, NULL::bigint, 'Mano de obra, Cableado y Protecciones DC/AC', 'Línea 4', 21, 1.00, 1200.00, 1200.00),
+
+    -- Caso 3: Mantenimiento y Revisión
+    ('PRES-SOLAR-003', 1, NULL::bigint, 'Limpieza técnica de campo solar (20 módulos)', 'Línea 1', 21, 1.00, 180.00, 180.00),
+    ('PRES-SOLAR-003', 2, NULL::bigint, 'Revisión termográfica de cuadros e inversor', 'Línea 2', 21, 1.00, 250.00, 250.00),
+
+    -- Caso 4: Kit Aislada (Casa de Campo)
+    ('PRES-SOLAR-004', 1, NULL::bigint, 'Kit Victron MultiPlus-II 48/3000 + Cerbo GX', 'Línea 1', 21, 1.00, 1450.00, 1450.00),
+    ('PRES-SOLAR-004', 2, NULL::bigint, '4x Batería Pylontech US3000C 3.5kWh LiFePo4', 'Línea 2', 21, 4.00, 1600.00, 6400.00),
+    ('PRES-SOLAR-004', 3, NULL::bigint, 'Material vario e instalación eléctrica', 'Línea 3', 21, 1.00, 1200.00, 1200.00)
+) AS v(codigo_referencia, orden, producto_id, producto_texto, concepto, iva_porcentaje, cantidad, precio_unitario, total_linea)
+JOIN presupuestos p ON p.codigo_referencia = v.codigo_referencia;
 
 -- ======================================================
 -- 4. PERMISOS (Supabase)

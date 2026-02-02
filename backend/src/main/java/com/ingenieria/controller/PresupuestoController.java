@@ -2,8 +2,11 @@ package com.ingenieria.controller;
 
 import com.ingenieria.dto.PresupuestoDTO;
 import com.ingenieria.dto.PresupuestoListResponse;
+import com.ingenieria.service.PdfService;
 import com.ingenieria.service.PresupuestoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +19,7 @@ import java.util.List;
 public class PresupuestoController {
 
     private final PresupuestoService service;
+    private final PdfService pdfService;
 
     @GetMapping
     public List<PresupuestoListResponse> getAll() {
@@ -28,6 +32,21 @@ public class PresupuestoController {
             return ResponseEntity.ok(service.findById(id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<?> downloadPdf(@PathVariable Long id) {
+        try {
+            byte[] pdf = pdfService.generarPresupuestoPdf(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"presupuesto_" + id + ".pdf\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("No se pudo generar el PDF.");
         }
     }
 

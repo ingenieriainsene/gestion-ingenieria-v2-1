@@ -2,6 +2,7 @@ package com.ingenieria.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,10 +35,17 @@ public class Presupuesto {
     @Column(precision = 12, scale = 2)
     private BigDecimal total;
 
+    @Column(name = "total_sin_iva", precision = 12, scale = 2)
+    private BigDecimal totalSinIva;
+
+    @Column(name = "total_con_iva", precision = 12, scale = 2)
+    private BigDecimal totalConIva;
+
     @Column(length = 30)
     private String estado;
 
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orden ASC")
+    @JsonManagedReference
     private List<PresupuestoLinea> lineas = new ArrayList<>();
 }

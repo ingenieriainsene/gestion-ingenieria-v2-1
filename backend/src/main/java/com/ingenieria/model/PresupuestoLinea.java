@@ -2,6 +2,7 @@ package com.ingenieria.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.math.BigDecimal;
 
@@ -16,6 +17,7 @@ public class PresupuestoLinea {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "presupuesto_id", nullable = false)
+    @JsonBackReference
     private Presupuesto presupuesto;
 
     private Integer orden;
@@ -28,6 +30,9 @@ public class PresupuestoLinea {
 
     @Column(nullable = false, length = 255)
     private String concepto;
+
+    @Column(name = "iva_porcentaje", precision = 5, scale = 2)
+    private BigDecimal ivaPorcentaje;
 
     @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal cantidad;

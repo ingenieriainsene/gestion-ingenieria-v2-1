@@ -11,6 +11,7 @@ public class PresupuestoLineaDTO {
     private Long productoId;
     private String productoTexto;
     private String concepto;
+    private BigDecimal ivaPorcentaje;
     private BigDecimal cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal totalLinea;

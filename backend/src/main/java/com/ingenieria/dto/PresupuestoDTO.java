@@ -14,6 +14,8 @@ public class PresupuestoDTO {
     private String codigoReferencia;
     private LocalDate fecha;
     private BigDecimal total;
+    private BigDecimal totalSinIva;
+    private BigDecimal totalConIva;
     private String estado;
     private List<PresupuestoLineaDTO> lineas;
 }

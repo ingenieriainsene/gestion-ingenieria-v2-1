@@ -15,6 +15,8 @@ public class PresupuestoListResponse {
     private String codigoReferencia;
     private LocalDate fecha;
     private BigDecimal total;
+    private BigDecimal totalSinIva;
+    private BigDecimal totalConIva;
     private String estado;
     private Long clienteId;
     private String clienteNombre;

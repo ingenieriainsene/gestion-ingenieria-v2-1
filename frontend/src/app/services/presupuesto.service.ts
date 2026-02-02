@@ -9,6 +9,7 @@ export interface PresupuestoLineaDTO {
   productoId?: number | null;
   productoTexto?: string;
   concepto: string;
+  ivaPorcentaje?: number;
   cantidad: number;
   precioUnitario: number;
   totalLinea?: number;
@@ -21,6 +22,8 @@ export interface PresupuestoDTO {
   codigoReferencia?: string;
   fecha: string;
   total?: number;
+  totalSinIva?: number;
+  totalConIva?: number;
   estado?: string;
   lineas: PresupuestoLineaDTO[];
 }
@@ -69,6 +72,10 @@ export class PresupuestoService {
 
   deleteBudget(id: number): Observable<void> {
     return this.api.delete<void>(`${this.endpoint}/${id}`);
+  }
+
+  downloadPdf(id: number): Observable<Blob> {
+    return this.api.getBlob(`${this.endpoint}/${id}/pdf`);
   }
 
   getProducts(): Observable<ProductoItem[]> {

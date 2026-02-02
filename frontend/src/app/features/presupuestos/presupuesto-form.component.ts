@@ -51,10 +51,6 @@ import Swal from 'sweetalert2';
             </datalist>
           </div>
           <div class="form-group">
-            <label class="form-label">Código referencia</label>
-            <input type="text" class="form-control" formControlName="codigoReferencia" placeholder="PRES-0001" />
-          </div>
-          <div class="form-group">
             <label class="form-label">Fecha *</label>
             <input type="date" class="form-control" formControlName="fecha" />
           </div>
@@ -69,7 +65,7 @@ import Swal from 'sweetalert2';
           </div>
           <div class="form-group">
             <label class="form-label">Total</label>
-            <input type="text" class="form-control" [value]="totalPresupuesto | number:'1.2-2'" disabled />
+            <input type="text" class="form-control" [value]="totalConIva | number:'1.2-2'" disabled />
           </div>
         </div>
 
@@ -96,6 +92,10 @@ import Swal from 'sweetalert2';
               <label>Precio</label>
               <input type="number" class="form-control" formControlName="precioUnitario" min="0" step="0.01" />
             </div>
+            <div class="col col-iva">
+              <label>IVA %</label>
+              <input type="number" class="form-control" formControlName="ivaPorcentaje" min="0" step="0.01" />
+            </div>
             <div class="col col-total">
               <label>Total</label>
               <input type="text" class="form-control" [value]="getLineaTotal(i) | number:'1.2-2'" disabled />
@@ -112,6 +112,20 @@ import Swal from 'sweetalert2';
             Guardar presupuesto
           </button>
         </div>
+        <div class="totales-resumen">
+          <div class="resumen-item">
+            <span>Total sin IVA</span>
+            <strong>{{ totalSinIva | number:'1.2-2' }} €</strong>
+          </div>
+          <div class="resumen-item">
+            <span>IVA total</span>
+            <strong>{{ totalIva | number:'1.2-2' }} €</strong>
+          </div>
+          <div class="resumen-item total">
+            <span>TOTAL con IVA</span>
+            <strong>{{ totalConIva | number:'1.2-2' }} €</strong>
+          </div>
+        </div>
       </form>
     </div>
   `,
@@ -127,7 +141,7 @@ import Swal from 'sweetalert2';
     .lineas-table { display: flex; flex-direction: column; gap: 12px; }
     .linea-row {
       display: grid;
-      grid-template-columns: 1.3fr 2fr 0.6fr 0.8fr 0.8fr 0.6fr;
+      grid-template-columns: 1.2fr 1.8fr 0.6fr 0.8fr 0.7fr 0.8fr 0.6fr;
       gap: 10px;
       align-items: end;
       background: #f8fafc;
@@ -137,6 +151,33 @@ import Swal from 'sweetalert2';
     }
     .col label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 4px; display:block; }
     .form-actions { margin-top: 20px; }
+    .totales-resumen {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 16px;
+      border-radius: 12px;
+    }
+    .resumen-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: #1e293b;
+    }
+    .resumen-item span {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      font-weight: 700;
+    }
+    .resumen-item.total strong {
+      font-size: 1.1rem;
+      color: #0f172a;
+    }
     .btn-secondary {
       background: #94a3b8;
       color: white;
@@ -150,6 +191,7 @@ import Swal from 'sweetalert2';
     @media (max-width: 1200px) {
       .form-grid { grid-template-columns: 1fr 1fr; }
       .linea-row { grid-template-columns: 1fr 1fr; }
+      .totales-resumen { grid-template-columns: 1fr; }
     }
   `]
 })
@@ -161,7 +203,9 @@ export class PresupuestoFormComponent implements OnInit {
   localesOptions: { id: number; label: string }[] = [];
   clientesOptionsView: { id: number; label: string }[] = [];
   localesOptionsView: { id: number; label: string }[] = [];
-  totalPresupuesto = 0;
+  totalSinIva = 0;
+  totalConIva = 0;
+  totalIva = 0;
   guardando = false;
   idPresupuesto: number | null = null;
   private pendingClienteId: number | null = null;
@@ -239,6 +283,7 @@ export class PresupuestoFormComponent implements OnInit {
       orden: [null],
       productoTexto: [''],
       concepto: ['', Validators.required],
+      ivaPorcentaje: [21, [Validators.min(0)]],
       cantidad: [1, [Validators.required, Validators.min(0.01)]],
       precioUnitario: [0, [Validators.required, Validators.min(0)]],
       totalLinea: [0]
@@ -292,6 +337,7 @@ export class PresupuestoFormComponent implements OnInit {
             orden: l.orden ?? null,
             productoTexto: l.productoTexto || '',
             concepto: l.concepto,
+            ivaPorcentaje: l.ivaPorcentaje ?? 21,
             cantidad: l.cantidad,
             precioUnitario: l.precioUnitario,
             totalLinea: l.totalLinea ?? 0
@@ -312,20 +358,31 @@ export class PresupuestoFormComponent implements OnInit {
     const linea = this.lineas.at(index).value;
     const cantidad = Number(linea.cantidad || 0);
     const precio = Number(linea.precioUnitario || 0);
-    return cantidad * precio;
+    return this.round2(cantidad * precio);
   }
 
   private recalcularTotales(): void {
-    let total = 0;
+    let subtotal = 0;
+    let totalConIva = 0;
     this.lineas.controls.forEach((ctrl, idx) => {
       const val = ctrl.value;
       const cantidad = Number(val.cantidad || 0);
       const precio = Number(val.precioUnitario || 0);
-      const totalLinea = cantidad * precio;
-      total += totalLinea;
+      const iva = Number(val.ivaPorcentaje ?? 21);
+      const totalLinea = this.round2(cantidad * precio);
+      const lineIva = this.round2(totalLinea * (iva / 100));
+      const lineConIva = this.round2(totalLinea + lineIva);
+      subtotal += totalLinea;
+      totalConIva += lineConIva;
       ctrl.patchValue({ totalLinea }, { emitEvent: false });
     });
-    this.totalPresupuesto = total;
+    this.totalSinIva = this.round2(subtotal);
+    this.totalConIva = this.round2(totalConIva);
+    this.totalIva = this.round2(this.totalConIva - this.totalSinIva);
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   private refreshClienteOptions(term: string): void {
@@ -385,6 +442,7 @@ export class PresupuestoFormComponent implements OnInit {
         productoId: null,
         productoTexto: v.productoTexto,
         concepto: v.concepto,
+        ivaPorcentaje: Number(v.ivaPorcentaje ?? 21),
         cantidad: Number(v.cantidad),
         precioUnitario: Number(v.precioUnitario),
         totalLinea: Number(v.totalLinea)
@@ -396,7 +454,9 @@ export class PresupuestoFormComponent implements OnInit {
       codigoReferencia: raw.codigoReferencia,
       fecha: raw.fecha,
       estado: raw.estado,
-      total: this.totalPresupuesto,
+      total: this.totalConIva,
+      totalSinIva: this.totalSinIva,
+      totalConIva: this.totalConIva,
       lineas
     };
     const request$ = this.idPresupuesto
