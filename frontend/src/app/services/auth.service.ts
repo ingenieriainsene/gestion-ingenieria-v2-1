@@ -26,22 +26,57 @@ export class AuthService {
         // Llamamos al backend para cerrar sesión y registrar auditoría
         this.api.post(`${this.endpoint}/logout`, {}).subscribe({
             next: () => {
-                localStorage.removeItem(this.tokenKey);
+                this.clearToken();
                 this.router.navigate(['/login']);
             },
             error: () => {
                 // Incluso si falla, limpiamos el estado local
-                localStorage.removeItem(this.tokenKey);
+                this.clearToken();
                 this.router.navigate(['/login']);
             }
         });
     }
 
     getToken() {
-        return localStorage.getItem(this.tokenKey);
+        const token = localStorage.getItem(this.tokenKey);
+        if (!token) return null;
+        if (this.isTokenExpired(token)) {
+            this.clearToken();
+            return null;
+        }
+        return token;
     }
 
     isLoggedIn(): boolean {
         return !!this.getToken();
+    }
+
+    forceLogout(): void {
+        this.clearToken();
+        this.router.navigate(['/login']);
+    }
+
+    private clearToken(): void {
+        localStorage.removeItem(this.tokenKey);
+    }
+
+    private isTokenExpired(token: string): boolean {
+        const payload = this.decodeTokenPayload(token);
+        if (!payload || typeof payload.exp !== 'number') return false;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        return payload.exp <= nowSeconds;
+    }
+
+    private decodeTokenPayload(token: string): { exp?: number } | null {
+        try {
+            const parts = token.split('.');
+            if (parts.length !== 3) return null;
+            const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+            const json = atob(padded);
+            return JSON.parse(json);
+        } catch {
+            return null;
+        }
     }
 }

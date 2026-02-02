@@ -17,6 +17,9 @@ import { authGuard } from './core/auth.guard';
 import { UsuarioListComponent } from './features/usuarios/usuario-list.component';
 import { UsuarioFichaComponent } from './features/usuarios/usuario-ficha.component';
 import { AuditoriaComponent } from './features/auditoria/auditoria.component';
+import { PresupuestoListComponent } from './features/presupuestos/presupuesto-list.component';
+import { PresupuestoFormComponent } from './features/presupuestos/presupuesto-form.component';
+import { PresupuestoFichaViewComponent } from './features/presupuestos/presupuesto-ficha-view.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -53,6 +56,11 @@ export const routes: Routes = [
             { path: 'usuarios/:id', component: UsuarioFichaComponent },
 
             { path: 'auditoria', component: AuditoriaComponent },
+
+            { path: 'presupuestos', component: PresupuestoListComponent },
+            { path: 'presupuestos/nuevo', component: PresupuestoFormComponent },
+            { path: 'presupuestos/:id/editar', component: PresupuestoFormComponent },
+            { path: 'presupuestos/:id', component: PresupuestoFichaViewComponent },
         ]
     }
 ];
