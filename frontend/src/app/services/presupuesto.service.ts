@@ -4,15 +4,26 @@ import { catchError } from 'rxjs/operators';
 import { ApiService } from './api.service';
 
 export interface PresupuestoLineaDTO {
-  idLinea?: number;
+  idLinea?: string;
   orden?: number;
   productoId?: number | null;
   productoTexto?: string;
   concepto: string;
   ivaPorcentaje?: number;
-  cantidad: number;
-  precioUnitario: number;
+  costeUnitario?: number;
+  factorMargen?: number;
+  totalCoste?: number;
+  pvpUnitario?: number;
+  totalPvp?: number;
+  importeIva?: number;
+  totalFinal?: number;
+  tipoJerarquia?: 'CAPITULO' | 'PARTIDA';
+  codigoVisual?: string;
+  padreId?: string | null;
+  cantidad?: number;
+  precioUnitario?: number;
   totalLinea?: number;
+  hijos?: PresupuestoLineaDTO[];
 }
 
 export interface PresupuestoDTO {

@@ -22,7 +22,12 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class PdfService {
@@ -109,33 +114,31 @@ public class PdfService {
     }
 
     private void addLineasTable(Document document, Presupuesto p) throws DocumentException {
-        PdfPTable table = new PdfPTable(5);
+        PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{3.5f, 0.8f, 1.2f, 0.8f, 1.2f});
+        table.setWidths(new float[]{3.6f, 0.8f, 1.2f, 1.2f});
 
         addHeaderCell(table, "CONCEPTO");
         addHeaderCell(table, "CANT.");
-        addHeaderCell(table, "PRECIO UNIT.");
-        addHeaderCell(table, "IVA");
+        addHeaderCell(table, "PVP UNIT.");
         addHeaderCell(table, "TOTAL");
 
         List<PresupuestoLinea> lineas = p.getLineas();
-        if (lineas != null) {
-            for (PresupuestoLinea l : lineas) {
-                String concepto = l.getProductoTexto() != null && !l.getProductoTexto().isBlank()
-                        ? l.getProductoTexto()
-                        : (l.getConcepto() != null ? l.getConcepto() : "—");
-                BigDecimal cantidad = safe(l.getCantidad());
-                BigDecimal precio = safe(l.getPrecioUnitario());
-                BigDecimal base = calcularBaseLinea(l);
-                BigDecimal ivaPct = l.getIvaPorcentaje() != null ? l.getIvaPorcentaje() : BigDecimal.valueOf(21);
-                BigDecimal total = calcularTotalConIva(base, ivaPct);
-
-                addBodyCell(table, concepto);
-                addBodyCell(table, formatDecimal(cantidad));
-                addBodyCell(table, formatMoney(precio));
-                addBodyCell(table, formatDecimal(ivaPct) + "%");
-                addBodyCell(table, formatMoney(total));
+        List<PresupuestoLinea> roots = buildTree(lineas);
+        for (PresupuestoLinea l : roots) {
+            if (l.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                String capitulo = (l.getCodigoVisual() != null ? l.getCodigoVisual() + " " : "") +
+                        (l.getConcepto() != null ? l.getConcepto() : "—");
+                BigDecimal capTotal = sumarCapituloConIva(l);
+                addBodyCellBold(table, capitulo);
+                addBodyCell(table, "—");
+                addBodyCell(table, "—");
+                addBodyCellBold(table, formatMoney(capTotal));
+                for (PresupuestoLinea h : l.getHijos()) {
+                    addPartidaRow(table, h);
+                }
+            } else {
+                addPartidaRow(table, l);
             }
         }
 
@@ -151,6 +154,9 @@ public class PdfService {
         List<PresupuestoLinea> lineas = p.getLineas();
         if (lineas != null) {
             for (PresupuestoLinea l : lineas) {
+                if (l.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                    continue;
+                }
                 BigDecimal base = calcularBaseLinea(l);
                 BigDecimal ivaPct = l.getIvaPorcentaje() != null ? l.getIvaPorcentaje() : BigDecimal.valueOf(21);
                 BigDecimal iva = round2(base.multiply(ivaPct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
@@ -196,6 +202,78 @@ public class PdfService {
         table.addCell(cell);
     }
 
+    private void addBodyCellBold(PdfPTable table, String text) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, FONT_LABEL));
+        cell.setBackgroundColor(Color.WHITE);
+        cell.setBorderColor(COLOR_LIGHT);
+        cell.setPadding(8);
+        table.addCell(cell);
+    }
+
+    private void addPartidaRow(PdfPTable table, PresupuestoLinea l) {
+        String concepto = l.getProductoTexto() != null && !l.getProductoTexto().isBlank()
+                ? l.getProductoTexto()
+                : (l.getConcepto() != null ? l.getConcepto() : "—");
+        if (l.getCodigoVisual() != null) {
+            concepto = l.getCodigoVisual() + " " + concepto;
+        }
+        BigDecimal cantidad = safe(l.getCantidad());
+        BigDecimal precio = safe(l.getPvpUnitario() != null ? l.getPvpUnitario() : l.getPrecioUnitario());
+        BigDecimal base = calcularBaseLinea(l);
+
+        addBodyCell(table, "   " + concepto);
+        addBodyCell(table, formatDecimal(cantidad));
+        addBodyCell(table, formatMoney(precio));
+        addBodyCell(table, formatMoney(base));
+    }
+
+    private BigDecimal sumarCapituloConIva(PresupuestoLinea capitulo) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (PresupuestoLinea h : capitulo.getHijos()) {
+            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                total = total.add(sumarCapituloConIva(h));
+            } else {
+                BigDecimal base = calcularBaseLinea(h);
+                BigDecimal ivaPct = h.getIvaPorcentaje() != null ? h.getIvaPorcentaje() : BigDecimal.valueOf(21);
+                total = total.add(calcularTotalConIva(base, ivaPct));
+            }
+        }
+        return round2(total);
+    }
+
+    private List<PresupuestoLinea> buildTree(List<PresupuestoLinea> lineas) {
+        if (lineas == null) return List.of();
+        Map<UUID, PresupuestoLinea> byId = new HashMap<>();
+        for (PresupuestoLinea l : lineas) {
+            l.setHijos(new ArrayList<>());
+            if (l.getIdLinea() != null) {
+                byId.put(l.getIdLinea(), l);
+            }
+        }
+
+        List<PresupuestoLinea> roots = new ArrayList<>();
+        for (PresupuestoLinea l : lineas) {
+            PresupuestoLinea padre = l.getPadre();
+            if (padre != null && padre.getIdLinea() != null && byId.containsKey(padre.getIdLinea())) {
+                byId.get(padre.getIdLinea()).getHijos().add(l);
+            } else {
+                roots.add(l);
+            }
+        }
+
+        sortTree(roots);
+        return roots;
+    }
+
+    private void sortTree(List<PresupuestoLinea> nodes) {
+        nodes.sort(Comparator
+                .comparing(PresupuestoLinea::getCodigoVisual, Comparator.nullsLast(String::compareTo))
+                .thenComparing(PresupuestoLinea::getOrden, Comparator.nullsLast(Integer::compareTo)));
+        for (PresupuestoLinea n : nodes) {
+            sortTree(n.getHijos());
+        }
+    }
+
     private void addTotalsRow(PdfPTable table, String label, String value) {
         PdfPCell c1 = new PdfPCell(new Phrase(label, FONT_LABEL));
         c1.setBorder(Rectangle.NO_BORDER);
@@ -228,9 +306,10 @@ public class PdfService {
     }
 
     private BigDecimal calcularBaseLinea(PresupuestoLinea l) {
+        if (l.getTotalPvp() != null) return round2(l.getTotalPvp());
         if (l.getTotalLinea() != null) return round2(l.getTotalLinea());
         BigDecimal qty = safe(l.getCantidad());
-        BigDecimal pu = safe(l.getPrecioUnitario());
+        BigDecimal pu = safe(l.getPvpUnitario() != null ? l.getPvpUnitario() : l.getPrecioUnitario());
         return round2(qty.multiply(pu));
     }
 

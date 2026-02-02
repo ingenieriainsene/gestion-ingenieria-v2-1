@@ -46,6 +46,6 @@ public class Presupuesto {
 
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orden ASC")
-    @JsonManagedReference
+    @JsonManagedReference("presupuesto-lineas")
     private List<PresupuestoLinea> lineas = new ArrayList<>();
 }

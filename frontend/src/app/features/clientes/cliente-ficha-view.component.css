@@ -168,6 +168,28 @@
   vertical-align: middle;
 }
 
+.row-capitulo {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.row-partida .indent {
+  padding-left: 24px;
+}
+
+.toggle-btn {
+  border: none;
+  background: transparent;
+  margin-right: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  color: #334155;
+}
+
+.hidden {
+  display: none;
+}
+
 .ficha-table tbody tr:last-child td {
   border-bottom: none;
 }

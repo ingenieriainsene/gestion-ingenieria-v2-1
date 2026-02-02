@@ -3,5 +3,7 @@ package com.ingenieria.repository;
 import com.ingenieria.model.PresupuestoLinea;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface PresupuestoLineaRepository extends JpaRepository<PresupuestoLinea, Long> {
+import java.util.UUID;
+
+public interface PresupuestoLineaRepository extends JpaRepository<PresupuestoLinea, UUID> {
 }

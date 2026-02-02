@@ -63,33 +63,58 @@ import Swal from 'sweetalert2';
 
       <section class="ficha-section">
         <div class="section-header">
-          <h2>📋 Líneas de presupuesto</h2>
+          <h2>📋 Capítulos y partidas</h2>
         </div>
         <div class="table-wrap">
           <table class="ficha-table">
             <thead>
               <tr>
-                <th>ORDEN</th>
-                <th>PRODUCTO</th>
-                <th>TIPO DE LÍNEA</th>
-                <th>IVA %</th>
-                <th>CANTIDAD</th>
-                <th>PRECIO</th>
-                <th>TOTAL (CON IVA)</th>
+                <th>CÓDIGO</th>
+                <th>CONCEPTO</th>
+                <th style="text-align:right;">CANT.</th>
+                <th style="text-align:right;">P. COSTE</th>
+                <th style="text-align:right;">TOT. COSTE</th>
+                <th style="text-align:right;">MARGEN</th>
+                <th style="text-align:right;">TOT. PVP</th>
+                <th style="text-align:right;">% IVA</th>
+                <th style="text-align:right;">IMP. IVA</th>
+                <th style="text-align:right;">TOTAL</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let l of presupuesto.lineas">
-                <td>{{ l.orden }}</td>
-                <td>{{ l.productoTexto || '—' }}</td>
-                <td>{{ l.concepto || '—' }}</td>
-                <td>{{ l.ivaPorcentaje ?? 21 }}</td>
-                <td>{{ l.cantidad | number:'1.2-2' }}</td>
-                <td>{{ l.precioUnitario | number:'1.2-2' }} €</td>
-                <td>{{ getLineaTotalConIva(l) | number:'1.2-2' }} €</td>
-              </tr>
+              <ng-container *ngFor="let cap of presupuesto.lineas; let i = index">
+                <tr class="row-capitulo">
+                  <td>{{ cap.codigoVisual || '—' }}</td>
+                  <td>
+                    <button type="button" class="toggle-btn" (click)="toggleCapitulo(i)">
+                      {{ collapsed[i] ? '▶' : '▼' }}
+                    </button>
+                    {{ cap.concepto || '—' }}
+                  </td>
+                  <td style="text-align:right;">—</td>
+                  <td style="text-align:right;">—</td>
+                  <td style="text-align:right;">{{ getCapituloTotalCoste(cap) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;">—</td>
+                  <td style="text-align:right;">{{ getCapituloTotalPvp(cap) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;">—</td>
+                  <td style="text-align:right;">{{ getCapituloImporteIva(cap) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;">{{ getCapituloTotalFinal(cap) | number:'1.2-2' }} €</td>
+                </tr>
+                <tr *ngFor="let l of cap.hijos || []" class="row-partida" [class.hidden]="collapsed[i]">
+                  <td class="indent">{{ l.codigoVisual || '—' }}</td>
+                  <td>{{ l.concepto || '—' }}</td>
+                  <td style="text-align:right;">{{ l.cantidad | number:'1.2-2' }}</td>
+                  <td style="text-align:right;">{{ l.costeUnitario | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;">{{ getPartidaTotalCoste(l) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;">{{ l.factorMargen | number:'1.2-2' }}</td>
+                  <td style="text-align:right;">{{ getPartidaTotalPvp(l) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;">{{ l.ivaPorcentaje ?? 21 }}</td>
+                  <td style="text-align:right;">{{ getPartidaImporteIva(l) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;">{{ getPartidaTotalFinal(l) | number:'1.2-2' }} €</td>
+                </tr>
+              </ng-container>
               <tr *ngIf="presupuesto.lineas.length === 0">
-                <td colspan="7" class="empty-cell">No hay líneas registradas.</td>
+                <td colspan="10" class="empty-cell">No hay líneas registradas.</td>
               </tr>
             </tbody>
           </table>
@@ -112,6 +137,7 @@ export class PresupuestoFichaViewComponent implements OnInit {
   totalSinIva = 0;
   totalIva = 0;
   totalConIva = 0;
+  collapsed: boolean[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -137,6 +163,7 @@ export class PresupuestoFichaViewComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (p) => {
         this.presupuesto = { ...p, lineas: p.lineas || [] };
+        this.collapsed = (p.lineas || []).map(() => false);
         this.recalcularTotales();
         this.loading = false;
         this.loadClienteLocal(p.clienteId, p.viviendaId);
@@ -187,11 +214,69 @@ export class PresupuestoFichaViewComponent implements OnInit {
     });
   }
 
+  toggleCapitulo(index: number): void {
+    this.collapsed[index] = !this.collapsed[index];
+  }
+
   getLineaTotalConIva(linea: any): number {
-    const totalLinea = Number(linea?.totalLinea ?? 0);
+    const totalFinal = Number(linea?.totalFinal);
+    if (!Number.isNaN(totalFinal) && totalFinal > 0) return this.round2(totalFinal);
+    const totalPvp = this.getLineaBase(linea);
     const iva = Number(linea?.ivaPorcentaje ?? 21);
-    const conIva = totalLinea + totalLinea * (iva / 100);
-    return Math.round(conIva * 100) / 100;
+    const conIva = totalPvp + totalPvp * (iva / 100);
+    return this.round2(conIva);
+  }
+
+  getCapituloTotalConIva(capitulo: any): number {
+    const hijos = capitulo?.hijos || [];
+    if (!hijos.length) {
+      return this.round2(this.getLineaTotalConIva(capitulo));
+    }
+    let total = 0;
+    for (const l of hijos) {
+      total += this.getLineaTotalConIva(l);
+    }
+    return this.round2(total);
+  }
+
+  getCapituloTotalCoste(capitulo: any): number {
+    const hijos = capitulo?.hijos || [];
+    if (!hijos.length) return this.calcPartidaValues(capitulo).totalCoste;
+    return this.round2(hijos.reduce((acc: number, l: any) => acc + this.calcPartidaValues(l).totalCoste, 0));
+  }
+
+  getCapituloTotalPvp(capitulo: any): number {
+    const hijos = capitulo?.hijos || [];
+    if (!hijos.length) return this.calcPartidaValues(capitulo).totalPvp;
+    return this.round2(hijos.reduce((acc: number, l: any) => acc + this.calcPartidaValues(l).totalPvp, 0));
+  }
+
+  getCapituloImporteIva(capitulo: any): number {
+    const hijos = capitulo?.hijos || [];
+    if (!hijos.length) return this.calcPartidaValues(capitulo).importeIva;
+    return this.round2(hijos.reduce((acc: number, l: any) => acc + this.calcPartidaValues(l).importeIva, 0));
+  }
+
+  getCapituloTotalFinal(capitulo: any): number {
+    const hijos = capitulo?.hijos || [];
+    if (!hijos.length) return this.calcPartidaValues(capitulo).totalFinal;
+    return this.round2(hijos.reduce((acc: number, l: any) => acc + this.calcPartidaValues(l).totalFinal, 0));
+  }
+
+  getPartidaTotalCoste(linea: any): number {
+    return this.calcPartidaValues(linea).totalCoste;
+  }
+
+  getPartidaTotalPvp(linea: any): number {
+    return this.calcPartidaValues(linea).totalPvp;
+  }
+
+  getPartidaImporteIva(linea: any): number {
+    return this.calcPartidaValues(linea).importeIva;
+  }
+
+  getPartidaTotalFinal(linea: any): number {
+    return this.calcPartidaValues(linea).totalFinal;
   }
 
   descargarPdf(): void {
@@ -220,11 +305,19 @@ export class PresupuestoFichaViewComponent implements OnInit {
     }
     let base = 0;
     let conIva = 0;
-    for (const l of this.presupuesto.lineas || []) {
-      const totalLinea = Number(l.totalLinea ?? 0);
-      const iva = Number(l.ivaPorcentaje ?? 21);
-      base += totalLinea;
-      conIva += this.getLineaTotalConIva(l);
+    for (const cap of this.presupuesto.lineas || []) {
+      const hijos = cap.hijos || [];
+      if (!hijos.length) {
+        const totalLinea = this.getLineaBase(cap);
+        base += totalLinea;
+        conIva += this.getLineaTotalConIva(cap);
+        continue;
+      }
+      for (const l of hijos) {
+        const totalLinea = this.getLineaBase(l);
+        base += totalLinea;
+        conIva += this.getLineaTotalConIva(l);
+      }
     }
     this.totalSinIva = this.round2(base);
     this.totalConIva = this.round2(conIva);
@@ -233,5 +326,28 @@ export class PresupuestoFichaViewComponent implements OnInit {
 
   private round2(value: number): number {
     return Math.round(value * 100) / 100;
+  }
+
+  private getLineaBase(linea: any): number {
+    const totalPvp = Number(linea?.totalPvp);
+    if (!Number.isNaN(totalPvp) && totalPvp > 0) return this.round2(totalPvp);
+    const totalLinea = Number(linea?.totalLinea);
+    if (!Number.isNaN(totalLinea) && totalLinea > 0) return this.round2(totalLinea);
+    const cantidad = Number(linea?.cantidad ?? 0);
+    const pvpUnit = Number(linea?.pvpUnitario ?? linea?.precioUnitario ?? 0);
+    return this.round2(cantidad * pvpUnit);
+  }
+
+  private calcPartidaValues(linea: any): { totalCoste: number; totalPvp: number; importeIva: number; totalFinal: number } {
+    const cantidad = Number(linea?.cantidad ?? 0);
+    const coste = Number(linea?.costeUnitario ?? 0);
+    const factorRaw = Number(linea?.factorMargen);
+    const factor = !Number.isNaN(factorRaw) && factorRaw > 0 ? factorRaw : 1;
+    const totalCoste = this.round2(cantidad * coste);
+    const totalPvp = this.round2(totalCoste * factor);
+    const iva = Number(linea?.ivaPorcentaje ?? 21);
+    const importeIva = this.round2(totalPvp * (iva / 100));
+    const totalFinal = this.round2(totalPvp + importeIva);
+    return { totalCoste, totalPvp, importeIva, totalFinal };
   }
 }

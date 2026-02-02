@@ -10,13 +10,15 @@ import java.util.Optional;
 
 public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> {
     @Query("SELECT DISTINCT p FROM Presupuesto p " +
-           "LEFT JOIN FETCH p.lineas " +
+           "LEFT JOIN FETCH p.lineas l " +
+           "LEFT JOIN FETCH l.padre " +
            "LEFT JOIN FETCH p.cliente " +
            "LEFT JOIN FETCH p.vivienda")
     List<Presupuesto> findAllWithLineas();
 
     @Query("SELECT DISTINCT p FROM Presupuesto p " +
-           "LEFT JOIN FETCH p.lineas " +
+           "LEFT JOIN FETCH p.lineas l " +
+           "LEFT JOIN FETCH l.padre " +
            "LEFT JOIN FETCH p.cliente " +
            "LEFT JOIN FETCH p.vivienda " +
            "WHERE p.idPresupuesto = :id")

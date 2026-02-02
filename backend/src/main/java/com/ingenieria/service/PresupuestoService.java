@@ -20,9 +20,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -142,7 +146,7 @@ public class PresupuestoService {
         dto.setTotalSinIva(p.getTotalSinIva());
         dto.setTotalConIva(p.getTotalConIva());
         if (p.getLineas() != null) {
-            dto.setLineas(p.getLineas().stream().map(this::toLineaDto).collect(Collectors.toList()));
+            dto.setLineas(buildTree(p.getLineas()));
         }
         return dto;
     }
@@ -155,6 +159,16 @@ public class PresupuestoService {
         dto.setProductoTexto(l.getProductoTexto());
         dto.setConcepto(l.getConcepto());
         dto.setIvaPorcentaje(l.getIvaPorcentaje());
+        dto.setCosteUnitario(l.getCosteUnitario());
+        dto.setFactorMargen(l.getFactorMargen());
+        dto.setTotalCoste(l.getTotalCoste());
+        dto.setPvpUnitario(l.getPvpUnitario());
+        dto.setTotalPvp(l.getTotalPvp());
+        dto.setImporteIva(l.getImporteIva());
+        dto.setTotalFinal(l.getTotalFinal());
+        dto.setTipoJerarquia(l.getTipoJerarquia() != null ? l.getTipoJerarquia().name() : null);
+        dto.setCodigoVisual(l.getCodigoVisual());
+        dto.setPadreId(l.getPadre() != null ? l.getPadre().getIdLinea() : null);
         dto.setCantidad(l.getCantidad());
         dto.setPrecioUnitario(l.getPrecioUnitario());
         dto.setTotalLinea(l.getTotalLinea());
@@ -213,32 +227,98 @@ public class PresupuestoService {
             lineas.clear();
         }
 
-        BigDecimal totalSinIva = BigDecimal.ZERO;
-        BigDecimal totalConIva = BigDecimal.ZERO;
+        List<PresupuestoLineaDTO> flat = flatten(lineasDto);
+        Map<String, PresupuestoLinea> byCodigo = new HashMap<>();
+        Map<UUID, PresupuestoLinea> byId = new HashMap<>();
+
         int idx = 1;
-        for (PresupuestoLineaDTO l : lineasDto) {
+        for (PresupuestoLineaDTO l : flat) {
+            if (l.getConcepto() == null || l.getConcepto().isBlank()) {
+                throw new IllegalArgumentException("El concepto es obligatorio en todas las líneas");
+            }
+            PresupuestoLinea.TipoJerarquia tipo = parseTipo(l.getTipoJerarquia());
+            if (tipo == PresupuestoLinea.TipoJerarquia.PARTIDA) {
+                if (l.getCantidad() == null || (l.getCosteUnitario() == null && l.getPrecioUnitario() == null)) {
+                    throw new IllegalArgumentException("Cantidad y coste unitario son obligatorios en las partidas");
+                }
+            }
             PresupuestoLinea linea = new PresupuestoLinea();
+            if (l.getIdLinea() != null) {
+                linea.setIdLinea(l.getIdLinea());
+            }
             linea.setPresupuesto(p);
             linea.setOrden(l.getOrden() != null ? l.getOrden() : idx);
             linea.setProductoId(l.getProductoId());
             linea.setProductoTexto(l.getProductoTexto());
             linea.setConcepto(l.getConcepto());
             linea.setIvaPorcentaje(l.getIvaPorcentaje() != null ? l.getIvaPorcentaje() : BigDecimal.valueOf(21));
+            linea.setTipoJerarquia(tipo);
+            linea.setCodigoVisual(l.getCodigoVisual());
             linea.setCantidad(l.getCantidad());
+            linea.setCosteUnitario(l.getCosteUnitario() != null ? l.getCosteUnitario() : l.getPrecioUnitario());
+            linea.setFactorMargen(l.getFactorMargen() != null ? l.getFactorMargen() : BigDecimal.ONE);
             linea.setPrecioUnitario(l.getPrecioUnitario());
 
-            BigDecimal totalLinea = calcularTotalLinea(l.getCantidad(), l.getPrecioUnitario(), l.getTotalLinea());
-            linea.setTotalLinea(totalLinea);
-            totalSinIva = totalSinIva.add(totalLinea);
-
-            BigDecimal ivaPct = linea.getIvaPorcentaje() != null ? linea.getIvaPorcentaje() : BigDecimal.valueOf(21);
-            BigDecimal lineIva = round2(totalLinea.multiply(ivaPct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
-            BigDecimal lineConIva = round2(totalLinea.add(lineIva));
-            totalConIva = totalConIva.add(lineConIva);
-
             lineas.add(linea);
+            if (linea.getCodigoVisual() != null) {
+                byCodigo.put(linea.getCodigoVisual(), linea);
+            }
+            if (linea.getIdLinea() != null) {
+                byId.put(linea.getIdLinea(), linea);
+            }
             idx++;
         }
+
+        for (PresupuestoLineaDTO l : flat) {
+            PresupuestoLinea child = findByCodigoOrId(l, byCodigo, byId);
+            String parentCode = parentCode(l.getCodigoVisual());
+            PresupuestoLinea parent = null;
+            if (l.getPadreId() != null) {
+                parent = byId.get(l.getPadreId());
+            } else if (parentCode != null) {
+                parent = byCodigo.get(parentCode);
+            }
+            if (child != null && parent != null) {
+                child.setPadre(parent);
+                parent.getHijos().add(child);
+            }
+        }
+
+        BigDecimal totalSinIva = BigDecimal.ZERO;
+        BigDecimal totalConIva = BigDecimal.ZERO;
+
+        for (PresupuestoLinea linea : lineas) {
+            if (linea.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                BigDecimal capCoste = sumaHijosCoste(linea);
+                BigDecimal capPvp = sumaHijosPvp(linea);
+                BigDecimal capFinal = sumaHijosFinal(linea);
+                linea.setCantidad(null);
+                linea.setPrecioUnitario(null);
+                linea.setCosteUnitario(null);
+                linea.setFactorMargen(null);
+                linea.setPvpUnitario(null);
+                linea.setIvaPorcentaje(null);
+                linea.setTotalCoste(capCoste);
+                linea.setTotalPvp(capPvp);
+                linea.setTotalFinal(capFinal);
+                linea.setImporteIva(round2(capFinal.subtract(capPvp)));
+                linea.setTotalLinea(capPvp);
+                continue;
+            }
+
+            LineaCalculos calc = calcularLinea(linea.getCantidad(), linea.getCosteUnitario(), linea.getFactorMargen(), linea.getIvaPorcentaje());
+            linea.setTotalCoste(calc.totalCoste);
+            linea.setPvpUnitario(calc.pvpUnitario);
+            linea.setTotalPvp(calc.totalPvp);
+            linea.setImporteIva(calc.importeIva);
+            linea.setTotalFinal(calc.totalFinal);
+            linea.setTotalLinea(calc.totalPvp);
+            linea.setPrecioUnitario(calc.pvpUnitario);
+
+            totalSinIva = totalSinIva.add(calc.totalPvp);
+            totalConIva = totalConIva.add(calc.totalFinal);
+        }
+
         return new Totales(round2(totalSinIva), round2(totalConIva));
     }
 
@@ -256,11 +336,153 @@ public class PresupuestoService {
         }
     }
 
+    private PresupuestoLinea.TipoJerarquia parseTipo(String value) {
+        if (value == null) return PresupuestoLinea.TipoJerarquia.PARTIDA;
+        try {
+            return PresupuestoLinea.TipoJerarquia.valueOf(value);
+        } catch (Exception e) {
+            return PresupuestoLinea.TipoJerarquia.PARTIDA;
+        }
+    }
+
+    private List<PresupuestoLineaDTO> flatten(List<PresupuestoLineaDTO> lineas) {
+        List<PresupuestoLineaDTO> result = new ArrayList<>();
+        if (lineas == null) return result;
+        for (PresupuestoLineaDTO l : lineas) {
+            result.add(l);
+            if (l.getHijos() != null && !l.getHijos().isEmpty()) {
+                result.addAll(flatten(l.getHijos()));
+            }
+        }
+        return result;
+    }
+
+    private PresupuestoLinea findByCodigoOrId(PresupuestoLineaDTO dto, Map<String, PresupuestoLinea> byCodigo, Map<UUID, PresupuestoLinea> byId) {
+        if (dto.getIdLinea() != null) {
+            PresupuestoLinea found = byId.get(dto.getIdLinea());
+            if (found != null) return found;
+        }
+        if (dto.getCodigoVisual() != null) {
+            return byCodigo.get(dto.getCodigoVisual());
+        }
+        return null;
+    }
+
+    private String parentCode(String codigo) {
+        if (codigo == null) return null;
+        int idx = codigo.lastIndexOf('.');
+        if (idx <= 0) return null;
+        return codigo.substring(0, idx);
+    }
+
+    private BigDecimal sumaHijosCoste(PresupuestoLinea capitulo) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (PresupuestoLinea h : capitulo.getHijos()) {
+            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                total = total.add(sumaHijosCoste(h));
+            } else {
+                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(), h.getIvaPorcentaje());
+                total = total.add(calc.totalCoste);
+            }
+        }
+        return round2(total);
+    }
+
+    private BigDecimal sumaHijosPvp(PresupuestoLinea capitulo) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (PresupuestoLinea h : capitulo.getHijos()) {
+            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                total = total.add(sumaHijosPvp(h));
+            } else {
+                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(), h.getIvaPorcentaje());
+                total = total.add(calc.totalPvp);
+            }
+        }
+        return round2(total);
+    }
+
+    private BigDecimal sumaHijosFinal(PresupuestoLinea capitulo) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (PresupuestoLinea h : capitulo.getHijos()) {
+            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                total = total.add(sumaHijosFinal(h));
+            } else {
+                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(), h.getIvaPorcentaje());
+                total = total.add(calc.totalFinal);
+            }
+        }
+        return round2(total);
+    }
+
+    private List<PresupuestoLineaDTO> buildTree(List<PresupuestoLinea> lineas) {
+        Map<UUID, PresupuestoLineaDTO> map = new HashMap<>();
+        List<PresupuestoLineaDTO> roots = new ArrayList<>();
+
+        for (PresupuestoLinea l : lineas) {
+            PresupuestoLineaDTO dto = toLineaDto(l);
+            dto.setHijos(new ArrayList<>());
+            map.put(l.getIdLinea(), dto);
+        }
+
+        for (PresupuestoLinea l : lineas) {
+            PresupuestoLineaDTO dto = map.get(l.getIdLinea());
+            PresupuestoLinea padre = l.getPadre();
+            if (padre != null && padre.getIdLinea() != null && map.containsKey(padre.getIdLinea())) {
+                map.get(padre.getIdLinea()).getHijos().add(dto);
+            } else {
+                roots.add(dto);
+            }
+        }
+
+        sortTree(roots);
+        return roots;
+    }
+
+    private void sortTree(List<PresupuestoLineaDTO> nodes) {
+        if (nodes == null) return;
+        nodes.sort(Comparator.comparing(PresupuestoLineaDTO::getCodigoVisual, Comparator.nullsLast(String::compareTo)));
+        for (PresupuestoLineaDTO n : nodes) {
+            sortTree(n.getHijos());
+        }
+    }
+
+    private LineaCalculos calcularLinea(BigDecimal cantidad, BigDecimal costeUnitario, BigDecimal factorMargen, BigDecimal ivaPorcentaje) {
+        BigDecimal qty = cantidad != null ? cantidad : BigDecimal.ZERO;
+        BigDecimal coste = costeUnitario != null ? costeUnitario : BigDecimal.ZERO;
+        BigDecimal factor = factorMargen != null ? factorMargen : BigDecimal.ONE;
+        BigDecimal totalCoste = round2(qty.multiply(coste));
+        BigDecimal pvpUnitario = round2(coste.multiply(factor));
+        BigDecimal totalPvp = round2(totalCoste.multiply(factor));
+        BigDecimal ivaPct = ivaPorcentaje != null ? ivaPorcentaje : BigDecimal.valueOf(21);
+        BigDecimal importeIva = round2(totalPvp.multiply(ivaPct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+        BigDecimal totalFinal = round2(totalPvp.add(importeIva));
+        return new LineaCalculos(totalCoste, pvpUnitario, totalPvp, importeIva, totalFinal);
+    }
+
+    private static class LineaCalculos {
+        private final BigDecimal totalCoste;
+        private final BigDecimal pvpUnitario;
+        private final BigDecimal totalPvp;
+        private final BigDecimal importeIva;
+        private final BigDecimal totalFinal;
+
+        private LineaCalculos(BigDecimal totalCoste, BigDecimal pvpUnitario, BigDecimal totalPvp, BigDecimal importeIva, BigDecimal totalFinal) {
+            this.totalCoste = totalCoste;
+            this.pvpUnitario = pvpUnitario;
+            this.totalPvp = totalPvp;
+            this.importeIva = importeIva;
+            this.totalFinal = totalFinal;
+        }
+    }
+
     private String joinLineField(List<PresupuestoLinea> lineas, Function<PresupuestoLinea, String> mapper) {
         if (lineas == null || lineas.isEmpty()) return null;
         Set<String> values = new LinkedHashSet<>();
         for (PresupuestoLinea l : lineas) {
             if (l == null) continue;
+            if (l.getTipoJerarquia() != null && l.getTipoJerarquia() != PresupuestoLinea.TipoJerarquia.PARTIDA) {
+                continue;
+            }
             String value = mapper.apply(l);
             if (value == null) continue;
             String trimmed = value.trim();

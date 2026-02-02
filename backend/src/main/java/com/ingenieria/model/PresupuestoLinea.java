@@ -3,22 +3,37 @@ package com.ingenieria.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @Entity
 @Table(name = "PRESUPUESTO_LINEAS")
 public class PresupuestoLinea {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_linea")
-    private Long idLinea;
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id_linea", columnDefinition = "uuid")
+    private UUID idLinea;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "presupuesto_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("presupuesto-lineas")
     private Presupuesto presupuesto;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "padre_id")
+    @JsonBackReference("linea-hijos")
+    private PresupuestoLinea padre;
+
+    @OneToMany(mappedBy = "padre", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("linea-hijos")
+    private List<PresupuestoLinea> hijos = new ArrayList<>();
 
     private Integer orden;
 
@@ -34,12 +49,45 @@ public class PresupuestoLinea {
     @Column(name = "iva_porcentaje", precision = 5, scale = 2)
     private BigDecimal ivaPorcentaje;
 
-    @Column(precision = 12, scale = 2, nullable = false)
+    @Column(name = "coste_unitario", precision = 12, scale = 2)
+    private BigDecimal costeUnitario;
+
+    @Column(name = "factor_margen", precision = 6, scale = 2)
+    private BigDecimal factorMargen;
+
+    @Column(name = "total_coste", precision = 12, scale = 2)
+    private BigDecimal totalCoste;
+
+    @Column(name = "pvp_unitario", precision = 12, scale = 2)
+    private BigDecimal pvpUnitario;
+
+    @Column(name = "total_pvp", precision = 12, scale = 2)
+    private BigDecimal totalPvp;
+
+    @Column(name = "importe_iva", precision = 12, scale = 2)
+    private BigDecimal importeIva;
+
+    @Column(name = "total_final", precision = 12, scale = 2)
+    private BigDecimal totalFinal;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_jerarquia", length = 20)
+    private TipoJerarquia tipoJerarquia;
+
+    @Column(name = "codigo_visual", length = 20)
+    private String codigoVisual;
+
+    @Column(precision = 12, scale = 2)
     private BigDecimal cantidad;
 
-    @Column(name = "precio_unitario", precision = 12, scale = 2, nullable = false)
+    @Column(name = "precio_unitario", precision = 12, scale = 2)
     private BigDecimal precioUnitario;
 
-    @Column(name = "total_linea", precision = 12, scale = 2, nullable = false)
+    @Column(name = "total_linea", precision = 12, scale = 2)
     private BigDecimal totalLinea;
+
+    public enum TipoJerarquia {
+        CAPITULO,
+        PARTIDA
+    }
 }

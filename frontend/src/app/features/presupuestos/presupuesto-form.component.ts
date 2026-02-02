@@ -70,45 +70,72 @@ import Swal from 'sweetalert2';
         </div>
 
         <div class="lineas-header">
-          <h2>Líneas de presupuesto</h2>
-          <button type="button" class="btn-primary" (click)="addLinea()">+ Añadir línea</button>
+          <h2>Capítulos y partidas</h2>
+          <button type="button" class="btn-primary" (click)="addCapitulo()">+ Nuevo Capítulo</button>
         </div>
 
-        <div class="lineas-table" formArrayName="lineas">
-          <div class="linea-row" *ngFor="let linea of lineas.controls; let i = index" [formGroupName]="i">
-            <div class="col col-prod">
-              <label>Producto</label>
-              <input type="text" class="form-control" formControlName="productoTexto" placeholder="Producto libre" />
-            </div>
-            <div class="col col-concepto">
-              <label>Tipo de linea</label>
-              <input type="text" class="form-control" formControlName="concepto" />
-            </div>
-            <div class="col col-cantidad">
-              <label>Cant.</label>
-              <input type="number" class="form-control" formControlName="cantidad" min="0" step="0.01" />
-            </div>
-            <div class="col col-precio">
-              <label>Precio</label>
-              <input type="number" class="form-control" formControlName="precioUnitario" min="0" step="0.01" />
-            </div>
-            <div class="col col-iva">
-              <label>IVA %</label>
-              <input type="number" class="form-control" formControlName="ivaPorcentaje" min="0" step="0.01" />
-            </div>
-            <div class="col col-total">
-              <label>Total</label>
-              <input type="text" class="form-control" [value]="getLineaTotal(i) | number:'1.2-2'" disabled />
-            </div>
-            <div class="col col-actions">
-              <label>&nbsp;</label>
-              <button type="button" class="btn-secondary" (click)="removeLinea(i)">Eliminar</button>
-            </div>
-          </div>
-        </div>
+        <table class="tree-table" formArrayName="capitulos">
+          <thead>
+            <tr>
+              <th style="width:90px;">CÓDIGO</th>
+              <th>CONCEPTO</th>
+              <th style="width:80px; text-align:right;">CANT.</th>
+              <th style="width:110px; text-align:right;">P. COSTE</th>
+              <th style="width:120px; text-align:right;">TOT. COSTE</th>
+              <th style="width:90px; text-align:right;">MARGEN</th>
+              <th style="width:120px; text-align:right;">TOT. PVP</th>
+              <th style="width:80px; text-align:right;">% IVA</th>
+              <th style="width:120px; text-align:right;">IMP. IVA</th>
+              <th style="width:120px; text-align:right;">TOTAL</th>
+              <th style="width:140px; text-align:right;">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let cap of capitulos.controls; let i = index" [formGroupName]="i">
+              <tr class="row-capitulo" (click)="selectCapitulo(i)">
+                <td class="code-cell">{{ cap.get('codigoVisual')?.value }}</td>
+                <td>
+                  <button type="button" class="toggle-btn" (click)="toggleCapitulo(i); $event.stopPropagation()">
+                    {{ collapsed[i] ? '▶' : '▼' }}
+                  </button>
+                  <input type="text" class="form-control flat-input" formControlName="concepto" placeholder="Nombre del capítulo" />
+                </td>
+                <td></td>
+                <td></td>
+                <td class="num readonly-cell">{{ getCapituloTotalCoste(i) | number:'1.2-2' }} €</td>
+                <td></td>
+                <td class="num readonly-cell">{{ getCapituloTotalPvp(i) | number:'1.2-2' }} €</td>
+                <td></td>
+                <td class="num readonly-cell">{{ getCapituloImporteIva(i) | number:'1.2-2' }} €</td>
+                <td class="num readonly-cell">{{ getCapituloTotalFinal(i) | number:'1.2-2' }} €</td>
+                <td class="actions">
+                  <button type="button" class="btn-secondary" *ngIf="selectedCapituloIndex === i" (click)="addPartida(i); $event.stopPropagation()">+ Partida</button>
+                  <button type="button" class="btn-secondary" (click)="removeCapitulo(i); $event.stopPropagation()">Eliminar</button>
+                </td>
+              </tr>
+              <ng-container formArrayName="partidas" *ngIf="!collapsed[i]">
+                <tr *ngFor="let part of getPartidas(i).controls; let j = index" [formGroupName]="j" class="row-partida">
+                  <td class="code-cell indent">{{ part.get('codigoVisual')?.value }}</td>
+                  <td><input type="text" class="form-control flat-input" formControlName="concepto" placeholder="Concepto de partida" /></td>
+                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="cantidad" min="0" step="0.01" /></td>
+                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="costeUnitario" min="0" step="0.01" /></td>
+                  <td class="num readonly-cell">{{ getPartidaTotalCoste(i, j) | number:'1.2-2' }} €</td>
+                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="factorMargen" min="1" step="0.01" /></td>
+                  <td class="num readonly-cell">{{ getPartidaTotalPvp(i, j) | number:'1.2-2' }} €</td>
+                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="ivaPorcentaje" min="0" step="0.01" /></td>
+                  <td class="num readonly-cell">{{ getPartidaImporteIva(i, j) | number:'1.2-2' }} €</td>
+                  <td class="num readonly-cell">{{ getPartidaTotalFinal(i, j) | number:'1.2-2' }} €</td>
+                  <td class="actions">
+                    <button type="button" class="btn-secondary" (click)="removePartida(i, j)">Eliminar</button>
+                  </td>
+                </tr>
+              </ng-container>
+            </ng-container>
+          </tbody>
+        </table>
 
         <div class="form-actions">
-          <button type="submit" class="btn-primary" [disabled]="form.invalid || lineas.length === 0 || guardando">
+          <button type="submit" class="btn-primary" [disabled]="guardando">
             Guardar presupuesto
           </button>
         </div>
@@ -138,18 +165,40 @@ import Swal from 'sweetalert2';
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; }
     .lineas-header { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px; }
-    .lineas-table { display: flex; flex-direction: column; gap: 12px; }
-    .linea-row {
-      display: grid;
-      grid-template-columns: 1.2fr 1.8fr 0.6fr 0.8fr 0.7fr 0.8fr 0.6fr;
-      gap: 10px;
-      align-items: end;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+    .tree-table { width: 100%; border-collapse: collapse; }
+    .tree-table th {
+      background: #f1f5f9;
       padding: 12px;
-      border-radius: 12px;
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
     }
-    .col label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 4px; display:block; }
+    .tree-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .row-capitulo { background: #f8fafc; font-weight: 700; }
+    .row-partida { background: #fff; }
+    .toggle-btn {
+      border: none;
+      background: transparent;
+      margin-right: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #334155;
+    }
+    .flat-input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .num { text-align: right; }
+    .readonly-cell { background: #f1f5f9; }
+    .actions { text-align: right; }
+    .code-cell { white-space: nowrap; color: #0f172a; }
+    .indent { padding-left: 24px; }
     .form-actions { margin-top: 20px; }
     .totales-resumen {
       margin-top: 24px;
@@ -190,7 +239,7 @@ import Swal from 'sweetalert2';
     }
     @media (max-width: 1200px) {
       .form-grid { grid-template-columns: 1fr 1fr; }
-      .linea-row { grid-template-columns: 1fr 1fr; }
+      .tree-table th, .tree-table td { font-size: 0.8rem; }
       .totales-resumen { grid-template-columns: 1fr; }
     }
   `]
@@ -210,6 +259,8 @@ export class PresupuestoFormComponent implements OnInit {
   idPresupuesto: number | null = null;
   private pendingClienteId: number | null = null;
   private pendingViviendaId: number | null = null;
+  collapsed: boolean[] = [];
+  selectedCapituloIndex: number | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -227,7 +278,7 @@ export class PresupuestoFormComponent implements OnInit {
       codigoReferencia: [''],
       fecha: [new Date().toISOString().slice(0, 10), Validators.required],
       estado: ['Borrador'],
-      lineas: this.fb.array([])
+      capitulos: this.fb.array([])
     });
   }
 
@@ -239,7 +290,7 @@ export class PresupuestoFormComponent implements OnInit {
         this.cargarPresupuesto();
       } else {
         this.idPresupuesto = null;
-        if (this.lineas.length === 0) this.addLinea();
+        if (this.capitulos.length === 0) this.addCapitulo();
       }
     });
 
@@ -271,35 +322,196 @@ export class PresupuestoFormComponent implements OnInit {
         this.pendingViviendaId = null;
       }
     });
-    this.lineas.valueChanges.subscribe(() => this.recalcularTotales());
+    this.capitulos.valueChanges.subscribe(() => this.recalcularTotales());
   }
 
-  get lineas(): FormArray {
-    return this.form.get('lineas') as FormArray;
+  get capitulos(): FormArray {
+    return this.form.get('capitulos') as FormArray;
   }
 
-  private buildLineaGroup(value?: any): FormGroup {
+  private buildCapituloGroup(codigo: string): FormGroup {
     return this.fb.group({
-      orden: [null],
-      productoTexto: [''],
+      tipoJerarquia: ['CAPITULO'],
+      codigoVisual: [codigo],
       concepto: ['', Validators.required],
-      ivaPorcentaje: [21, [Validators.min(0)]],
+      totalCoste: [0],
+      totalPvp: [0],
+      importeIva: [0],
+      totalFinal: [0],
+      totalLinea: [0],
+      partidas: this.fb.array([])
+    });
+  }
+
+  private buildPartidaGroup(codigo: string): FormGroup {
+    return this.fb.group({
+      tipoJerarquia: ['PARTIDA'],
+      codigoVisual: [codigo],
+      concepto: ['', Validators.required],
       cantidad: [1, [Validators.required, Validators.min(0.01)]],
-      precioUnitario: [0, [Validators.required, Validators.min(0)]],
+      costeUnitario: [0, [Validators.required, Validators.min(0)]],
+      factorMargen: [1.00, [Validators.min(1)]],
+      ivaPorcentaje: [21, [Validators.min(0)]],
+      totalCoste: [0],
+      pvpUnitario: [0],
+      totalPvp: [0],
+      importeIva: [0],
+      totalFinal: [0],
       totalLinea: [0]
     });
   }
 
-  addLinea(): void {
-    const linea = this.buildLineaGroup();
-    linea.valueChanges.subscribe(() => this.recalcularTotales());
-    this.lineas.push(linea);
+  addCapitulo(): void {
+    const codigo = String(this.capitulos.length + 1).padStart(2, '0');
+    const cap = this.buildCapituloGroup(codigo);
+    this.capitulos.push(cap);
+    this.collapsed.push(false);
+    this.selectCapitulo(this.capitulos.length - 1);
     this.recalcularTotales();
   }
 
-  removeLinea(index: number): void {
-    this.lineas.removeAt(index);
+  addPartida(capIndex: number): void {
+    const cap = this.capitulos.at(capIndex);
+    const codigoCap = cap.get('codigoVisual')?.value || String(capIndex + 1);
+    const partidas = this.getPartidas(capIndex);
+    const next = partidas.length + 1;
+    const codigo = `${codigoCap}.${String(next).padStart(2, '0')}`;
+    const part = this.buildPartidaGroup(codigo);
+    part.valueChanges.subscribe(() => this.recalcularTotales());
+    partidas.push(part);
     this.recalcularTotales();
+  }
+
+  removeCapitulo(index: number): void {
+    this.capitulos.removeAt(index);
+    this.collapsed.splice(index, 1);
+    if (this.selectedCapituloIndex === index) {
+      this.selectedCapituloIndex = null;
+    }
+    this.recalcularTotales();
+  }
+
+  removePartida(capIndex: number, partIndex: number): void {
+    this.getPartidas(capIndex).removeAt(partIndex);
+    this.recalcularTotales();
+  }
+
+  selectCapitulo(index: number): void {
+    this.selectedCapituloIndex = index;
+  }
+
+  toggleCapitulo(index: number): void {
+    this.collapsed[index] = !this.collapsed[index];
+  }
+
+  getPartidas(index: number): FormArray {
+    return this.capitulos.at(index).get('partidas') as FormArray;
+  }
+
+  getPartidaTotalCoste(capIndex: number, partIndex: number): number {
+    const part = this.getPartidas(capIndex).at(partIndex).value;
+    return this.calcPartidaValues(part).totalCoste;
+  }
+
+  getPartidaTotalPvp(capIndex: number, partIndex: number): number {
+    const part = this.getPartidas(capIndex).at(partIndex).value;
+    return this.calcPartidaValues(part).totalPvp;
+  }
+
+  getPartidaImporteIva(capIndex: number, partIndex: number): number {
+    const part = this.getPartidas(capIndex).at(partIndex).value;
+    return this.calcPartidaValues(part).importeIva;
+  }
+
+  getPartidaTotalFinal(capIndex: number, partIndex: number): number {
+    const part = this.getPartidas(capIndex).at(partIndex).value;
+    return this.calcPartidaValues(part).totalFinal;
+  }
+
+  getCapituloTotalCoste(index: number): number {
+    return this.round2(this.sumCapitulo(index, 'totalCoste'));
+  }
+
+  getCapituloTotalPvp(index: number): number {
+    return this.round2(this.sumCapitulo(index, 'totalPvp'));
+  }
+
+  getCapituloImporteIva(index: number): number {
+    return this.round2(this.sumCapitulo(index, 'importeIva'));
+  }
+
+  getCapituloTotalFinal(index: number): number {
+    return this.round2(this.sumCapitulo(index, 'totalFinal'));
+  }
+
+  private sumCapitulo(index: number, field: 'totalCoste' | 'totalPvp' | 'importeIva' | 'totalFinal'): number {
+    const partidas = this.getPartidas(index).controls;
+    let total = 0;
+    partidas.forEach((ctrl) => {
+      const vals = this.calcPartidaValues(ctrl.value);
+      total += vals[field];
+    });
+    return total;
+  }
+
+  private calcPartidaValues(part: any): { totalCoste: number; pvpUnitario: number; totalPvp: number; importeIva: number; totalFinal: number } {
+    const cantidad = Number(part.cantidad || 0);
+    const coste = Number(part.costeUnitario || 0);
+    const factorRaw = Number(part.factorMargen);
+    const factor = !Number.isNaN(factorRaw) && factorRaw > 0 ? factorRaw : 1;
+    const totalCoste = this.round2(cantidad * coste);
+    const pvpUnitario = this.round2(coste * factor);
+    const totalPvp = this.round2(totalCoste * factor);
+    const iva = Number(part.ivaPorcentaje ?? 21);
+    const importeIva = this.round2(totalPvp * (iva / 100));
+    const totalFinal = this.round2(totalPvp + importeIva);
+    return { totalCoste, pvpUnitario, totalPvp, importeIva, totalFinal };
+  }
+
+  private recalcularTotales(): void {
+    let subtotal = 0;
+    let totalConIva = 0;
+
+    this.capitulos.controls.forEach((capCtrl, capIndex) => {
+      const partidas = this.getPartidas(capIndex).controls;
+      let capCoste = 0;
+      let capPvp = 0;
+      let capIva = 0;
+      let capFinal = 0;
+      partidas.forEach((ctrl) => {
+        const val = ctrl.value;
+        const calc = this.calcPartidaValues(val);
+        capCoste += calc.totalCoste;
+        capPvp += calc.totalPvp;
+        capIva += calc.importeIva;
+        capFinal += calc.totalFinal;
+        subtotal += calc.totalPvp;
+        totalConIva += calc.totalFinal;
+        ctrl.patchValue({
+          totalCoste: calc.totalCoste,
+          pvpUnitario: calc.pvpUnitario,
+          totalPvp: calc.totalPvp,
+          importeIva: calc.importeIva,
+          totalFinal: calc.totalFinal,
+          totalLinea: calc.totalPvp
+        }, { emitEvent: false });
+      });
+      capCtrl.patchValue({
+        totalCoste: this.round2(capCoste),
+        totalPvp: this.round2(capPvp),
+        importeIva: this.round2(capIva),
+        totalFinal: this.round2(capFinal),
+        totalLinea: this.round2(capPvp)
+      }, { emitEvent: false });
+    });
+
+    this.totalSinIva = this.round2(subtotal);
+    this.totalConIva = this.round2(totalConIva);
+    this.totalIva = this.round2(this.totalConIva - this.totalSinIva);
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   onClienteInput(): void {
@@ -330,59 +542,49 @@ export class PresupuestoFormComponent implements OnInit {
         this.setClienteLabelById(p.clienteId);
         this.setViviendaLabelById(p.viviendaId);
 
-        this.lineas.clear();
-        (p.lineas || []).forEach((l) => {
-          const linea = this.buildLineaGroup();
-          linea.patchValue({
-            orden: l.orden ?? null,
-            productoTexto: l.productoTexto || '',
-            concepto: l.concepto,
-            ivaPorcentaje: l.ivaPorcentaje ?? 21,
-            cantidad: l.cantidad,
-            precioUnitario: l.precioUnitario,
-            totalLinea: l.totalLinea ?? 0
+        this.capitulos.clear();
+        this.collapsed = [];
+        (p.lineas || []).forEach((cap) => {
+          const codigo = cap.codigoVisual || String(this.capitulos.length + 1).padStart(2, '0');
+          const capGroup = this.buildCapituloGroup(codigo);
+          capGroup.patchValue({
+            concepto: cap.concepto || '',
+            totalCoste: cap.totalCoste ?? 0,
+            totalPvp: cap.totalPvp ?? 0,
+            importeIva: cap.importeIva ?? 0,
+            totalFinal: cap.totalFinal ?? 0,
+            totalLinea: cap.totalLinea ?? 0
           }, { emitEvent: false });
-          linea.valueChanges.subscribe(() => this.recalcularTotales());
-          this.lineas.push(linea);
+          const partidasArr = capGroup.get('partidas') as FormArray;
+          (cap.hijos || []).forEach((part) => {
+            const partCode = part.codigoVisual || `${codigo}.${String(partidasArr.length + 1).padStart(2, '0')}`;
+            const partGroup = this.buildPartidaGroup(partCode);
+            partGroup.patchValue({
+              concepto: part.concepto,
+              cantidad: part.cantidad,
+              costeUnitario: part.costeUnitario ?? part.precioUnitario ?? 0,
+              factorMargen: part.factorMargen ?? 1,
+              ivaPorcentaje: part.ivaPorcentaje ?? 21,
+              totalCoste: part.totalCoste ?? 0,
+              pvpUnitario: part.pvpUnitario ?? part.precioUnitario ?? 0,
+              totalPvp: part.totalPvp ?? part.totalLinea ?? 0,
+              importeIva: part.importeIva ?? 0,
+              totalFinal: part.totalFinal ?? 0,
+              totalLinea: part.totalLinea ?? 0
+            }, { emitEvent: false });
+            partGroup.valueChanges.subscribe(() => this.recalcularTotales());
+            partidasArr.push(partGroup);
+          });
+          this.capitulos.push(capGroup);
+          this.collapsed.push(false);
         });
-        if (this.lineas.length === 0) this.addLinea();
+        if (this.capitulos.length === 0) this.addCapitulo();
         this.recalcularTotales();
       },
       error: () => {
         this.router.navigate(['/presupuestos']);
       }
     });
-  }
-
-  getLineaTotal(index: number): number {
-    const linea = this.lineas.at(index).value;
-    const cantidad = Number(linea.cantidad || 0);
-    const precio = Number(linea.precioUnitario || 0);
-    return this.round2(cantidad * precio);
-  }
-
-  private recalcularTotales(): void {
-    let subtotal = 0;
-    let totalConIva = 0;
-    this.lineas.controls.forEach((ctrl, idx) => {
-      const val = ctrl.value;
-      const cantidad = Number(val.cantidad || 0);
-      const precio = Number(val.precioUnitario || 0);
-      const iva = Number(val.ivaPorcentaje ?? 21);
-      const totalLinea = this.round2(cantidad * precio);
-      const lineIva = this.round2(totalLinea * (iva / 100));
-      const lineConIva = this.round2(totalLinea + lineIva);
-      subtotal += totalLinea;
-      totalConIva += lineConIva;
-      ctrl.patchValue({ totalLinea }, { emitEvent: false });
-    });
-    this.totalSinIva = this.round2(subtotal);
-    this.totalConIva = this.round2(totalConIva);
-    this.totalIva = this.round2(this.totalConIva - this.totalSinIva);
-  }
-
-  private round2(value: number): number {
-    return Math.round(value * 100) / 100;
   }
 
   private refreshClienteOptions(term: string): void {
@@ -432,21 +634,52 @@ export class PresupuestoFormComponent implements OnInit {
   }
 
   guardar(): void {
-    if (this.form.invalid || this.guardando || this.lineas.length === 0) return;
+    if (this.guardando) return;
+    if (this.form.invalid || this.capitulos.length === 0) {
+      const msg = !this.form.get('clienteId')?.value || !this.form.get('viviendaId')?.value
+        ? 'Debes seleccionar un cliente y una vivienda válidos del listado.'
+        : 'Completa cliente, vivienda y conceptos de capítulo/partida.';
+      Swal.fire('Revisa el formulario', msg, 'warning');
+      return;
+    }
+    if (!this.hasPartidas()) {
+      Swal.fire('Faltan partidas', 'Añade al menos una partida a un capítulo.', 'warning');
+      return;
+    }
     this.guardando = true;
     const raw = this.form.getRawValue();
-    const lineas: PresupuestoLineaDTO[] = this.lineas.controls.map((ctrl, i) => {
-      const v = ctrl.value;
+    const lineas: PresupuestoLineaDTO[] = this.capitulos.controls.map((capCtrl, i) => {
+      const capVal = capCtrl.value;
+      const partidas = (capCtrl.get('partidas') as FormArray).controls.map((pCtrl, j) => {
+        const v = pCtrl.value;
+        return {
+          tipoJerarquia: 'PARTIDA',
+          codigoVisual: v.codigoVisual,
+          concepto: v.concepto,
+          cantidad: Number(v.cantidad),
+          costeUnitario: Number(v.costeUnitario),
+          factorMargen: Number(v.factorMargen ?? 1),
+          ivaPorcentaje: Number(v.ivaPorcentaje ?? 21),
+          totalCoste: Number(v.totalCoste),
+          pvpUnitario: Number(v.pvpUnitario),
+          totalPvp: Number(v.totalPvp),
+          importeIva: Number(v.importeIva),
+          totalFinal: Number(v.totalFinal),
+          precioUnitario: Number(v.pvpUnitario),
+          totalLinea: Number(v.totalPvp)
+        } as PresupuestoLineaDTO;
+      });
       return {
-        orden: i + 1,
-        productoId: null,
-        productoTexto: v.productoTexto,
-        concepto: v.concepto,
-        ivaPorcentaje: Number(v.ivaPorcentaje ?? 21),
-        cantidad: Number(v.cantidad),
-        precioUnitario: Number(v.precioUnitario),
-        totalLinea: Number(v.totalLinea)
-      };
+        tipoJerarquia: 'CAPITULO',
+        codigoVisual: capVal.codigoVisual,
+        concepto: capVal.concepto,
+        totalCoste: Number(capVal.totalCoste),
+        totalPvp: Number(capVal.totalPvp),
+        importeIva: Number(capVal.importeIva),
+        totalFinal: Number(capVal.totalFinal),
+        totalLinea: Number(capVal.totalLinea),
+        hijos: partidas
+      } as PresupuestoLineaDTO;
     });
     const payload = {
       clienteId: raw.clienteId,
@@ -472,9 +705,15 @@ export class PresupuestoFormComponent implements OnInit {
       },
       error: (e) => {
         this.guardando = false;
-        const msg = e?.error?.message ?? e?.error?.error ?? 'No se pudo guardar el presupuesto.';
+        const msg = typeof e?.error === 'string'
+          ? e.error
+          : (e?.error?.message ?? e?.error?.error ?? 'No se pudo guardar el presupuesto.');
         Swal.fire('Error', msg, 'error');
       }
     });
+  }
+
+  private hasPartidas(): boolean {
+    return this.capitulos.controls.some((capCtrl) => (capCtrl.get('partidas') as FormArray).length > 0);
   }
 }
