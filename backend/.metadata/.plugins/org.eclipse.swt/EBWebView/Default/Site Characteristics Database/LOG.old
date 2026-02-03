@@ -1,3 +1,5 @@
-2026/01/26-12:50:27.313 5348 Reusing MANIFEST C:\xampp\htdocs\BBDDAntigravity\proyecto_ingenieria\backend\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Site Characteristics Database/MANIFEST-000001
-2026/01/26-12:50:27.315 5348 Recovering log #3
-2026/01/26-12:50:27.315 5348 Reusing old log C:\xampp\htdocs\BBDDAntigravity\proyecto_ingenieria\backend\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Site Characteristics Database/000003.log 
+2026/02/03-11:22:33.037 342c Log #3: 5 ops saved to Table #4 OK
+2026/02/03-11:22:33.039 342c Archiving C:\Users\Usuario\Desktop\gestion-ingenieria-v2\backend\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Site Characteristics Database/000003.log: OK
+2026/02/03-11:22:33.039 342c Table #4: 5 entries OK
+2026/02/03-11:22:33.040 342c Archiving C:\Users\Usuario\Desktop\gestion-ingenieria-v2\backend\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Site Characteristics Database/MANIFEST-000001: OK
+2026/02/03-11:22:33.062 342c **** Repaired leveldb C:\Users\Usuario\Desktop\gestion-ingenieria-v2\backend\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Site Characteristics Database; recovered 1 files; 234 bytes. Some data may have been lost. ****

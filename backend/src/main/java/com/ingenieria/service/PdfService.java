@@ -27,7 +27,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class PdfService {
@@ -243,7 +242,7 @@ public class PdfService {
 
     private List<PresupuestoLinea> buildTree(List<PresupuestoLinea> lineas) {
         if (lineas == null) return List.of();
-        Map<UUID, PresupuestoLinea> byId = new HashMap<>();
+        Map<Long, PresupuestoLinea> byId = new HashMap<>();
         for (PresupuestoLinea l : lineas) {
             l.setHijos(new ArrayList<>());
             if (l.getIdLinea() != null) {

@@ -36,5 +36,61 @@ public class AuditoriaSesion {
 
     @Column(name = "estado")
     private String estado;
+
+    public Long getIdSesion() {
+        return idSesion;
+    }
+
+    public void setIdSesion(Long idSesion) {
+        this.idSesion = idSesion;
+    }
+
+    public Long getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
+    }
+
+    public LocalDateTime getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(LocalDateTime fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDateTime getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(LocalDateTime fechaFin) {
+        this.fechaFin = fechaFin;
+    }
+
+    public String getIpAcceso() {
+        return ipAcceso;
+    }
+
+    public void setIpAcceso(String ipAcceso) {
+        this.ipAcceso = ipAcceso;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
 }
 

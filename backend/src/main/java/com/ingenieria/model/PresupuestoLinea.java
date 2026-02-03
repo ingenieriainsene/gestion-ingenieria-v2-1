@@ -4,22 +4,18 @@ import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import org.hibernate.annotations.UuidGenerator;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Entity
 @Table(name = "PRESUPUESTO_LINEAS")
 public class PresupuestoLinea {
     @Id
-    @GeneratedValue
-    @UuidGenerator
-    @Column(name = "id_linea", columnDefinition = "uuid")
-    private UUID idLinea;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_linea")
+    private Long idLinea;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "presupuesto_id", nullable = false)

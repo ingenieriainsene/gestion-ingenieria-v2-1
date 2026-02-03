@@ -26,7 +26,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -229,7 +228,7 @@ public class PresupuestoService {
 
         List<PresupuestoLineaDTO> flat = flatten(lineasDto);
         Map<String, PresupuestoLinea> byCodigo = new HashMap<>();
-        Map<UUID, PresupuestoLinea> byId = new HashMap<>();
+        Map<Long, PresupuestoLinea> byId = new HashMap<>();
 
         int idx = 1;
         for (PresupuestoLineaDTO l : flat) {
@@ -357,7 +356,7 @@ public class PresupuestoService {
         return result;
     }
 
-    private PresupuestoLinea findByCodigoOrId(PresupuestoLineaDTO dto, Map<String, PresupuestoLinea> byCodigo, Map<UUID, PresupuestoLinea> byId) {
+    private PresupuestoLinea findByCodigoOrId(PresupuestoLineaDTO dto, Map<String, PresupuestoLinea> byCodigo, Map<Long, PresupuestoLinea> byId) {
         if (dto.getIdLinea() != null) {
             PresupuestoLinea found = byId.get(dto.getIdLinea());
             if (found != null) return found;
@@ -415,7 +414,7 @@ public class PresupuestoService {
     }
 
     private List<PresupuestoLineaDTO> buildTree(List<PresupuestoLinea> lineas) {
-        Map<UUID, PresupuestoLineaDTO> map = new HashMap<>();
+        Map<Long, PresupuestoLineaDTO> map = new HashMap<>();
         List<PresupuestoLineaDTO> roots = new ArrayList<>();
 
         for (PresupuestoLinea l : lineas) {

@@ -4,11 +4,10 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 public class PresupuestoLineaDTO {
-    private UUID idLinea;
+    private Long idLinea;
     private Integer orden;
     private Long productoId;
     private String productoTexto;
@@ -23,7 +22,7 @@ public class PresupuestoLineaDTO {
     private BigDecimal totalFinal;
     private String tipoJerarquia;
     private String codigoVisual;
-    private UUID padreId;
+    private Long padreId;
     private BigDecimal cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal totalLinea;
