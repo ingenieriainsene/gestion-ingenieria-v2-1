@@ -20,6 +20,8 @@ import { AuditoriaComponent } from './features/auditoria/auditoria.component';
 import { PresupuestoListComponent } from './features/presupuestos/presupuesto-list.component';
 import { PresupuestoFormComponent } from './features/presupuestos/presupuesto-form.component';
 import { PresupuestoFichaViewComponent } from './features/presupuestos/presupuesto-ficha-view.component';
+import { ProductoListComponent } from './features/productos/producto-list.component';
+import { ProductoFormComponent } from './features/productos/producto-form.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -31,6 +33,10 @@ export const routes: Routes = [
             { path: 'proveedores', component: ProveedorListComponent },
             { path: 'proveedores/nuevo', component: ProveedorFichaComponent },
             { path: 'proveedores/:id', component: ProveedorFichaComponent },
+
+            { path: 'productos', component: ProductoListComponent },
+            { path: 'productos/nuevo', component: ProductoFormComponent },
+            { path: 'productos/:id', component: ProductoFormComponent },
 
             { path: 'clientes', component: ClienteListComponent },
             { path: 'clientes/nuevo', component: ClienteFichaComponent },

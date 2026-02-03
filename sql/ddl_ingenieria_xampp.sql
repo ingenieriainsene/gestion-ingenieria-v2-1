@@ -19,6 +19,7 @@ DROP TABLE IF EXISTS seguimiento_tramites;
 DROP TABLE IF EXISTS proveedor_contactos;
 DROP TABLE IF EXISTS proveedor_oficios;
 DROP TABLE IF EXISTS proveedores;
+DROP TABLE IF EXISTS productos;
 DROP TABLE IF EXISTS tramites_contrato;
 DROP TABLE IF EXISTS contratos;
 DROP TABLE IF EXISTS locales;
@@ -123,6 +124,14 @@ CREATE TABLE proveedores (
     direccion_fiscal VARCHAR(255),
     fecha_alta DATETIME DEFAULT CURRENT_TIMESTAMP,
     creado_por VARCHAR(100) DEFAULT 'Sistema'
+) ENGINE=InnoDB;
+
+CREATE TABLE productos (
+    id_producto BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    cod_ref_producto VARCHAR(50) NOT NULL UNIQUE,
+    descripcion VARCHAR(255) NOT NULL,
+    coste DECIMAL(12, 2) NOT NULL,
+    categoria VARCHAR(100)
 ) ENGINE=InnoDB;
 
 CREATE TABLE proveedor_oficios (
@@ -276,12 +285,12 @@ JOIN locales l ON c.id_local = l.id_local;
 -- ======================================================
 
 INSERT INTO usuarios (nombre_usuario, password_hash, rol, email) VALUES
-('jefe_admin', 'admin123', 'ADMIN', 'jefeadmin@insene.com'),
-('carlos_tec', 'pass123', 'TÉCNICO', 'carlos.tec@insene.com'),
-('marta_tec', 'pass123', 'TÉCNICO', 'marta.tec@insene.com'),
-('raul_tec', 'pass123', 'TÉCNICO', 'raul.tec@insene.com'),
-('elena_tec', 'pass123', 'TÉCNICO', 'elena.tec@insene.com'),
-('pablo_tec', 'pass123', 'TÉCNICO', 'pablo.tec@insene.com');
+('jefe_admin', '$2a$10$fx8sccd3svi33CcKUrH.BOfPEiC8Y.qWD1rYKkobZ2rporK45MmGi', 'ADMIN', 'jefeadmin@insene.com'),
+('carlos_tec', '$2a$10$ub6/aibpkSyqhORYDQceEehLI.pjBODVdPEkZED4bleFdMCujcK1a', 'TÉCNICO', 'carlos.tec@insene.com'),
+('marta_tec', '$2a$10$ub6/aibpkSyqhORYDQceEehLI.pjBODVdPEkZED4bleFdMCujcK1a', 'TÉCNICO', 'marta.tec@insene.com'),
+('raul_tec', '$2a$10$ub6/aibpkSyqhORYDQceEehLI.pjBODVdPEkZED4bleFdMCujcK1a', 'TÉCNICO', 'raul.tec@insene.com'),
+('elena_tec', '$2a$10$ub6/aibpkSyqhORYDQceEehLI.pjBODVdPEkZED4bleFdMCujcK1a', 'TÉCNICO', 'elena.tec@insene.com'),
+('pablo_tec', '$2a$10$ub6/aibpkSyqhORYDQceEehLI.pjBODVdPEkZED4bleFdMCujcK1a', 'TÉCNICO', 'pablo.tec@insene.com');
 
 INSERT INTO clientes (nombre, apellido1, apellido2, dni, direccion_fiscal_completa, codigo_postal, cuenta_bancaria, creado_por) VALUES
 ('Jose', 'Brenes', 'Oliva', '75892994D', 'Calle Mina 4, Arahal', '41600', 'ES1234567890123456789012', 'jefe_admin'),
@@ -333,6 +342,27 @@ INSERT INTO proveedores (nombre_comercial, razon_social, es_autonomo, cif, direc
 ('Silence Acustica', 'Ingenieria Silence SL', 0, 'B99887766', 'Parque Tecnologico Cartuja, Sevilla', 'jefe_admin'),
 ('Excavaciones Tierra', 'Excavaciones Tierra SL', 0, 'B44332211', 'Carretera Carmona Km 5', 'jefe_admin'),
 ('Seguridad 24h', 'Alarmas y Sistemas SL', 0, 'B66778899', 'Avda. Republica Argentina 20, Sevilla', 'jefe_admin');
+
+INSERT INTO productos (cod_ref_producto, descripcion, coste, categoria) VALUES
+('PNL-JKM550', 'Panel Solar Jinko Tiger Neo 550W Monocristalino', 145.50, 'Paneles Solares'),
+('PNL-CS600', 'Panel Canadian Solar 600W HiKu6', 162.00, 'Paneles Solares'),
+('PNL-LONG450', 'Panel Longi Solar 450W Black Frame', 110.00, 'Paneles Solares'),
+('INV-HUA-5K', 'Inversor Híbrido Huawei SUN2000-5KTL-L1', 850.00, 'Inversores'),
+('INV-FRO-GEN24', 'Inversor Fronius Primo GEN24 6.0 Plus', 1250.00, 'Inversores'),
+('INV-SMA-ST10', 'Inversor de Red SMA Sunny Tripower 10.0', 1890.00, 'Inversores'),
+('BAT-LUNA-5', 'Módulo Batería Huawei LUNA2000 5kWh', 2100.00, 'Baterías y Almacenamiento'),
+('BAT-BYD-HVS', 'Batería BYD Battery-Box Premium HVS 5.1', 2450.00, 'Baterías y Almacenamiento'),
+('EST-ALU-01', 'Perfil Aluminio 40x40 (Barra 3m) para Coplanar', 25.50, 'Estructuras y Fijaciones'),
+('EST-GRAPA-END', 'Grapa Final Ajustable 30-40mm Negro', 1.20, 'Estructuras y Fijaciones'),
+('EST-GRAPA-MID', 'Grapa Intermedia 30-40mm Negro', 1.35, 'Estructuras y Fijaciones'),
+('CAB-SOL-6MM', 'Cable Solar H1Z2Z2-K 6mm² Rojo (Rollo 100m)', 115.00, 'Material Eléctrico'),
+('CAB-SOL-6MM-B', 'Cable Solar H1Z2Z2-K 6mm² Negro (Rollo 100m)', 115.00, 'Material Eléctrico'),
+('CON-MC4', 'Pareja Conectores MC4 Stäubli Original', 2.50, 'Material Eléctrico'),
+('PROT-DC-2', 'Cuadro Protección DC 2 Strings 1000V', 85.00, 'Material Eléctrico')
+ON DUPLICATE KEY UPDATE
+  descripcion = VALUES(descripcion),
+  coste = VALUES(coste),
+  categoria = VALUES(categoria);
 
 INSERT INTO proveedor_oficios (id_proveedor, oficio) VALUES
 (1, 'Electricidad'), (1, 'Baja Tension'),

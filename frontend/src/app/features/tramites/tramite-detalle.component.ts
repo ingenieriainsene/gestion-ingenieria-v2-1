@@ -13,6 +13,7 @@ import { UsuarioService as UsuarioApi, Usuario } from '../../services/usuario.se
 import { ProveedorService, ProveedorDTO } from '../../services/proveedor.service';
 import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
+import { environment } from '../../../environments/environments';
 
 interface ArchivoTramite {
   idArchivoT?: number;
@@ -43,7 +44,7 @@ export class TramiteDetalleComponent implements OnInit {
   formHito: FormGroup;
   filesToUpload: File[] = [];
   nombreVisibleUpload = '';
-  private archivosBaseUrl = 'http://localhost:8081/api/archivos';
+  private archivosBaseUrl = `${environment.apiUrl}/archivos`;
 
   constructor(
     private tramiteService: TramiteService,
@@ -139,7 +140,7 @@ export class TramiteDetalleComponent implements OnInit {
         } else if (status >= 400 && status < 500) {
           userMsg = typeof msg === 'string' ? msg : 'Solicitud incorrecta. Ver consola para detalles.';
         } else {
-          userMsg = 'No se pudo cargar el detalle del trámite. Comprueba la conexión y que el backend esté en marcha (puerto 8081).';
+          userMsg = 'No se pudo cargar el detalle del trámite. Comprueba la conexión y que el backend esté en marcha.';
         }
         Swal.fire('Error', userMsg, 'error');
       },
@@ -305,7 +306,7 @@ export class TramiteDetalleComponent implements OnInit {
       Swal.fire('Aviso', 'Selecciona al menos un archivo.', 'warning');
       return;
     }
-    const base = 'http://localhost:8081/api/archivos';
+    const base = `${environment.apiUrl}/archivos`;
     const reqs = this.filesToUpload.map((f) => {
       const fd = new FormData();
       fd.append('file', f);

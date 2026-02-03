@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TramiteService, SeguimientoService, Tramite, Seguimiento } from '../../services/domain.services';
 import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
+import { environment } from '../../../environments/environments';
 
 interface ArchivoTramite {
   idArchivoT?: number;
@@ -236,7 +237,7 @@ export class GestionIntervencionComponent implements OnInit {
   filesToUpload: File[] = [];
   nombreVisibleUpload = '';
 
-  private archivosBaseUrl = 'http://localhost:8081/api/archivos';
+  private archivosBaseUrl = `${environment.apiUrl}/archivos`;
 
   constructor(
     private tramiteService: TramiteService,

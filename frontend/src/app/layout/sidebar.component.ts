@@ -36,6 +36,14 @@ import { AuthService } from '../services/auth.service';
 
         <a
           class="side-item"
+          routerLink="/productos"
+          routerLinkActive="active"
+        >
+          <span>Almacén</span>
+        </a>
+
+        <a
+          class="side-item"
           routerLink="/contratos"
           routerLinkActive="active"
         >

@@ -33,9 +33,16 @@ public class AuditoriaSistema {
     @Column(name = "valor_nuevo", columnDefinition = "TEXT")
     private String valorNuevo;
 
-    @Column(name = "fecha_cambio", insertable = false, updatable = false)
+    @Column(name = "fecha_cambio")
     private LocalDateTime fechaCambio;
 
     @Column(name = "usuario_bd")
     private String usuarioBd;
+
+    @PrePersist
+    protected void onCreate() {
+        if (fechaCambio == null) {
+            fechaCambio = LocalDateTime.now();
+        }
+    }
 }

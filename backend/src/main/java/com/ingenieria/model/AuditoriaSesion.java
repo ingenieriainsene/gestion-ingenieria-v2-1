@@ -25,7 +25,7 @@ public class AuditoriaSesion {
     @Column(name = "nombre_usuario", nullable = false)
     private String nombreUsuario;
 
-    @Column(name = "fecha_inicio", insertable = false, updatable = false)
+    @Column(name = "fecha_inicio")
     private LocalDateTime fechaInicio;
 
     @Column(name = "fecha_fin")
@@ -36,6 +36,13 @@ public class AuditoriaSesion {
 
     @Column(name = "estado")
     private String estado;
+
+    @PrePersist
+    protected void onCreate() {
+        if (fechaInicio == null) {
+            fechaInicio = LocalDateTime.now();
+        }
+    }
 
     public Long getIdSesion() {
         return idSesion;
