@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { Producto } from '../../models/producto.model';
@@ -11,9 +11,9 @@ import { ProductoService } from '../../services/producto.service';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2>Almacén de Productos</h2>
-      <a routerLink="/productos/nuevo" class="btn-primary">+ Nuevo Producto</a>
+    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
+      <h1>Almacén de Productos</h1>
+      <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Producto</button>
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 25px;">
@@ -27,7 +27,7 @@ import { ProductoService } from '../../services/producto.service';
       <button class="btn-primary" (click)="aplicarFiltro()">Filtrar</button>
     </div>
 
-    <table class="table table-striped">
+    <table>
       <thead>
         <tr>
           <th>ID</th>
@@ -40,8 +40,8 @@ import { ProductoService } from '../../services/producto.service';
       </thead>
       <tbody>
         <tr *ngFor="let p of filtrados">
-          <td>#{{ p.id }}</td>
-          <td><code>{{ p.codRef }}</code></td>
+          <td><strong>#{{ p.id }}</strong></td>
+          <td><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">{{ p.codRef }}</code></td>
           <td>{{ p.descripcion }}</td>
           <td>{{ p.categoria || '—' }}</td>
           <td>{{ p.coste | number:'1.2-2' }} €</td>
@@ -57,12 +57,77 @@ import { ProductoService } from '../../services/producto.service';
         </tr>
       </tbody>
     </table>
+
+    <div class="modal-overlay" *ngIf="modalVisible" (click)="onOverlayClick($event)">
+      <div class="modal-bubble modal-form" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Nuevo Producto</h2>
+          <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+        </div>
+        <form #formModal="ngForm" (ngSubmit)="guardarNuevo(formModal)">
+          <div class="modal-grid">
+            <div class="modal-field">
+              <label>Código de referencia *</label>
+              <input type="text" name="codRef" [(ngModel)]="nuevo.codRef" required />
+            </div>
+            <div class="modal-field">
+              <label>Categoría</label>
+              <input type="text" name="categoria" [(ngModel)]="nuevo.categoria" />
+            </div>
+            <div class="modal-field full">
+              <label>Descripción *</label>
+              <input type="text" name="descripcion" [(ngModel)]="nuevo.descripcion" required />
+            </div>
+            <div class="modal-field">
+              <label>Coste *</label>
+              <input type="number" name="coste" [(ngModel)]="nuevo.coste" step="0.01" min="0" required />
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarModal()" [disabled]="guardando">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="formModal.invalid || guardando">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
   `,
+  styles: [`
+    .modal-form { max-width: 620px; width: 90%; text-align: left; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .modal-field { display: flex; flex-direction: column; gap: 6px; }
+    .modal-field.full { grid-column: span 2; }
+    .modal-field input {
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-family: inherit;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-secondary {
+      background: #94a3b8;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  `],
 })
 export class ProductoListComponent implements OnInit {
   productos: Producto[] = [];
   filtrados: Producto[] = [];
   filtro = '';
+  modalVisible = false;
+  guardando = false;
+  nuevo: Producto = {
+    codRef: '',
+    descripcion: '',
+    coste: 0,
+    categoria: '',
+  };
 
   constructor(private productoService: ProductoService) {}
 
@@ -109,6 +174,44 @@ export class ProductoListComponent implements OnInit {
         },
         error: () => Swal.fire('Error', 'No se pudo eliminar el producto.', 'error'),
       });
+    });
+  }
+
+  abrirModalNuevo(): void {
+    this.guardando = false;
+    this.nuevo = { codRef: '', descripcion: '', coste: 0, categoria: '' };
+    this.modalVisible = true;
+  }
+
+  cerrarModal(): void {
+    this.modalVisible = false;
+  }
+
+  onOverlayClick(e: Event): void {
+    if ((e.target as HTMLElement).classList.contains('modal-overlay')) this.cerrarModal();
+  }
+
+  guardarNuevo(form: NgForm): void {
+    if (form.invalid || this.guardando) return;
+    this.guardando = true;
+    const payload: Producto = {
+      codRef: this.nuevo.codRef.trim(),
+      descripcion: this.nuevo.descripcion.trim(),
+      coste: Number(this.nuevo.coste),
+      categoria: this.nuevo.categoria?.trim() || '',
+    };
+    this.productoService.create(payload).subscribe({
+      next: (created) => {
+        this.guardando = false;
+        this.cerrarModal();
+        this.productos = [created, ...this.productos];
+        this.aplicarFiltro();
+        Swal.fire('Guardado', 'Producto creado correctamente.', 'success');
+      },
+      error: () => {
+        this.guardando = false;
+        Swal.fire('Error', 'No se pudo crear el producto.', 'error');
+      },
     });
   }
 }

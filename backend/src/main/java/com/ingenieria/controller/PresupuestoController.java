@@ -2,6 +2,7 @@ package com.ingenieria.controller;
 
 import com.ingenieria.dto.PresupuestoDTO;
 import com.ingenieria.dto.PresupuestoListResponse;
+import com.ingenieria.service.MantenimientoPreventivoService;
 import com.ingenieria.service.PdfService;
 import com.ingenieria.service.PresupuestoService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class PresupuestoController {
 
     private final PresupuestoService service;
     private final PdfService pdfService;
+    private final MantenimientoPreventivoService mantenimientoService;
 
     @GetMapping
     public List<PresupuestoListResponse> getAll() {
@@ -72,5 +74,14 @@ public class PresupuestoController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/preventivo/contrato")
+    public ResponseEntity<?> crearContratoPreventivo(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(mantenimientoService.createContractFromPresupuesto(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

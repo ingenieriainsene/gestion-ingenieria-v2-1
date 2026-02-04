@@ -294,6 +294,10 @@ export class SeguimientoService {
     private endpoint = 'seguimiento';
     constructor(private api: ApiService) { }
     getByTramite(idTramite: number): Observable<Seguimiento[]> { return this.api.get<Seguimiento[]>(`${this.endpoint}/tramite/${idTramite}`); }
+    getAll(estado?: string): Observable<Seguimiento[]> {
+        const params = estado ? { estado } : undefined;
+        return this.api.get<Seguimiento[]>(this.endpoint, params);
+    }
     create(data: Seguimiento): Observable<Seguimiento> { return this.api.post<Seguimiento>(this.endpoint, data); }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
 }

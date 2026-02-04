@@ -36,6 +36,7 @@ export interface PresupuestoDTO {
   totalSinIva?: number;
   totalConIva?: number;
   estado?: string;
+  tipoPresupuesto?: string;
   lineas: PresupuestoLineaDTO[];
 }
 
@@ -45,6 +46,7 @@ export interface PresupuestoListItem {
   fecha: string;
   total: number;
   estado: string;
+  tipoPresupuesto?: string;
   clienteId: number;
   clienteNombre: string;
   viviendaId: number;

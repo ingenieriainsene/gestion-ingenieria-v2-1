@@ -90,6 +90,7 @@ public class PdfService {
         right.setVerticalAlignment(Element.ALIGN_MIDDLE);
         right.addElement(new Paragraph("INSENE SOLAR", FONT_TITLE));
         right.addElement(new Paragraph("Instalaciones Fotovoltaicas", FONT_TEXT));
+        right.addElement(new Paragraph("Tipo presupuesto: " + resolveTipo(p), FONT_TEXT));
         right.addElement(new Paragraph("CIF: B-00000000", FONT_TEXT));
         right.addElement(new Paragraph("info@insene-solar.com", FONT_TEXT));
 
@@ -104,12 +105,20 @@ public class PdfService {
         PdfPCell metaCell = new PdfPCell();
         metaCell.setBorder(Rectangle.NO_BORDER);
         metaCell.addElement(new Paragraph("Presupuesto #" + p.getIdPresupuesto(), FONT_LABEL));
+        metaCell.addElement(new Paragraph("TIPO DE PRESUPUESTO: " + resolveTipo(p).toUpperCase(), FONT_LABEL));
         metaCell.addElement(new Paragraph("Fecha: " + formatDate(p), FONT_TEXT));
         metaCell.addElement(new Paragraph("Cliente: " + buildClienteNombre(p.getCliente()), FONT_TEXT));
         metaCell.addElement(new Paragraph("Vivienda: " + buildVivienda(p.getVivienda()), FONT_TEXT));
         meta.addCell(metaCell);
         document.add(meta);
         document.add(Chunk.NEWLINE);
+    }
+
+    private String resolveTipo(Presupuesto p) {
+        if (p == null) return "Obra";
+        String tipo = p.getTipoPresupuesto();
+        if (tipo == null || tipo.isBlank()) return "Obra";
+        return tipo.trim();
     }
 
     private void addLineasTable(Document document, Presupuesto p) throws DocumentException {

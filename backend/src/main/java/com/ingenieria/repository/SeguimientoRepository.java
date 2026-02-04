@@ -8,4 +8,10 @@ public interface SeguimientoRepository extends JpaRepository<Seguimiento, Long> 
     List<Seguimiento> findByTramite_IdTramiteOrderByFechaRegistroDesc(Long idTramite);
 
     long countByTramite_IdTramite(Long idTramite);
+
+    List<Seguimiento> findAllByOrderByFechaRegistroDesc();
+
+    List<Seguimiento> findByEstadoIgnoreCaseOrderByFechaRegistroDesc(String estado);
+
+    boolean existsByTramite_IdTramiteAndComentarioAndFechaSeguimiento(Long idTramite, String comentario, java.time.LocalDate fechaSeguimiento);
 }

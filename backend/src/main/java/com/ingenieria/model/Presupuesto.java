@@ -44,6 +44,9 @@ public class Presupuesto {
     @Column(length = 30)
     private String estado;
 
+    @Column(name = "tipo_presupuesto", length = 20)
+    private String tipoPresupuesto;
+
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orden ASC")
     @JsonManagedReference("presupuesto-lineas")

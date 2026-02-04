@@ -313,11 +313,17 @@ export class GestionIntervencionComponent implements OnInit {
       idTramite: this.idTramite
     };
 
-    this.seguimientoService.create(payload).subscribe(newHito => {
-      this.seguimientos.unshift(newHito);
-      this.form.reset({ estado: 'Pendiente' });
-      this.showNuevoHito = false;
-      Swal.fire('Registrado', 'Hito de seguimiento agregado', 'success');
+    this.seguimientoService.create(payload).subscribe({
+      next: (newHito) => {
+        this.seguimientos.unshift(newHito);
+        this.form.reset({ estado: 'Pendiente' });
+        this.showNuevoHito = false;
+        Swal.fire('Registrado', 'Hito de seguimiento agregado', 'success');
+      },
+      error: (e) => {
+        const msg = (e?.error && (e.error['message'] ?? e.error['error'])) || 'No se pudo guardar el hito.';
+        Swal.fire('Error', msg, 'error');
+      },
     });
   }
 
@@ -366,8 +372,11 @@ export class GestionIntervencionComponent implements OnInit {
       esUrgente: false,
       estado: 'Pendiente'
     };
-    this.seguimientoService.create(payload).subscribe(newHito => {
-      this.seguimientos.unshift(newHito);
+    this.seguimientoService.create(payload).subscribe({
+      next: (newHito) => {
+        this.seguimientos.unshift(newHito);
+      },
+      error: () => {},
     });
   }
 

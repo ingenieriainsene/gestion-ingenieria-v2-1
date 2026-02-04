@@ -1,15 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PresupuestoService, PresupuestoLineaDTO } from '../../services/presupuesto.service';
 import { ClienteService, LocalService, Cliente, Local } from '../../services/domain.services';
+import { ProductoService } from '../../services/producto.service';
+import { Producto } from '../../models/producto.model';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-presupuesto-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="mb-3">
       <a [routerLink]="idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos']" class="direct-link">
@@ -64,6 +66,14 @@ import Swal from 'sweetalert2';
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">Tipo de presupuesto</label>
+            <select class="form-control" formControlName="tipoPresupuesto">
+              <option value="Obra">Obra</option>
+              <option value="Correctivo">Correctivo</option>
+              <option value="Preventivo">Preventivo</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Total</label>
             <input type="text" class="form-control" [value]="totalConIva | number:'1.2-2'" disabled />
           </div>
@@ -78,6 +88,7 @@ import Swal from 'sweetalert2';
           <thead>
             <tr>
               <th style="width:90px;">CÓDIGO</th>
+              <th style="width:220px;">PRODUCTO</th>
               <th>CONCEPTO</th>
               <th style="width:80px; text-align:right;">CANT.</th>
               <th style="width:110px; text-align:right;">P. COSTE</th>
@@ -94,6 +105,7 @@ import Swal from 'sweetalert2';
             <ng-container *ngFor="let cap of capitulos.controls; let i = index" [formGroupName]="i">
               <tr class="row-capitulo" (click)="selectCapitulo(i)">
                 <td class="code-cell">{{ cap.get('codigoVisual')?.value }}</td>
+                <td></td>
                 <td>
                   <button type="button" class="toggle-btn" (click)="toggleCapitulo(i); $event.stopPropagation()">
                     {{ collapsed[i] ? '▶' : '▼' }}
@@ -116,6 +128,18 @@ import Swal from 'sweetalert2';
               <ng-container formArrayName="partidas" *ngIf="!collapsed[i]">
                 <tr *ngFor="let part of getPartidas(i).controls; let j = index" [formGroupName]="j" class="row-partida">
                   <td class="code-cell indent">{{ part.get('codigoVisual')?.value }}</td>
+                  <td>
+                    <div class="product-input">
+                      <input
+                        type="text"
+                        class="form-control flat-input"
+                        formControlName="productoTexto"
+                        placeholder="Selecciona o escribe"
+                        (input)="onProductoInput(i, j)"
+                      />
+                      <button type="button" class="product-btn" (click)="abrirProductoModal(i, j)">🔍</button>
+                    </div>
+                  </td>
                   <td><input type="text" class="form-control flat-input" formControlName="concepto" placeholder="Concepto de partida" /></td>
                   <td class="num"><input type="number" class="form-control flat-input num" formControlName="cantidad" min="0" step="0.01" /></td>
                   <td class="num"><input type="number" class="form-control flat-input num" formControlName="costeUnitario" min="0" step="0.01" /></td>
@@ -133,6 +157,42 @@ import Swal from 'sweetalert2';
             </ng-container>
           </tbody>
         </table>
+
+        <div class="modal-overlay" *ngIf="modalProductoVisible" (click)="cerrarProductoModal()">
+          <div class="modal-bubble modal-form" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h2>Seleccionar producto</h2>
+              <button type="button" class="close-btn" (click)="cerrarProductoModal()">✕</button>
+            </div>
+            <div class="modal-search">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Buscar por código o descripción..."
+                [(ngModel)]="productoQuery"
+                (ngModelChange)="filtrarProductos()"
+              />
+            </div>
+            <div class="product-list">
+              <button
+                type="button"
+                class="product-item"
+                *ngFor="let p of productosFiltrados"
+                (click)="seleccionarProducto(p)"
+              >
+                <strong>{{ p.codRef || '—' }}</strong>
+                <span>{{ p.descripcion }}</span>
+                <em>{{ p.coste | number:'1.2-2' }} €</em>
+              </button>
+              <div *ngIf="productosFiltrados.length === 0" class="product-empty">
+                No hay resultados para "{{ productoQuery }}".
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" (click)="cerrarProductoModal()">Cerrar</button>
+            </div>
+          </div>
+        </div>
 
         <div class="form-actions">
           <button type="submit" class="btn-primary" [disabled]="guardando">
@@ -237,6 +297,57 @@ import Swal from 'sweetalert2';
       font-weight: 600;
       width: 100%;
     }
+    .product-input {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .product-btn {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .modal-search {
+      margin: 8px 0 16px;
+    }
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 360px;
+      overflow: auto;
+      margin-bottom: 16px;
+    }
+    .product-item {
+      display: grid;
+      grid-template-columns: 120px 1fr 100px;
+      gap: 12px;
+      text-align: left;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      align-items: center;
+    }
+    .product-item:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+    .product-item strong { color: #0f172a; }
+    .product-item span { color: #334155; }
+    .product-item em { color: #64748b; font-style: normal; text-align: right; }
+    .product-empty {
+      padding: 16px;
+      color: #64748b;
+      text-align: center;
+      border: 1px dashed #e2e8f0;
+      border-radius: 10px;
+    }
     @media (max-width: 1200px) {
       .form-grid { grid-template-columns: 1fr 1fr; }
       .tree-table th, .tree-table td { font-size: 0.8rem; }
@@ -248,6 +359,12 @@ export class PresupuestoFormComponent implements OnInit {
   form: FormGroup;
   clientes: Cliente[] = [];
   locales: Local[] = [];
+  productos: Producto[] = [];
+  productosOptions: { id: number; label: string; coste: number; descripcion: string; codRef: string }[] = [];
+  productosFiltrados: { id: number; label: string; coste: number; descripcion: string; codRef: string }[] = [];
+  modalProductoVisible = false;
+  productoQuery = '';
+  private productoTarget: { capIndex: number; partIndex: number } | null = null;
   clientesOptions: { id: number; label: string }[] = [];
   localesOptions: { id: number; label: string }[] = [];
   clientesOptionsView: { id: number; label: string }[] = [];
@@ -267,6 +384,7 @@ export class PresupuestoFormComponent implements OnInit {
     private service: PresupuestoService,
     private clienteService: ClienteService,
     private localService: LocalService,
+    private productoService: ProductoService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -278,6 +396,7 @@ export class PresupuestoFormComponent implements OnInit {
       codigoReferencia: [''],
       fecha: [new Date().toISOString().slice(0, 10), Validators.required],
       estado: ['Borrador'],
+      tipoPresupuesto: ['Obra'],
       capitulos: this.fb.array([])
     });
   }
@@ -322,6 +441,19 @@ export class PresupuestoFormComponent implements OnInit {
         this.pendingViviendaId = null;
       }
     });
+    this.productoService.getAll().subscribe((list) => {
+      this.productos = list || [];
+      this.productosOptions = this.productos
+        .filter((p) => typeof p.id === 'number')
+        .map((p) => ({
+          id: p.id!,
+          label: this.buildProductoLabel(p),
+          coste: Number(p.coste ?? 0),
+          descripcion: p.descripcion ?? '',
+          codRef: p.codRef ?? '',
+        }));
+      this.filtrarProductos();
+    });
     this.capitulos.valueChanges.subscribe(() => this.recalcularTotales());
   }
 
@@ -347,6 +479,8 @@ export class PresupuestoFormComponent implements OnInit {
     return this.fb.group({
       tipoJerarquia: ['PARTIDA'],
       codigoVisual: [codigo],
+      productoId: [null],
+      productoTexto: [''],
       concepto: ['', Validators.required],
       cantidad: [1, [Validators.required, Validators.min(0.01)]],
       costeUnitario: [0, [Validators.required, Validators.min(0)]],
@@ -528,6 +662,75 @@ export class PresupuestoFormComponent implements OnInit {
     this.refreshViviendaOptions(label);
   }
 
+  abrirProductoModal(capIndex: number, partIndex: number): void {
+    this.productoTarget = { capIndex, partIndex };
+    const part = this.getPartidas(capIndex).at(partIndex) as FormGroup;
+    this.productoQuery = String(part.get('productoTexto')?.value || '').trim();
+    this.filtrarProductos();
+    this.modalProductoVisible = true;
+  }
+
+  cerrarProductoModal(): void {
+    this.modalProductoVisible = false;
+    this.productoTarget = null;
+  }
+
+  filtrarProductos(): void {
+    const term = this.productoQuery.trim().toLowerCase();
+    const base = this.productosOptions;
+    if (!term) {
+      this.productosFiltrados = base.slice(0, 50);
+      return;
+    }
+    this.productosFiltrados = base.filter((p) => {
+      const cod = p.codRef?.toLowerCase() ?? '';
+      const desc = p.descripcion?.toLowerCase() ?? '';
+      const label = p.label?.toLowerCase() ?? '';
+      return cod.includes(term) || desc.includes(term) || label.includes(term);
+    }).slice(0, 50);
+  }
+
+  seleccionarProducto(p: { id: number; label: string; coste: number; descripcion: string }): void {
+    if (!this.productoTarget) return;
+    const part = this.getPartidas(this.productoTarget.capIndex).at(this.productoTarget.partIndex) as FormGroup;
+    const patch: Record<string, unknown> = {
+      productoId: p.id,
+      productoTexto: p.label,
+    };
+    const concepto = String(part.get('concepto')?.value || '').trim();
+    if (!concepto) patch['concepto'] = p.descripcion;
+    const costeRaw = Number(part.get('costeUnitario')?.value || 0);
+    if (!costeRaw) patch['costeUnitario'] = p.coste;
+    part.patchValue(patch, { emitEvent: false });
+    this.modalProductoVisible = false;
+    this.productoTarget = null;
+    this.recalcularTotales();
+  }
+
+  onProductoInput(capIndex: number, partIndex: number): void {
+    const part = this.getPartidas(capIndex).at(partIndex) as FormGroup;
+    const raw = String(part.get('productoTexto')?.value || '').trim();
+    if (!raw) {
+      part.patchValue({ productoId: null }, { emitEvent: false });
+      return;
+    }
+    const match = this.productosOptions.find((p) => p.label === raw || p.codRef === raw);
+    if (!match) {
+      part.patchValue({ productoId: null }, { emitEvent: false });
+      return;
+    }
+    const patch: Record<string, unknown> = {
+      productoId: match.id,
+      productoTexto: match.label,
+    };
+    const concepto = String(part.get('concepto')?.value || '').trim();
+    if (!concepto) patch['concepto'] = match.descripcion;
+    const costeRaw = Number(part.get('costeUnitario')?.value || 0);
+    if (!costeRaw) patch['costeUnitario'] = match.coste;
+    part.patchValue(patch, { emitEvent: false });
+    this.recalcularTotales();
+  }
+
   private cargarPresupuesto(): void {
     if (!this.idPresupuesto) return;
     this.service.getById(this.idPresupuesto).subscribe({
@@ -538,6 +741,7 @@ export class PresupuestoFormComponent implements OnInit {
           codigoReferencia: p.codigoReferencia || '',
           fecha: p.fecha,
           estado: p.estado || 'Borrador',
+          tipoPresupuesto: p.tipoPresupuesto || 'Obra',
         });
         this.setClienteLabelById(p.clienteId);
         this.setViviendaLabelById(p.viviendaId);
@@ -560,6 +764,8 @@ export class PresupuestoFormComponent implements OnInit {
             const partCode = part.codigoVisual || `${codigo}.${String(partidasArr.length + 1).padStart(2, '0')}`;
             const partGroup = this.buildPartidaGroup(partCode);
             partGroup.patchValue({
+              productoId: part.productoId ?? null,
+              productoTexto: part.productoTexto ?? '',
               concepto: part.concepto,
               cantidad: part.cantidad,
               costeUnitario: part.costeUnitario ?? part.precioUnitario ?? 0,
@@ -613,6 +819,13 @@ export class PresupuestoFormComponent implements OnInit {
     return `${dir}${cups}`;
   }
 
+  private buildProductoLabel(p: Producto): string {
+    const cod = (p.codRef || '').trim();
+    const desc = (p.descripcion || '').trim();
+    if (cod && desc) return `${cod} - ${desc}`;
+    return cod || desc || `Producto ${p.id}`;
+  }
+
   private setClienteLabelById(id: number | null): void {
     if (!id) return;
     const match = this.clientesOptions.find((c) => c.id === id);
@@ -655,6 +868,8 @@ export class PresupuestoFormComponent implements OnInit {
         return {
           tipoJerarquia: 'PARTIDA',
           codigoVisual: v.codigoVisual,
+            productoId: v.productoId ?? null,
+            productoTexto: v.productoTexto,
           concepto: v.concepto,
           cantidad: Number(v.cantidad),
           costeUnitario: Number(v.costeUnitario),
@@ -687,6 +902,7 @@ export class PresupuestoFormComponent implements OnInit {
       codigoReferencia: raw.codigoReferencia,
       fecha: raw.fecha,
       estado: raw.estado,
+      tipoPresupuesto: raw.tipoPresupuesto,
       total: this.totalConIva,
       totalSinIva: this.totalSinIva,
       totalConIva: this.totalConIva,

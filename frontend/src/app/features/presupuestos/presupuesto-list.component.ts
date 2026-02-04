@@ -20,10 +20,10 @@ import Swal from 'sweetalert2';
           <th>ID</th>
           <th>CLIENTE</th>
           <th>VIVIENDA</th>
-          <th>PRODUCTO</th>
           <th>FECHA</th>
           <th>TOTAL</th>
           <th>ESTADO</th>
+          <th>TIPO</th>
           <th style="text-align:right;">ACCIONES</th>
         </tr>
       </thead>
@@ -34,10 +34,10 @@ import Swal from 'sweetalert2';
           </td>
           <td>{{ p.clienteNombre || '—' }}</td>
           <td>{{ p.viviendaDireccion || '—' }}</td>
-          <td [title]="p.productoNombre || ''">{{ formatProducto(p.productoNombre) }}</td>
           <td>{{ p.fecha | date:'dd/MM/yyyy' }}</td>
           <td>{{ p.total | number:'1.2-2' }} €</td>
           <td>{{ p.estado || '—' }}</td>
+          <td>{{ p.tipoPresupuesto || 'Obra' }}</td>
           <td style="text-align:right; white-space:nowrap;">
             <a
               [routerLink]="['/presupuestos', p.idPresupuesto]"
@@ -74,14 +74,6 @@ export class PresupuestoListComponent implements OnInit {
   formatId(id: number | string): string {
     const value = String(id);
     return value.length > 8 ? `${value.slice(0, 8)}…` : value;
-  }
-
-  formatProducto(valor?: string | null): string {
-    if (!valor) return '—';
-    const partes = valor.split(',').map((p) => p.trim()).filter(Boolean);
-    if (partes.length === 0) return '—';
-    if (partes.length === 1) return partes[0];
-    return `${partes[0]} + ${partes.length - 1}`;
   }
 
   verFicha(p: PresupuestoListItem): void {

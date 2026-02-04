@@ -22,6 +22,8 @@ import { PresupuestoFormComponent } from './features/presupuestos/presupuesto-fo
 import { PresupuestoFichaViewComponent } from './features/presupuestos/presupuesto-ficha-view.component';
 import { ProductoListComponent } from './features/productos/producto-list.component';
 import { ProductoFormComponent } from './features/productos/producto-form.component';
+import { SeguimientoListComponent } from './features/seguimientos/seguimiento-list.component';
+import { PlanificacionIntervencionesComponent } from './features/contratos/planificacion-intervenciones.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -56,12 +58,14 @@ export const routes: Routes = [
             { path: 'contratos/:idContrato/tramites', component: TramiteListComponent },
             { path: 'contratos/:idContrato/tramites/:idTramite', component: GestionIntervencionComponent },
             { path: 'tramite-detalle/:id', component: TramiteDetalleComponent },
+            { path: 'contratos/:id/planificacion', component: PlanificacionIntervencionesComponent },
 
             { path: 'usuarios', component: UsuarioListComponent },
             { path: 'usuarios/nuevo', component: UsuarioFichaComponent },
             { path: 'usuarios/:id', component: UsuarioFichaComponent },
 
             { path: 'auditoria', component: AuditoriaComponent },
+            { path: 'seguimientos', component: SeguimientoListComponent },
 
             { path: 'presupuestos', component: PresupuestoListComponent },
             { path: 'presupuestos/nuevo', component: PresupuestoFormComponent },

@@ -76,6 +76,7 @@ public class PresupuestoService {
         p.setCodigoReferencia(generarReferencia(dto.getCodigoReferencia()));
         p.setFecha(dto.getFecha() != null ? dto.getFecha() : LocalDate.now());
         p.setEstado(dto.getEstado() != null ? dto.getEstado() : "Borrador");
+        p.setTipoPresupuesto(normalizeTipo(dto.getTipoPresupuesto()));
 
         Totales totales = applyLineas(p, dto.getLineas());
         p.setTotalSinIva(totales.totalSinIva);
@@ -116,6 +117,11 @@ public class PresupuestoService {
         if (dto.getEstado() != null && !dto.getEstado().isBlank()) {
             p.setEstado(dto.getEstado().trim());
         }
+        if (dto.getTipoPresupuesto() != null && !dto.getTipoPresupuesto().isBlank()) {
+            p.setTipoPresupuesto(normalizeTipo(dto.getTipoPresupuesto()));
+        } else if (p.getTipoPresupuesto() == null || p.getTipoPresupuesto().isBlank()) {
+            p.setTipoPresupuesto("Obra");
+        }
 
         Totales totales = applyLineas(p, dto.getLineas());
         p.setTotalSinIva(totales.totalSinIva);
@@ -141,6 +147,7 @@ public class PresupuestoService {
         dto.setCodigoReferencia(p.getCodigoReferencia());
         dto.setFecha(p.getFecha());
         dto.setEstado(p.getEstado());
+        dto.setTipoPresupuesto(normalizeTipo(p.getTipoPresupuesto()));
         dto.setTotal(p.getTotal());
         dto.setTotalSinIva(p.getTotalSinIva());
         dto.setTotalConIva(p.getTotalConIva());
@@ -196,6 +203,7 @@ public class PresupuestoService {
                 p.getTotalSinIva(),
                 p.getTotalConIva(),
                 p.getEstado(),
+                normalizeTipo(p.getTipoPresupuesto()),
                 p.getCliente() != null ? p.getCliente().getIdCliente() : null,
                 clienteNombre,
                 p.getVivienda() != null ? p.getVivienda().getIdLocal() : null,
@@ -203,6 +211,15 @@ public class PresupuestoService {
                 tipoLinea,
                 productoNombre
         );
+    }
+
+    private String normalizeTipo(String tipo) {
+        if (tipo == null || tipo.isBlank()) return "Obra";
+        String t = tipo.trim().toLowerCase();
+        if (t.equals("obra")) return "Obra";
+        if (t.equals("correctivo")) return "Correctivo";
+        if (t.equals("preventivo")) return "Preventivo";
+        return "Obra";
     }
 
     private String generarReferencia(String ref) {

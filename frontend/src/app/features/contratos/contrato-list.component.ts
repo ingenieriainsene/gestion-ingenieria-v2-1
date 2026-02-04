@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ContratoService, Contrato, ClienteService, LocalService, Cliente, Local } from '../../services/domain.services';
 import Swal from 'sweetalert2';
@@ -217,11 +217,13 @@ export class ContratoListComponent implements OnInit {
     modalVisible = false;
     formNuevo: FormGroup;
     guardando = false;
+    private prefill: { idCliente?: number; idLocal?: number; tipoContrato?: string; fechaInicio?: string } | null = null;
     constructor(
         private service: ContratoService,
         private clientesService: ClienteService,
         private localesService: LocalService,
-        private fb: FormBuilder
+        private fb: FormBuilder,
+        private route: ActivatedRoute
     ) {
         this.formNuevo = this.fb.group({
             idCliente: [null, Validators.required],
@@ -245,6 +247,7 @@ export class ContratoListComponent implements OnInit {
                     id: c.idCliente!,
                     label: this.buildClienteLabel(c),
                 }));
+            this.applyPrefillIfReady();
         });
         this.localesService.getAll().subscribe(data => {
             this.locales = data || [];
@@ -254,6 +257,23 @@ export class ContratoListComponent implements OnInit {
                     id: l.idLocal!,
                     label: this.buildLocalLabel(l),
                 }));
+            this.applyPrefillIfReady();
+        });
+        this.route.queryParamMap.subscribe((params) => {
+            const open = params.get('openModal');
+            if (open !== '1') return;
+            const idCliente = Number(params.get('clienteId') || '');
+            const idLocal = Number(params.get('localId') || '');
+            const tipoContrato = params.get('tipoContrato') || undefined;
+            const fechaInicio = params.get('fechaInicio') || undefined;
+            this.prefill = {
+                ...(Number.isFinite(idCliente) ? { idCliente } : {}),
+                ...(Number.isFinite(idLocal) ? { idLocal } : {}),
+                ...(tipoContrato ? { tipoContrato } : {}),
+                ...(fechaInicio ? { fechaInicio } : {}),
+            };
+            this.abrirModalNuevo();
+            this.applyPrefillIfReady();
         });
     }
 
@@ -309,6 +329,25 @@ export class ContratoListComponent implements OnInit {
         const label = String(this.formNuevo.get('localLabel')?.value || '').trim();
         const match = this.localesOptions.find(l => l.label === label);
         this.formNuevo.patchValue({ idLocal: match?.id ?? null }, { emitEvent: false });
+    }
+
+    private applyPrefillIfReady() {
+        if (!this.prefill) return;
+        const { idCliente, idLocal, tipoContrato, fechaInicio } = this.prefill;
+        this.formNuevo.patchValue({
+            ...(idCliente ? { idCliente } : {}),
+            ...(idLocal ? { idLocal } : {}),
+            ...(tipoContrato ? { tipoContrato } : {}),
+            ...(fechaInicio ? { fechaInicio } : {}),
+        }, { emitEvent: false });
+        if (idCliente && this.clientesOptions.length) {
+            const match = this.clientesOptions.find(c => c.id === idCliente);
+            if (match) this.formNuevo.patchValue({ clienteLabel: match.label }, { emitEvent: false });
+        }
+        if (idLocal && this.localesOptions.length) {
+            const match = this.localesOptions.find(l => l.id === idLocal);
+            if (match) this.formNuevo.patchValue({ localLabel: match.label }, { emitEvent: false });
+        }
     }
 
     private buildClienteLabel(c: Cliente): string {

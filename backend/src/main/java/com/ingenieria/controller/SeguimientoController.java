@@ -22,6 +22,11 @@ public class SeguimientoController {
         return service.findDtosByTramite(idTramite);
     }
 
+    @GetMapping
+    public List<SeguimientoListResponse> list(@RequestParam(required = false) String estado) {
+        return service.findDtos(estado);
+    }
+
     @PostMapping
     public ResponseEntity<SeguimientoListResponse> create(@RequestBody SeguimientoDTO dto) {
         return ResponseEntity.ok(service.create(dto));

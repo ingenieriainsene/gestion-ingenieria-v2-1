@@ -6,7 +6,10 @@
 
 <div *ngIf="!loading && presupuesto" class="ficha-container">
   <div class="ficha-header clearfix">
-    <h1 class="ficha-title">FICHA PRESUPUESTO #{{ presupuesto.idPresupuesto }}</h1>
+    <h1 class="ficha-title">
+      FICHA PRESUPUESTO #{{ presupuesto.idPresupuesto }}
+      · {{ presupuesto.tipoPresupuesto || 'Obra' }}
+    </h1>
     <div class="ficha-actions">
       <span class="link-archivos link-disabled" title="Código de referencia">
         {{ presupuesto.codigoReferencia || 'Sin referencia' }}
@@ -33,6 +36,10 @@
     <div class="info-card">
       <h3>Estado</h3>
       <p>{{ presupuesto.estado || '—' }}</p>
+    </div>
+    <div class="info-card">
+      <h3>Tipo</h3>
+      <p>{{ presupuesto.tipoPresupuesto || '—' }}</p>
     </div>
     <div class="info-card">
       <h3>Subtotal (Base imponible)</h3>

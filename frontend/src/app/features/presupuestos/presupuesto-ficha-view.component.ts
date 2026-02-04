@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PresupuestoService, PresupuestoDTO } from '../../services/presupuesto.service';
 import { ClienteService, LocalService, Cliente, Local } from '../../services/domain.services';
+import { MantenimientoPreventivoService } from '../../services/mantenimiento-preventivo.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -18,7 +19,13 @@ import Swal from 'sweetalert2';
 
     <div *ngIf="!loading && presupuesto" class="ficha-container">
       <div class="ficha-header clearfix">
-        <h1 class="ficha-title">FICHA PRESUPUESTO #{{ presupuesto.idPresupuesto }}</h1>
+        <div class="ficha-title-wrap">
+          <h1 class="ficha-title">FICHA PRESUPUESTO #{{ presupuesto.idPresupuesto }}</h1>
+        </div>
+        <div class="header-badge-wrap">
+          <span class="header-label">TIPO:</span>
+          <span class="badge-tipo">{{ presupuesto.tipoPresupuesto || 'Obra' }}</span>
+        </div>
         <div class="ficha-actions">
           <span class="link-archivos link-disabled" title="Código de referencia">
             {{ presupuesto.codigoReferencia || 'Sin referencia' }}
@@ -58,6 +65,21 @@ import Swal from 'sweetalert2';
         <div class="info-card">
           <h3>TOTAL con IVA</h3>
           <p>{{ totalConIva | number:'1.2-2' }} €</p>
+        </div>
+      </div>
+
+      <div class="info-card-grid" *ngIf="presupuesto.estado === 'Aceptado'">
+        <div class="info-card info-card-wide">
+          <h3>Generar contrato</h3>
+          <p *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">
+            Este presupuesto preventivo está aceptado. Continuaremos con la planificación de intervenciones.
+          </p>
+          <p *ngIf="presupuesto.tipoPresupuesto !== 'Preventivo'">
+            Este presupuesto está aceptado. ¿Deseas generar un contrato ahora?
+          </p>
+          <div class="cta-actions">
+            <button type="button" class="btn-primary" (click)="generarContrato()">Continuar</button>
+          </div>
         </div>
       </div>
 
@@ -143,6 +165,7 @@ export class PresupuestoFichaViewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: PresupuestoService,
+    private mantenimientoService: MantenimientoPreventivoService,
     private clienteService: ClienteService,
     private localService: LocalService
   ) {}
@@ -212,6 +235,49 @@ export class PresupuestoFichaViewComponent implements OnInit {
         }
       });
     });
+  }
+
+  generarContrato(): void {
+    if (!this.presupuesto) return;
+    if (this.presupuesto.tipoPresupuesto === 'Preventivo') {
+      this.mantenimientoService.crearContratoDesdePresupuesto(this.presupuesto.idPresupuesto!).subscribe({
+        next: (c) => {
+          if (c?.idContratoMant) {
+            this.router.navigate(['/contratos', c.idContratoMant, 'planificacion']);
+          }
+        },
+        error: (e) => {
+          let msg = 'No se pudo generar el contrato preventivo.';
+          if (typeof e?.error === 'string') {
+            msg = e.error;
+          } else if (e?.error?.message) {
+            msg = e.error.message;
+          } else if (e?.status === 404) {
+            msg = 'El endpoint no está disponible en el backend.';
+          }
+          Swal.fire('Error', msg, 'error');
+        },
+      });
+      return;
+    }
+    const tipoContrato = this.mapTipoContrato(this.presupuesto.tipoPresupuesto);
+    this.router.navigate(['/contratos'], {
+      queryParams: {
+        openModal: 1,
+        clienteId: this.presupuesto.clienteId,
+        localId: this.presupuesto.viviendaId,
+        ...(tipoContrato ? { tipoContrato } : {}),
+        ...(this.presupuesto.fecha ? { fechaInicio: this.presupuesto.fecha } : {}),
+      },
+    });
+  }
+
+  private mapTipoContrato(tipoPresupuesto?: string): string | null {
+    if (!tipoPresupuesto) return null;
+    const t = tipoPresupuesto.toLowerCase();
+    if (t === 'preventivo') return 'Preventivo';
+    if (t === 'obra') return 'Instalación';
+    return null;
   }
 
   toggleCapitulo(index: number): void {

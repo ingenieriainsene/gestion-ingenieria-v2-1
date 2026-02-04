@@ -228,9 +228,17 @@ CREATE TABLE presupuestos (
     total_sin_iva DECIMAL(12, 2) DEFAULT 0,
     total_con_iva DECIMAL(12, 2) DEFAULT 0,
     estado VARCHAR(30) DEFAULT 'Borrador',
+    tipo_presupuesto VARCHAR(20) DEFAULT 'Obra',
     CONSTRAINT fk_presupuesto_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
     CONSTRAINT fk_presupuesto_vivienda FOREIGN KEY (vivienda_id) REFERENCES locales(id_local) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
+
+ALTER TABLE presupuestos
+    ADD COLUMN tipo_presupuesto VARCHAR(20) DEFAULT 'Obra';
+
+UPDATE presupuestos
+SET tipo_presupuesto = 'Obra'
+WHERE tipo_presupuesto IS NULL;
 
 -- 1.12 TABLA PRESUPUESTO_LINEAS
 CREATE TABLE presupuesto_lineas (
@@ -256,6 +264,104 @@ CREATE TABLE presupuesto_lineas (
     padre_id BIGINT NULL,
     CONSTRAINT fk_linea_presupuesto FOREIGN KEY (presupuesto_id) REFERENCES presupuestos(id_presupuesto) ON DELETE CASCADE,
     CONSTRAINT fk_presupuesto_lineas_padre FOREIGN KEY (padre_id) REFERENCES presupuesto_lineas(id_linea) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 1.13 MANTENIMIENTO PREVENTIVO
+CREATE TABLE presupuestos_preventivos (
+    id_presupuesto_prev BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    cliente_id BIGINT NOT NULL,
+    vivienda_id BIGINT NOT NULL,
+    fecha DATE NOT NULL,
+    estado VARCHAR(30) DEFAULT 'Borrador',
+    notas TEXT,
+    CONSTRAINT fk_pp_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
+    CONSTRAINT fk_pp_vivienda FOREIGN KEY (vivienda_id) REFERENCES locales(id_local) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE presupuestos_preventivos_tareas (
+    id_tarea_prev BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    presupuesto_prev_id BIGINT NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    frecuencia_meses INT NOT NULL,
+    orden INT,
+    activo BOOLEAN DEFAULT TRUE,
+    CONSTRAINT fk_pp_tarea_presupuesto FOREIGN KEY (presupuesto_prev_id) REFERENCES presupuestos_preventivos(id_presupuesto_prev) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE contratos_mantenimiento (
+    id_contrato_mant BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    presupuesto_prev_id BIGINT NOT NULL,
+    cliente_id BIGINT NOT NULL,
+    vivienda_id BIGINT NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    estado VARCHAR(30) DEFAULT 'Activo',
+    creado_por VARCHAR(100),
+    fecha_alta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cm_presupuesto FOREIGN KEY (presupuesto_prev_id) REFERENCES presupuestos_preventivos(id_presupuesto_prev) ON DELETE RESTRICT,
+    CONSTRAINT fk_cm_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
+    CONSTRAINT fk_cm_vivienda FOREIGN KEY (vivienda_id) REFERENCES locales(id_local) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+SET @cm_col_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'contratos_mantenimiento'
+    AND COLUMN_NAME = 'contrato_id'
+);
+SET @cm_sql := IF(@cm_col_exists = 0,
+  'ALTER TABLE contratos_mantenimiento ADD COLUMN contrato_id BIGINT',
+  'SELECT 1'
+);
+PREPARE cm_stmt FROM @cm_sql;
+EXECUTE cm_stmt;
+DEALLOCATE PREPARE cm_stmt;
+
+SET @cm_fk_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'contratos_mantenimiento'
+    AND CONSTRAINT_NAME = 'fk_cm_contrato_base'
+);
+SET @cm_fk_sql := IF(@cm_fk_exists = 0,
+  'ALTER TABLE contratos_mantenimiento ADD CONSTRAINT fk_cm_contrato_base FOREIGN KEY (contrato_id) REFERENCES contratos(id_contrato) ON DELETE SET NULL',
+  'SELECT 1'
+);
+PREPARE cm_fk_stmt FROM @cm_fk_sql;
+EXECUTE cm_fk_stmt;
+DEALLOCATE PREPARE cm_fk_stmt;
+
+CREATE TABLE contratos_mantenimiento_tareas (
+    id_tarea_contrato BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    contrato_mant_id BIGINT NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    frecuencia_meses INT NOT NULL,
+    orden INT,
+    activo BOOLEAN DEFAULT TRUE,
+    CONSTRAINT fk_cmt_contrato FOREIGN KEY (contrato_mant_id) REFERENCES contratos_mantenimiento(id_contrato_mant) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE avisos_mantenimiento (
+    id_aviso BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    contrato_mant_id BIGINT NOT NULL,
+    fecha_programada DATE NOT NULL,
+    estado VARCHAR(30) DEFAULT 'Pendiente',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_aviso_contrato FOREIGN KEY (contrato_mant_id) REFERENCES contratos_mantenimiento(id_contrato_mant) ON DELETE CASCADE,
+    UNIQUE KEY uq_aviso_fecha (contrato_mant_id, fecha_programada)
+) ENGINE=InnoDB;
+
+CREATE TABLE avisos_mantenimiento_detalle (
+    id_aviso_det BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    aviso_id BIGINT NOT NULL,
+    tarea_contrato_id BIGINT NOT NULL,
+    estado VARCHAR(30) DEFAULT 'Pendiente',
+    observaciones TEXT,
+    CONSTRAINT fk_aviso_det_aviso FOREIGN KEY (aviso_id) REFERENCES avisos_mantenimiento(id_aviso) ON DELETE CASCADE,
+    CONSTRAINT fk_aviso_det_tarea FOREIGN KEY (tarea_contrato_id) REFERENCES contratos_mantenimiento_tareas(id_tarea_contrato) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 -- ======================================================
@@ -426,3 +532,116 @@ VALUES
   (@p_id, 10, 'Cableado solar 6mm y canalizacion reforzada', 1, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, 'PARTIDA', '03.04', @cap03),
   (@p_id, 11, 'Apertura de rozas y ayudas de albanileria', 1, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, 'PARTIDA', '04.01', @cap04),
   (@p_id, 12, 'Bancada de hormigon para unidad exterior (si procede)', 1, 300.00, 1.00, 300.00, 300.00, 300.00, 63.00, 363.00, 21, 300.00, 300.00, 'PARTIDA', '04.02', @cap04);
+
+-- ======================================================
+-- 3.2 SEED PRESUPUESTO PREVENTIVO (FV)
+-- ======================================================
+INSERT INTO clientes (
+  nombre, apellido1, apellido2, dni,
+  direccion_fiscal_completa, codigo_postal, cuenta_bancaria, creado_por
+) VALUES (
+  'Iberdrola', 'Renovables', 'S.A.U.', 'A-12345678',
+  'Plaza Euskadi 5, Torre Iberdrola, 48009 Bilbao, Espana', '48009',
+  'ES1221000418450200001234', 'Sistema'
+)
+ON DUPLICATE KEY UPDATE id_cliente = LAST_INSERT_ID(id_cliente),
+  nombre = VALUES(nombre),
+  apellido1 = VALUES(apellido1),
+  apellido2 = VALUES(apellido2),
+  direccion_fiscal_completa = VALUES(direccion_fiscal_completa),
+  codigo_postal = VALUES(codigo_postal),
+  cuenta_bancaria = VALUES(cuenta_bancaria);
+SET @cliente_prev_id := LAST_INSERT_ID();
+
+INSERT INTO locales (
+  id_cliente, nombre_titular, apellido1_titular, apellido2_titular, dni_titular,
+  cups, referencia_catastral, direccion_completa, latitud, longitud, creado_por
+) VALUES (
+  @cliente_prev_id, 'Iberdrola', 'Renovables', 'S.A.U.', 'A-12345678',
+  'ES0031401234567890ABCD', '1234567VK4713S0001AB',
+  'Parque Solar La Campina, Km 12 A-92, 41500 Alcala de Guadaira, Sevilla',
+  37.331234, -5.858765, 'Sistema'
+);
+SET @local_prev_id := LAST_INSERT_ID();
+
+INSERT INTO presupuestos_preventivos (
+  cliente_id, vivienda_id, fecha, estado, notas
+) VALUES (
+  @cliente_prev_id, @local_prev_id, '2026-02-04', 'Aceptado',
+  'Mantenimiento preventivo anual para planta FV 250 kWp: limpieza, termografia y revision de inversores.'
+);
+SET @pp_prev_id := LAST_INSERT_ID();
+
+INSERT INTO presupuestos_preventivos_tareas (
+  presupuesto_prev_id, nombre, descripcion, frecuencia_meses, orden, activo
+) VALUES
+  (@pp_prev_id, 'Limpieza de modulos FV', 'Limpieza en seco y verificacion de sombras puntuales', 6, 1, 1),
+  (@pp_prev_id, 'Revision de inversores', 'Chequeo de alarmas, rendimiento y firmware', 12, 2, 1),
+  (@pp_prev_id, 'Termografia de cuadros DC/AC', 'Deteccion de puntos calientes en conexiones', 12, 3, 1),
+  (@pp_prev_id, 'Inspeccion de estructura y anclajes', 'Par de apriete y corrosion', 12, 4, 1),
+  (@pp_prev_id, 'Verificacion de protecciones', 'Comprobacion de magnetotermicos y fusibles', 6, 5, 1),
+  (@pp_prev_id, 'Revision de monitorizacion', 'Validacion de comunicaciones y datos SCADA', 3, 6, 1);
+
+-- ======================================================
+-- 3.3 SEED PRESUPUESTO (TIPO PREVENTIVO)
+-- ======================================================
+INSERT INTO clientes (
+  nombre, apellido1, apellido2, dni,
+  direccion_fiscal_completa, codigo_postal, cuenta_bancaria, creado_por
+) VALUES (
+  'Iberdrola', 'Renovables', 'S.A.U.', 'A-12345678',
+  'Plaza Euskadi 5, Torre Iberdrola, 48009 Bilbao, Espana', '48009',
+  'ES1221000418450200001234', 'Sistema'
+)
+ON DUPLICATE KEY UPDATE id_cliente = LAST_INSERT_ID(id_cliente),
+  nombre = VALUES(nombre),
+  apellido1 = VALUES(apellido1),
+  apellido2 = VALUES(apellido2),
+  direccion_fiscal_completa = VALUES(direccion_fiscal_completa),
+  codigo_postal = VALUES(codigo_postal),
+  cuenta_bancaria = VALUES(cuenta_bancaria);
+SET @cliente_prev_id2 := LAST_INSERT_ID();
+
+SET @local_prev_id2 := (
+  SELECT id_local
+  FROM locales
+  WHERE id_cliente = @cliente_prev_id2
+    AND direccion_completa = 'Parque Solar La Campina, Km 12 A-92, 41500 Alcala de Guadaira, Sevilla'
+  LIMIT 1
+);
+INSERT INTO locales (
+  id_cliente, nombre_titular, apellido1_titular, apellido2_titular, dni_titular,
+  cups, referencia_catastral, direccion_completa, latitud, longitud, creado_por
+)
+SELECT
+  @cliente_prev_id2, 'Iberdrola', 'Renovables', 'S.A.U.', 'A-12345678',
+  'ES0031401234567890ABCD', '1234567VK4713S0001AB',
+  'Parque Solar La Campina, Km 12 A-92, 41500 Alcala de Guadaira, Sevilla',
+  37.331234, -5.858765, 'Sistema'
+WHERE @local_prev_id2 IS NULL;
+SET @local_prev_id2 := COALESCE(@local_prev_id2, LAST_INSERT_ID());
+
+INSERT INTO presupuestos (
+  cliente_id, vivienda_id, codigo_referencia, fecha,
+  total, total_sin_iva, total_con_iva, estado, tipo_presupuesto
+) VALUES (
+  @cliente_prev_id2, @local_prev_id2, 'PRES-FV-MANT-001', '2026-02-04',
+  2274.80, 1880.00, 2274.80, 'Aceptado', 'Preventivo'
+);
+SET @p_prev_id2 := LAST_INSERT_ID();
+
+INSERT INTO presupuesto_lineas (presupuesto_id, orden, concepto, tipo_jerarquia, codigo_visual)
+VALUES (@p_prev_id2, 1, 'MANTENIMIENTO PREVENTIVO', 'CAPITULO', '01');
+SET @cap_prev_id2 := LAST_INSERT_ID();
+
+INSERT INTO presupuesto_lineas (
+  presupuesto_id, orden, concepto, cantidad, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, tipo_jerarquia, codigo_visual, padre_id
+)
+VALUES
+  (@p_prev_id2, 1, 'Limpieza de modulos FV', 1, 400.00, 1.00, 400.00, 400.00, 400.00, 84.00, 484.00, 21, 400.00, 400.00, 'PARTIDA', '01.01', @cap_prev_id2),
+  (@p_prev_id2, 2, 'Revision de inversores', 1, 350.00, 1.00, 350.00, 350.00, 350.00, 73.50, 423.50, 21, 350.00, 350.00, 'PARTIDA', '01.02', @cap_prev_id2),
+  (@p_prev_id2, 3, 'Termografia de cuadros DC/AC', 1, 500.00, 1.00, 500.00, 500.00, 500.00, 105.00, 605.00, 21, 500.00, 500.00, 'PARTIDA', '01.03', @cap_prev_id2),
+  (@p_prev_id2, 4, 'Inspeccion de estructura y anclajes', 1, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, 'PARTIDA', '01.04', @cap_prev_id2),
+  (@p_prev_id2, 5, 'Verificacion de protecciones', 1, 200.00, 1.00, 200.00, 200.00, 200.00, 42.00, 242.00, 21, 200.00, 200.00, 'PARTIDA', '01.05', @cap_prev_id2),
+  (@p_prev_id2, 6, 'Revision de monitorizacion', 1, 180.00, 1.00, 180.00, 180.00, 180.00, 37.80, 217.80, 21, 180.00, 180.00, 'PARTIDA', '01.06', @cap_prev_id2);

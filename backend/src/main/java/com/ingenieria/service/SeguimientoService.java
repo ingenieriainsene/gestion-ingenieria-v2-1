@@ -61,6 +61,19 @@ public class SeguimientoService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<SeguimientoListResponse> findDtos(String estado) {
+        List<Seguimiento> list;
+        if (estado == null || estado.isBlank()) {
+            list = seguimientoRepo.findAllByOrderByFechaRegistroDesc();
+        } else {
+            list = seguimientoRepo.findByEstadoIgnoreCaseOrderByFechaRegistroDesc(estado.trim());
+        }
+        return list.stream()
+                .map(SeguimientoService::toListResponse)
+                .collect(Collectors.toList());
+    }
+
     private void ensurePrimerHito(Long idTramite) {
         if (seguimientoRepo.countByTramite_IdTramite(idTramite) > 0) return;
 
@@ -99,7 +112,9 @@ public class SeguimientoService {
         s.setComentario(dto.getComentario());
         s.setFechaSeguimiento(dto.getFechaSeguimiento());
         s.setEsUrgente(Boolean.TRUE.equals(dto.getEsUrgente()));
-        s.setEstado(dto.getEstado() != null ? dto.getEstado() : "Pendiente");
+        String estado = dto.getEstado();
+        if (estado == null || estado.isBlank()) estado = "Pendiente";
+        s.setEstado(estado);
 
         Usuario creador = null;
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

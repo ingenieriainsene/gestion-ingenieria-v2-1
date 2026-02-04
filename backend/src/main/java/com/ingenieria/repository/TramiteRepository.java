@@ -13,6 +13,10 @@ public interface TramiteRepository extends JpaRepository<Tramite, Long> {
 
     List<Tramite> findByContrato_IdContratoAndEstadoOrderByFechaCreacionDesc(Long idContrato, String estado);
 
+    boolean existsByContrato_IdContratoAndTipoTramiteAndFechaSeguimiento(Long idContrato, String tipoTramite, java.time.LocalDate fechaSeguimiento);
+
+    java.util.Optional<Tramite> findByContrato_IdContratoAndTipoTramite(Long idContrato, String tipoTramite);
+
     /**
      * Trámites activos del contrato: estado IN ('En proceso', 'Terminado').
      * Para el Mapa Visual. Replica $res_activas de gestionar_contrato.php.

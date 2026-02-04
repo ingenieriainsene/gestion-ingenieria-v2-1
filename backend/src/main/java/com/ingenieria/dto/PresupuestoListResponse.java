@@ -18,6 +18,7 @@ public class PresupuestoListResponse {
     private BigDecimal totalSinIva;
     private BigDecimal totalConIva;
     private String estado;
+    private String tipoPresupuesto;
     private Long clienteId;
     private String clienteNombre;
     private Long viviendaId;
