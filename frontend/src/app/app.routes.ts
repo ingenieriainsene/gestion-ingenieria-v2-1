@@ -66,6 +66,8 @@ export const routes: Routes = [
 
             { path: 'auditoria', component: AuditoriaComponent },
             { path: 'seguimientos', component: SeguimientoListComponent },
+            { path: 'agendar-citas', loadComponent: () => import('./features/citas/agendar-citas.component').then(m => m.AgendarCitasComponent) },
+            { path: 'chat', loadComponent: () => import('./features/chat/chat-general.component').then(m => m.ChatGeneralComponent) },
 
             { path: 'presupuestos', component: PresupuestoListComponent },
             { path: 'presupuestos/nuevo', component: PresupuestoFormComponent },

@@ -21,4 +21,6 @@ public interface PresupuestoPreventivoRepository extends JpaRepository<Presupues
            "LEFT JOIN FETCH p.vivienda " +
            "WHERE p.idPresupuestoPrev = :id")
     Optional<PresupuestoPreventivo> findByIdWithTareas(@Param("id") Long id);
+
+    Optional<PresupuestoPreventivo> findByPresupuesto_IdPresupuesto(Long idPresupuesto);
 }

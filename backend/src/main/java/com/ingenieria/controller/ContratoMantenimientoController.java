@@ -1,5 +1,6 @@
 package com.ingenieria.controller;
 
+import com.ingenieria.dto.AvisoMantenimientoDTO;
 import com.ingenieria.dto.ContratoMantenimientoDTO;
 import com.ingenieria.dto.GenerarAvisosRequest;
 import com.ingenieria.dto.GenerarAvisosResponse;

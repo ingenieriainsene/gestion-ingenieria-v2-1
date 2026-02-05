@@ -50,6 +50,22 @@ import { AuthService } from '../services/auth.service';
           <span>Contratos</span>
         </a>
 
+        <a
+          class="side-item"
+          routerLink="/agendar-citas"
+          routerLinkActive="active"
+        >
+          <span>Agendar citas</span>
+        </a>
+
+        <a
+          class="side-item"
+          routerLink="/chat"
+          routerLinkActive="active"
+        >
+          <span>Chat</span>
+        </a>
+
 
         <a
           class="side-item"

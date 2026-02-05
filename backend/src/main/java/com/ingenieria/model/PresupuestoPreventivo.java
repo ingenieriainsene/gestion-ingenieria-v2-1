@@ -24,6 +24,10 @@ public class PresupuestoPreventivo {
     @JoinColumn(name = "vivienda_id", nullable = false)
     private Local vivienda;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "presupuesto_id")
+    private Presupuesto presupuesto;
+
     @Column(nullable = false)
     private LocalDate fecha;
 

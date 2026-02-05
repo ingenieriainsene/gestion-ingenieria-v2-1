@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ContratoService, TramiteService, Contrato, Tramite } from '../../services/domain.services';
+import { ContratoService, TramiteService, SeguimientoService, Contrato, Tramite, Seguimiento } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -26,6 +26,13 @@ import Swal from 'sweetalert2';
             <span class="header-label">SERVICIO:</span>
             <span class="badge-tipo">{{ contrato.tipoContrato }}</span>
           </div>
+        </div>
+
+        <div class="filter-bar">
+          <span class="filter-label">Filtrar intervenciones:</span>
+          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'todos'" (click)="setFiltro('todos')">Todas</button>
+          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'mantenimiento'" (click)="setFiltro('mantenimiento')">Mantenimiento</button>
+          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'otros'" (click)="setFiltro('otros')">Otras</button>
         </div>
 
         <div class="panel-grid">
@@ -103,6 +110,27 @@ import Swal from 'sweetalert2';
               </div>
             </section>
           </div>
+          </div>
+
+          <div class="panel-section">
+            <h3>📆 Próximas intervenciones</h3>
+            <div class="tramites-scroll-container">
+              <p *ngIf="proximas.length === 0" class="ventas-empty">No hay intervenciones planificadas.</p>
+              <div *ngFor="let s of proximas" class="intervencion-row">
+                <div class="map-col">
+                  <span class="map-label">Fecha</span>
+                  <span class="map-data">📅 {{ s.fechaSeguimiento | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="map-col">
+                  <span class="map-label">Tarea</span>
+                  <span class="map-data map-data-sm">{{ s.comentario || '—' }}</span>
+                </div>
+                <div class="map-col">
+                  <span class="map-label">Estado</span>
+                  <span class="status-badge pendiente">{{ s.estado || 'Pendiente' }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="panel-section panel-section-full mapa-visual-wrap">
@@ -218,6 +246,44 @@ import Swal from 'sweetalert2';
       margin-bottom: 15px; color: #1e293b; font-size: 0.85rem; text-transform: uppercase;
       border-bottom: 2px solid #f1c40f; padding-bottom: 5px; display: inline-block;
     }
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .filter-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-right: 6px;
+    }
+    .filter-chip {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #1e293b;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .filter-chip.active {
+      background: #1e293b;
+      color: #f8fafc;
+      border-color: #1e293b;
+    }
+    .intervencion-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
     .data-row { margin-bottom: 10px; display: flex; border-bottom: 1px solid #eee; padding-bottom: 4px; }
     .data-label { font-weight: 700; color: #64748b; font-size: 0.8rem; text-transform: uppercase; width: 140px; flex-shrink: 0; }
     .data-value { color: #1e293b; font-size: 0.95rem; font-weight: 600; }
@@ -309,6 +375,9 @@ export class ContratoFichaComponent implements OnInit {
   contrato: Contrato | null = null;
   ventas: Tramite[] = [];
   activas: Tramite[] = [];
+  allTramites: Tramite[] = [];
+  filtroTipo: 'todos' | 'mantenimiento' | 'otros' = 'todos';
+  proximas: Seguimiento[] = [];
 
   nuevaIntervencionForm: FormGroup;
   obsForm: FormGroup;
@@ -316,6 +385,7 @@ export class ContratoFichaComponent implements OnInit {
   constructor(
     private contratos: ContratoService,
     private tramites: TramiteService,
+    private seguimientos: SeguimientoService,
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder
@@ -354,15 +424,58 @@ export class ContratoFichaComponent implements OnInit {
     this.contratos.getTramitesPorContrato(idContrato).subscribe({
       next: (lista) => {
         const all = Array.isArray(lista) ? lista : [];
-        const e = (s: string | undefined) => (s || '').trim();
-        this.ventas = all.filter(t => e(t.estado) === 'Pendiente');
-        this.activas = all.filter(t => {
-          const est = e(t.estado);
-          return est === 'En proceso' || est === 'Terminado';
-        });
+        this.allTramites = all;
+        this.aplicarFiltros();
+        this.cargarProximas(all);
       },
       error: (err) => {
         console.error('Error al cargar trámites por contrato', err?.status, err?.error);
+      }
+    });
+  }
+
+  setFiltro(tipo: 'todos' | 'mantenimiento' | 'otros') {
+    this.filtroTipo = tipo;
+    this.aplicarFiltros();
+  }
+
+  private aplicarFiltros() {
+    const e = (s: string | undefined) => (s || '').trim().toLowerCase();
+    let list = this.allTramites;
+    if (this.filtroTipo === 'mantenimiento') {
+      list = list.filter(t => e(t.tipoTramite) === 'mantenimiento');
+    } else if (this.filtroTipo === 'otros') {
+      list = list.filter(t => e(t.tipoTramite) !== 'mantenimiento');
+    }
+    this.ventas = list.filter(t => e(t.estado) === 'pendiente');
+    this.activas = list.filter(t => {
+      const est = e(t.estado);
+      return est === 'en proceso' || est === 'terminado';
+    });
+  }
+
+  private cargarProximas(lista: Tramite[]) {
+    const mantenimiento = lista.find(t => (t.tipoTramite || '').toLowerCase() === 'mantenimiento');
+    if (!mantenimiento?.idTramite) {
+      this.proximas = [];
+      return;
+    }
+    this.seguimientos.getByTramite(mantenimiento.idTramite).subscribe({
+      next: (segs) => {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        this.proximas = (segs || [])
+          .filter(s => !!s.fechaSeguimiento)
+          .sort((a, b) => {
+            const da = new Date(String(a.fechaSeguimiento));
+            const db = new Date(String(b.fechaSeguimiento));
+            return da.getTime() - db.getTime();
+          })
+          .filter(s => new Date(String(s.fechaSeguimiento)) >= hoy)
+          .slice(0, 6);
+      },
+      error: () => {
+        this.proximas = [];
       }
     });
   }

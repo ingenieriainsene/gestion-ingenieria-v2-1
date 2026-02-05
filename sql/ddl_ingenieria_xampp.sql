@@ -269,6 +269,7 @@ CREATE TABLE presupuesto_lineas (
 -- 1.13 MANTENIMIENTO PREVENTIVO
 CREATE TABLE presupuestos_preventivos (
     id_presupuesto_prev BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    presupuesto_id BIGINT NULL,
     cliente_id BIGINT NOT NULL,
     vivienda_id BIGINT NOT NULL,
     fecha DATE NOT NULL,
@@ -277,6 +278,123 @@ CREATE TABLE presupuestos_preventivos (
     CONSTRAINT fk_pp_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
     CONSTRAINT fk_pp_vivienda FOREIGN KEY (vivienda_id) REFERENCES locales(id_local) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS citas (
+    id_cita BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    cliente_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    estado VARCHAR(30) DEFAULT 'Programada',
+    enlace_remoto TEXT,
+    notas TEXT,
+    fecha_inicio DATETIME NOT NULL,
+    fecha_fin DATETIME NOT NULL,
+    recordatorio_min INT DEFAULT 15,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cita_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
+    CONSTRAINT fk_cita_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuario) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_citas_fecha_inicio ON citas (fecha_inicio);
+CREATE INDEX idx_citas_usuario ON citas (usuario_id);
+
+CREATE TABLE IF NOT EXISTS chat_salas (
+    id_sala BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(80) NOT NULL,
+    es_global BOOLEAN DEFAULT FALSE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS chat_mensajes (
+    id_mensaje BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    sala_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    contenido TEXT NOT NULL,
+    fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_chat_mensaje_sala FOREIGN KEY (sala_id) REFERENCES chat_salas(id_sala) ON DELETE CASCADE,
+    CONSTRAINT fk_chat_mensaje_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuario) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS chat_adjuntos (
+    id_adjunto BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    mensaje_id BIGINT NOT NULL,
+    url TEXT NOT NULL,
+    tipo VARCHAR(50),
+    nombre VARCHAR(255),
+    CONSTRAINT fk_chat_adj_mensaje FOREIGN KEY (mensaje_id) REFERENCES chat_mensajes(id_mensaje) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS chat_menciones (
+    id_mencion BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    mensaje_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    CONSTRAINT fk_chat_mencion_mensaje FOREIGN KEY (mensaje_id) REFERENCES chat_mensajes(id_mensaje) ON DELETE CASCADE,
+    CONSTRAINT fk_chat_mencion_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS chat_lecturas (
+    id_lectura BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    mensaje_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    leido BOOLEAN DEFAULT TRUE,
+    fecha_lectura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_chat_lectura_mensaje FOREIGN KEY (mensaje_id) REFERENCES chat_mensajes(id_mensaje) ON DELETE CASCADE,
+    CONSTRAINT fk_chat_lectura_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_chat_mensajes_sala_fecha ON chat_mensajes (sala_id, fecha_envio);
+CREATE INDEX idx_chat_mensajes_usuario ON chat_mensajes (usuario_id);
+CREATE INDEX idx_chat_lecturas_usuario ON chat_lecturas (usuario_id);
+
+INSERT INTO chat_salas (nombre, es_global)
+SELECT 'General', TRUE
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM chat_salas WHERE es_global = TRUE);
+
+SET @pp_col_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'presupuestos_preventivos'
+    AND COLUMN_NAME = 'presupuesto_id'
+);
+SET @pp_sql := IF(@pp_col_exists = 0,
+  'ALTER TABLE presupuestos_preventivos ADD COLUMN presupuesto_id BIGINT NULL',
+  'SELECT 1'
+);
+PREPARE pp_stmt FROM @pp_sql;
+EXECUTE pp_stmt;
+DEALLOCATE PREPARE pp_stmt;
+
+SET @pp_fk_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'presupuestos_preventivos'
+    AND CONSTRAINT_NAME = 'fk_pp_presupuesto_base'
+);
+SET @pp_fk_sql := IF(@pp_fk_exists = 0,
+  'ALTER TABLE presupuestos_preventivos ADD CONSTRAINT fk_pp_presupuesto_base FOREIGN KEY (presupuesto_id) REFERENCES presupuestos(id_presupuesto) ON DELETE SET NULL',
+  'SELECT 1'
+);
+PREPARE pp_fk_stmt FROM @pp_fk_sql;
+EXECUTE pp_fk_stmt;
+DEALLOCATE PREPARE pp_fk_stmt;
+
+SET @pp_uq_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'presupuestos_preventivos'
+    AND INDEX_NAME = 'uq_pp_presupuesto_base'
+);
+SET @pp_uq_sql := IF(@pp_uq_exists = 0,
+  'CREATE UNIQUE INDEX uq_pp_presupuesto_base ON presupuestos_preventivos(presupuesto_id)',
+  'SELECT 1'
+);
+PREPARE pp_uq_stmt FROM @pp_uq_sql;
+EXECUTE pp_uq_stmt;
+DEALLOCATE PREPARE pp_uq_stmt;
 
 CREATE TABLE presupuestos_preventivos_tareas (
     id_tarea_prev BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -332,6 +450,21 @@ SET @cm_fk_sql := IF(@cm_fk_exists = 0,
 PREPARE cm_fk_stmt FROM @cm_fk_sql;
 EXECUTE cm_fk_stmt;
 DEALLOCATE PREPARE cm_fk_stmt;
+
+SET @cm_uq_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'contratos_mantenimiento'
+    AND INDEX_NAME = 'uq_cm_presupuesto_prev'
+);
+SET @cm_uq_sql := IF(@cm_uq_exists = 0,
+  'CREATE UNIQUE INDEX uq_cm_presupuesto_prev ON contratos_mantenimiento(presupuesto_prev_id)',
+  'SELECT 1'
+);
+PREPARE cm_uq_stmt FROM @cm_uq_sql;
+EXECUTE cm_uq_stmt;
+DEALLOCATE PREPARE cm_uq_stmt;
 
 CREATE TABLE contratos_mantenimiento_tareas (
     id_tarea_contrato BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,

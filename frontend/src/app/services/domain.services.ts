@@ -90,6 +90,19 @@ export interface Seguimiento {
     fechaRegistro?: string;
 }
 
+export interface Cita {
+    idCita?: number;
+    clienteId: number;
+    usuarioId: number;
+    titulo: string;
+    estado?: string;
+    enlaceRemoto?: string;
+    notas?: string;
+    fechaInicio: string;
+    fechaFin: string;
+    recordatorioMin?: number;
+}
+
 export interface TramiteDetalleResponse {
     idTramite: number;
     idContrato: number;
@@ -299,5 +312,17 @@ export class SeguimientoService {
         return this.api.get<Seguimiento[]>(this.endpoint, params);
     }
     create(data: Seguimiento): Observable<Seguimiento> { return this.api.post<Seguimiento>(this.endpoint, data); }
+    delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
+}
+
+@Injectable({ providedIn: 'root' })
+export class CitaService {
+    private endpoint = 'citas';
+    constructor(private api: ApiService) { }
+    listByRange(from: string, to: string): Observable<Cita[]> {
+        return this.api.get<Cita[]>(this.endpoint, { from, to });
+    }
+    create(data: Cita): Observable<Cita> { return this.api.post<Cita>(this.endpoint, data); }
+    update(id: number, data: Cita): Observable<Cita> { return this.api.put<Cita>(`${this.endpoint}/${id}`, data); }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
 }

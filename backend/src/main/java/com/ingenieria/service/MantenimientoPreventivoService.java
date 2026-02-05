@@ -147,6 +147,15 @@ public class MantenimientoPreventivoService {
 
     @Transactional
     public ContratoMantenimientoDTO createContractFromPresupuesto(Long presupuestoId) {
+        PresupuestoPreventivo existente = presupuestoRepo.findByPresupuesto_IdPresupuesto(presupuestoId).orElse(null);
+        if (existente != null) {
+            Optional<ContratoMantenimiento> cm = contratoRepo.findByPresupuestoPreventivo_IdPresupuestoPrev(existente.getIdPresupuestoPrev());
+            if (cm.isPresent()) {
+                return toContractDto(cm.get());
+            }
+            return approveBudgetAndCreateContract(existente.getIdPresupuestoPrev());
+        }
+
         Presupuesto p = presupuestoBaseRepo.findByIdWithLineas(presupuestoId)
                 .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
         if (p.getLineas() == null || p.getLineas().isEmpty()) {
@@ -154,6 +163,7 @@ public class MantenimientoPreventivoService {
         }
 
         PresupuestoPreventivo prev = new PresupuestoPreventivo();
+        prev.setPresupuesto(p);
         prev.setCliente(p.getCliente());
         prev.setVivienda(p.getVivienda());
         prev.setFecha(p.getFecha() != null ? p.getFecha() : LocalDate.now());
@@ -199,6 +209,19 @@ public class MantenimientoPreventivoService {
             throw new IllegalArgumentException("La fecha fin debe ser posterior a la fecha inicio");
         }
 
+        if (avisoRepo.existsByContrato_IdContratoMant(contractId)) {
+            Contrato contratoBase = contrato.getContrato() != null
+                    ? contrato.getContrato()
+                    : ensureContratoBase(contrato, inicio, fin);
+            List<AvisoMantenimientoDTO> avisos = avisoRepo.findByContrato_IdContratoMantOrderByFechaProgramadaAsc(contractId).stream()
+                    .map(this::toNoticeDto)
+                    .collect(Collectors.toList());
+            GenerarAvisosResponse res = new GenerarAvisosResponse();
+            res.setContratoId(contratoBase != null ? contratoBase.getIdContrato() : null);
+            res.setAvisos(avisos);
+            return res;
+        }
+
         List<ContratoMantenimientoTarea> tareas = contratoTareaRepo
                 .findByContrato_IdContratoMantAndActivoTrue(contractId);
         Map<Long, LocalDate> overrides = buildOverrides(req);
@@ -207,7 +230,8 @@ public class MantenimientoPreventivoService {
         for (ContratoMantenimientoTarea t : tareas) {
             Integer freq = t.getFrecuenciaMeses();
             if (freq == null || freq <= 0) continue;
-            LocalDate fecha = overrides.getOrDefault(t.getIdTareaContrato(), inicio);
+            LocalDate fechaOverride = overrides.getOrDefault(t.getIdTareaContrato(), inicio);
+            LocalDate fecha = (fechaOverride != null && fechaOverride.isBefore(inicio)) ? inicio : fechaOverride;
             while (!fecha.isAfter(fin)) {
                 agrupadas.computeIfAbsent(fecha, k -> new ArrayList<>()).add(t);
                 fecha = fecha.plusMonths(freq);

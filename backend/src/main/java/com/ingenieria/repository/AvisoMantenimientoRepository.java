@@ -11,4 +11,6 @@ public interface AvisoMantenimientoRepository extends JpaRepository<AvisoManteni
     Optional<AvisoMantenimiento> findByContrato_IdContratoMantAndFechaProgramada(Long idContratoMant, LocalDate fechaProgramada);
 
     List<AvisoMantenimiento> findByContrato_IdContratoMantOrderByFechaProgramadaAsc(Long idContratoMant);
+
+    boolean existsByContrato_IdContratoMant(Long idContratoMant);
 }
