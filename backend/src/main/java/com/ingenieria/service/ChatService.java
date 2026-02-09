@@ -23,11 +23,11 @@ public class ChatService {
     private final UsuarioRepository usuarioRepo;
 
     public ChatService(ChatSalaRepository salaRepo,
-                       ChatMensajeRepository mensajeRepo,
-                       ChatAdjuntoRepository adjuntoRepo,
-                       ChatMencionRepository mencionRepo,
-                       ChatLecturaRepository lecturaRepo,
-                       UsuarioRepository usuarioRepo) {
+            ChatMensajeRepository mensajeRepo,
+            ChatAdjuntoRepository adjuntoRepo,
+            ChatMencionRepository mencionRepo,
+            ChatLecturaRepository lecturaRepo,
+            UsuarioRepository usuarioRepo) {
         this.salaRepo = salaRepo;
         this.mensajeRepo = mensajeRepo;
         this.adjuntoRepo = adjuntoRepo;
@@ -36,9 +36,15 @@ public class ChatService {
         this.usuarioRepo = usuarioRepo;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ChatSala getSalaGlobal() {
-        return salaRepo.findByEsGlobalTrue().orElseThrow(() -> new IllegalArgumentException("Sala global no encontrada"));
+        return salaRepo.findByEsGlobalTrue().orElseGet(() -> {
+            // Crear sala global si no existe
+            ChatSala sala = new ChatSala();
+            sala.setNombre("Chat General");
+            sala.setEsGlobal(true);
+            return salaRepo.save(sala);
+        });
     }
 
     @Transactional(readOnly = true)
@@ -79,9 +85,11 @@ public class ChatService {
         }
         if (req.getMenciones() != null) {
             for (Long uid : req.getMenciones()) {
-                if (uid == null) continue;
+                if (uid == null)
+                    continue;
                 Usuario u = usuarioRepo.findById(uid).orElse(null);
-                if (u == null) continue;
+                if (u == null)
+                    continue;
                 ChatMencion men = new ChatMencion();
                 men.setMensaje(saved);
                 men.setUsuario(u);
@@ -94,7 +102,8 @@ public class ChatService {
     @Transactional
     public void marcarLeido(Long mensajeId, Long usuarioId) {
         Optional<ChatLectura> existing = lecturaRepo.findByMensaje_IdMensajeAndUsuario_IdUsuario(mensajeId, usuarioId);
-        if (existing.isPresent()) return;
+        if (existing.isPresent())
+            return;
         ChatMensaje m = mensajeRepo.findById(mensajeId)
                 .orElseThrow(() -> new IllegalArgumentException("Mensaje no encontrado"));
         Usuario u = usuarioRepo.findById(usuarioId)
