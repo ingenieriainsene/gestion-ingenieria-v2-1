@@ -16,18 +16,30 @@ import java.util.stream.Collectors;
 @Service
 public class MantenimientoPreventivoService {
 
-    @Autowired private PresupuestoPreventivoRepository presupuestoRepo;
-    @Autowired private PresupuestoRepository presupuestoBaseRepo;
-    @Autowired private ContratoMantenimientoRepository contratoRepo;
-    @Autowired private ContratoMantenimientoTareaRepository contratoTareaRepo;
-    @Autowired private AvisoMantenimientoRepository avisoRepo;
-    @Autowired private AvisoMantenimientoDetalleRepository avisoDetalleRepo;
-    @Autowired private ClienteRepository clienteRepo;
-    @Autowired private LocalRepository localRepo;
-    @Autowired private ContratoRepository contratoBaseRepo;
-    @Autowired private TramiteRepository tramiteRepo;
-    @Autowired private SeguimientoRepository seguimientoRepo;
-    @Autowired private UsuarioRepository usuarioRepo;
+    @Autowired
+    private PresupuestoPreventivoRepository presupuestoRepo;
+    @Autowired
+    private PresupuestoRepository presupuestoBaseRepo;
+    @Autowired
+    private ContratoMantenimientoRepository contratoRepo;
+    @Autowired
+    private ContratoMantenimientoTareaRepository contratoTareaRepo;
+    @Autowired
+    private AvisoMantenimientoRepository avisoRepo;
+    @Autowired
+    private AvisoMantenimientoDetalleRepository avisoDetalleRepo;
+    @Autowired
+    private ClienteRepository clienteRepo;
+    @Autowired
+    private LocalRepository localRepo;
+    @Autowired
+    private ContratoRepository contratoBaseRepo;
+    @Autowired
+    private TramiteRepository tramiteRepo;
+    @Autowired
+    private SeguimientoRepository seguimientoRepo;
+    @Autowired
+    private UsuarioRepository usuarioRepo;
 
     @Transactional(readOnly = true)
     public List<PresupuestoPreventivoDTO> findAllBudgets() {
@@ -128,7 +140,8 @@ public class MantenimientoPreventivoService {
 
         List<ContratoMantenimientoTarea> tareas = new ArrayList<>();
         for (PresupuestoPreventivoTarea t : p.getTareas()) {
-            if (t.getActivo() != null && !t.getActivo()) continue;
+            if (t.getActivo() != null && !t.getActivo())
+                continue;
             ContratoMantenimientoTarea ct = new ContratoMantenimientoTarea();
             ct.setContrato(saved);
             ct.setNombre(t.getNombre());
@@ -149,7 +162,8 @@ public class MantenimientoPreventivoService {
     public ContratoMantenimientoDTO createContractFromPresupuesto(Long presupuestoId) {
         PresupuestoPreventivo existente = presupuestoRepo.findByPresupuesto_IdPresupuesto(presupuestoId).orElse(null);
         if (existente != null) {
-            Optional<ContratoMantenimiento> cm = contratoRepo.findByPresupuestoPreventivo_IdPresupuestoPrev(existente.getIdPresupuestoPrev());
+            Optional<ContratoMantenimiento> cm = contratoRepo
+                    .findByPresupuestoPreventivo_IdPresupuestoPrev(existente.getIdPresupuestoPrev());
             if (cm.isPresent()) {
                 return toContractDto(cm.get());
             }
@@ -172,7 +186,8 @@ public class MantenimientoPreventivoService {
         List<PresupuestoPreventivoTarea> tareas = new ArrayList<>();
         int orden = 1;
         for (PresupuestoLinea l : p.getLineas()) {
-            if (!isPartida(l)) continue;
+            if (!isPartida(l))
+                continue;
             PresupuestoPreventivoTarea t = new PresupuestoPreventivoTarea();
             t.setPresupuesto(prev);
             t.setNombre(l.getConcepto());
@@ -200,7 +215,8 @@ public class MantenimientoPreventivoService {
     }
 
     @Transactional
-    public GenerarAvisosResponse generateNoticesForContract(Long contractId, LocalDate hasta, GenerarAvisosRequest req) {
+    public GenerarAvisosResponse generateNoticesForContract(Long contractId, LocalDate hasta,
+            GenerarAvisosRequest req) {
         ContratoMantenimiento contrato = contratoRepo.findByIdWithTareas(contractId)
                 .orElseThrow(() -> new IllegalArgumentException("Contrato de mantenimiento no encontrado"));
         LocalDate inicio = contrato.getFechaInicio() != null ? contrato.getFechaInicio() : LocalDate.now();
@@ -213,7 +229,8 @@ public class MantenimientoPreventivoService {
             Contrato contratoBase = contrato.getContrato() != null
                     ? contrato.getContrato()
                     : ensureContratoBase(contrato, inicio, fin);
-            List<AvisoMantenimientoDTO> avisos = avisoRepo.findByContrato_IdContratoMantOrderByFechaProgramadaAsc(contractId).stream()
+            List<AvisoMantenimientoDTO> avisos = avisoRepo
+                    .findByContrato_IdContratoMantOrderByFechaProgramadaAsc(contractId).stream()
                     .map(this::toNoticeDto)
                     .collect(Collectors.toList());
             GenerarAvisosResponse res = new GenerarAvisosResponse();
@@ -229,7 +246,8 @@ public class MantenimientoPreventivoService {
 
         for (ContratoMantenimientoTarea t : tareas) {
             Integer freq = t.getFrecuenciaMeses();
-            if (freq == null || freq <= 0) continue;
+            if (freq == null || freq <= 0)
+                continue;
             LocalDate fechaOverride = overrides.getOrDefault(t.getIdTareaContrato(), inicio);
             LocalDate fecha = (fechaOverride != null && fechaOverride.isBefore(inicio)) ? inicio : fechaOverride;
             while (!fecha.isAfter(fin)) {
@@ -253,7 +271,8 @@ public class MantenimientoPreventivoService {
             for (ContratoMantenimientoTarea tarea : entry.getValue()) {
                 boolean exists = avisoDetalleRepo.existsByAviso_IdAvisoAndTarea_IdTareaContrato(
                         aviso.getIdAviso(), tarea.getIdTareaContrato());
-                if (exists) continue;
+                if (exists)
+                    continue;
                 AvisoMantenimientoDetalle det = new AvisoMantenimientoDetalle();
                 det.setAviso(aviso);
                 det.setTarea(tarea);
@@ -270,7 +289,8 @@ public class MantenimientoPreventivoService {
             }
         }
 
-        List<AvisoMantenimientoDTO> avisos = avisoRepo.findByContrato_IdContratoMantOrderByFechaProgramadaAsc(contractId).stream()
+        List<AvisoMantenimientoDTO> avisos = avisoRepo
+                .findByContrato_IdContratoMantOrderByFechaProgramadaAsc(contractId).stream()
                 .map(this::toNoticeDto)
                 .collect(Collectors.toList());
         GenerarAvisosResponse res = new GenerarAvisosResponse();
@@ -321,7 +341,8 @@ public class MantenimientoPreventivoService {
     private ContratoMantenimientoDTO toContractDto(ContratoMantenimiento c) {
         ContratoMantenimientoDTO dto = new ContratoMantenimientoDTO();
         dto.setIdContratoMant(c.getIdContratoMant());
-        dto.setPresupuestoPrevId(c.getPresupuestoPreventivo() != null ? c.getPresupuestoPreventivo().getIdPresupuestoPrev() : null);
+        dto.setPresupuestoPrevId(
+                c.getPresupuestoPreventivo() != null ? c.getPresupuestoPreventivo().getIdPresupuestoPrev() : null);
         dto.setContratoId(c.getContrato() != null ? c.getContrato().getIdContrato() : null);
         dto.setClienteId(c.getCliente() != null ? c.getCliente().getIdCliente() : null);
         dto.setViviendaId(c.getVivienda() != null ? c.getVivienda().getIdLocal() : null);
@@ -366,10 +387,12 @@ public class MantenimientoPreventivoService {
     }
 
     private Map<Long, LocalDate> buildOverrides(GenerarAvisosRequest req) {
-        if (req == null || req.getTareas() == null) return Collections.emptyMap();
+        if (req == null || req.getTareas() == null)
+            return Collections.emptyMap();
         Map<Long, LocalDate> map = new HashMap<>();
         for (GenerarAvisosRequest.TareaInicioOverride t : req.getTareas()) {
-            if (t.getTareaContratoId() == null || t.getFechaInicio() == null) continue;
+            if (t.getTareaContratoId() == null || t.getFechaInicio() == null)
+                continue;
             map.put(t.getTareaContratoId(), t.getFechaInicio());
         }
         return map;
@@ -393,7 +416,8 @@ public class MantenimientoPreventivoService {
         return saved;
     }
 
-    private Tramite ensureTramiteMantenimiento(Contrato contrato, Map<LocalDate, List<ContratoMantenimientoTarea>> agrupadas) {
+    private Tramite ensureTramiteMantenimiento(Contrato contrato,
+            Map<LocalDate, List<ContratoMantenimientoTarea>> agrupadas) {
         return tramiteRepo.findByContrato_IdContratoAndTipoTramite(contrato.getIdContrato(), "Mantenimiento")
                 .orElseGet(() -> {
                     Tramite t = new Tramite();
@@ -410,8 +434,10 @@ public class MantenimientoPreventivoService {
                 });
     }
 
-    private void createSeguimientosFromAgrupadas(Tramite tramite, Map<LocalDate, List<ContratoMantenimientoTarea>> agrupadas) {
-        if (agrupadas == null || agrupadas.isEmpty()) return;
+    private void createSeguimientosFromAgrupadas(Tramite tramite,
+            Map<LocalDate, List<ContratoMantenimientoTarea>> agrupadas) {
+        if (agrupadas == null || agrupadas.isEmpty())
+            return;
         Usuario usuario = resolveUsuarioActual();
         for (Map.Entry<LocalDate, List<ContratoMantenimientoTarea>> entry : agrupadas.entrySet()) {
             LocalDate fecha = entry.getKey();
@@ -437,17 +463,20 @@ public class MantenimientoPreventivoService {
     }
 
     private String buildResumenTareas(Map<LocalDate, List<ContratoMantenimientoTarea>> agrupadas) {
-        if (agrupadas == null || agrupadas.isEmpty()) return "Mantenimiento preventivo";
+        if (agrupadas == null || agrupadas.isEmpty())
+            return "Mantenimiento preventivo";
         Set<String> nombres = new LinkedHashSet<>();
         for (List<ContratoMantenimientoTarea> list : agrupadas.values()) {
-            if (list == null) continue;
+            if (list == null)
+                continue;
             for (ContratoMantenimientoTarea t : list) {
                 if (t != null && t.getNombre() != null && !t.getNombre().isBlank()) {
                     nombres.add(t.getNombre().trim());
                 }
             }
         }
-        if (nombres.isEmpty()) return "Mantenimiento preventivo";
+        if (nombres.isEmpty())
+            return "Mantenimiento preventivo";
         return "Tareas: " + String.join(", ", nombres);
     }
 
@@ -455,15 +484,18 @@ public class MantenimientoPreventivoService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getName() != null) {
             Usuario u = usuarioRepo.findByNombreUsuario(auth.getName()).orElse(null);
-            if (u != null) return u;
+            if (u != null)
+                return u;
         }
         return usuarioRepo.findAll().stream().findFirst()
                 .orElseThrow(() -> new RuntimeException("No hay usuarios en el sistema"));
     }
 
     private boolean isPartida(PresupuestoLinea l) {
-        if (l == null) return false;
-        if (l.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.PARTIDA) return true;
+        if (l == null)
+            return false;
+        if ("PARTIDA".equals(l.getTipoJerarquia()))
+            return true;
         return l.getPadre() != null;
     }
 
@@ -494,22 +526,28 @@ public class MantenimientoPreventivoService {
     }
 
     private String normalizeEstado(String estado) {
-        if (estado == null || estado.isBlank()) return "Borrador";
+        if (estado == null || estado.isBlank())
+            return "Borrador";
         String e = estado.trim().toLowerCase();
-        if (e.equals("pendiente")) return "Pendiente";
-        if (e.equals("aceptado") || e.equals("aceptada")) return "Aceptado";
-        if (e.equals("borrador")) return "Borrador";
+        if (e.equals("pendiente"))
+            return "Pendiente";
+        if (e.equals("aceptado") || e.equals("aceptada"))
+            return "Aceptado";
+        if (e.equals("borrador"))
+            return "Borrador";
         return estado.trim();
     }
 
     private boolean isAceptado(String estado) {
-        if (estado == null) return false;
+        if (estado == null)
+            return false;
         return estado.trim().equalsIgnoreCase("Aceptado");
     }
 
     private String getUsuarioActual() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return "Sistema";
+        if (auth == null)
+            return "Sistema";
         String name = auth.getName();
         return (name == null || name.isBlank()) ? "Sistema" : name;
     }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -54,14 +54,10 @@ interface NavCategory {
       </nav>
 
       <div class="sidebar-footer">
-        <a
-          class="footer-item"
-          routerLink="/chat"
-          routerLinkActive="active"
-        >
-          <span class="footer-icon">💬</span>
-          <span>Chat</span>
-        </a>
+        <div class="user-display" *ngIf="username">
+          <span class="footer-icon">👤</span>
+          <span class="user-name">{{ username }}</span>
+        </div>
         
         <button class="footer-item logout-btn" (click)="logout()">
           <span class="footer-icon">🚪</span>
@@ -87,23 +83,25 @@ interface NavCategory {
     }
 
     .sidebar.collapsed {
-      width: 70px;
+      width: 60px;
     }
 
-    .sidebar.collapsed .category-label,
-    .sidebar.collapsed .category-arrow,
-    .sidebar.collapsed .side-item span,
-    .sidebar.collapsed .footer-item span:not(.footer-icon) {
-      display: none;
+    .sidebar.collapsed .sidebar-main,
+    .sidebar.collapsed .sidebar-footer,
+    .sidebar.collapsed .nav-brand-container {
+      display: none !important;
     }
 
-    .sidebar.collapsed .nav-brand {
-      font-size: 1.2rem;
+    .sidebar.collapsed .toggle-btn {
+      right: auto;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
     /* Header */
     .sidebar-header {
       flex-shrink: 0;
+      position: relative;
     }
 
     .toggle-btn {
@@ -128,7 +126,7 @@ interface NavCategory {
     }
 
     .nav-brand-container {
-      padding: 20px 16px;
+      padding: 20px 50px 20px 16px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
@@ -263,6 +261,24 @@ interface NavCategory {
       background: rgba(0, 0, 0, 0.2);
     }
 
+    .user-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 8px;
+    }
+
+    .user-name {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .footer-item {
       display: flex;
       align-items: center;
@@ -321,7 +337,7 @@ interface NavCategory {
     }
   `]
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   collapsed = false;
 
   @Output() collapsedChange = new EventEmitter<boolean>();
@@ -357,16 +373,31 @@ export class SidebarComponent {
         { label: 'Usuarios', route: '/usuarios' },
         { label: 'Auditoría', route: '/auditoria' }
       ]
+    },
+    {
+      id: 'comunicacion',
+      label: 'Comunicación',
+      icon: '💬',
+      items: [
+        { label: 'Chat', route: '/chat' }
+      ]
     }
   ];
 
   expandedCategories: { [key: string]: boolean } = {
     'comercial': true,
     'operaciones': false,
-    'admin': false
+    'admin': false,
+    'comunicacion': false
   };
 
+  username: string | null = null;
+
   constructor(public auth: AuthService) { }
+
+  ngOnInit(): void {
+    this.username = this.auth.getUsername();
+  }
 
   toggleSidebar(): void {
     this.collapsed = !this.collapsed;

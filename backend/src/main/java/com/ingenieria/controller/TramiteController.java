@@ -18,7 +18,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tramites")
-@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class TramiteController {
 
@@ -42,7 +41,8 @@ public class TramiteController {
 
     /**
      * Detalle completo para la página de detalle (replica detalle_tramite.php).
-     * Declarado antes que /{id} para que Spring matchee /{id}/detalle correctamente.
+     * Declarado antes que /{id} para que Spring matchee /{id}/detalle
+     * correctamente.
      */
     @GetMapping("/{id}/detalle")
     public ResponseEntity<?> getDetalle(@PathVariable Long id) {
@@ -113,7 +113,8 @@ public class TramiteController {
 
     /**
      * Generar: UPDATE real en BD. Pasa el trámite de Pendiente a En proceso.
-     * Replica gestionar_contrato.php (acciones_tramites?accion=ejecutar). @Transactional en servicio.
+     * Replica gestionar_contrato.php
+     * (acciones_tramites?accion=ejecutar). @Transactional en servicio.
      */
     @PostMapping("/{id}/generar")
     public ResponseEntity<?> generar(@PathVariable Long id) {

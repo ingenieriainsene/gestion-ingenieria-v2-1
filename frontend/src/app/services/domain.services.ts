@@ -150,6 +150,30 @@ export class ClienteService {
     create(data: Cliente): Observable<Cliente> { return this.api.post<Cliente>(this.endpoint, data); }
     update(id: number, data: Cliente): Observable<Cliente> { return this.api.put<Cliente>(`${this.endpoint}/${id}`, data); }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
+
+    getArchivos(id: number): Observable<ArchivoCliente[]> {
+        return this.api.get<ArchivoCliente[]>(`clientes/${id}/archivos`);
+    }
+
+    subirArchivo(id: number, file: File): Observable<ArchivoCliente> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.api.post<ArchivoCliente>(`clientes/${id}/archivos`, formData);
+    }
+
+    deleteArchivo(fileId: number): Observable<void> {
+        return this.api.delete<void>(`clientes/archivos/${fileId}`);
+    }
+}
+
+export interface ArchivoCliente {
+    idArchivo: number;
+    clienteId: number;
+    nombreVisible: string;
+    tipoArchivo: string;
+    url: string;
+    fechaSubida: string;
+    usuarioSubida: string;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/presupuestos")
-@CrossOrigin(origins = "http://localhost:4200")
+
 @RequiredArgsConstructor
 public class PresupuestoController {
 

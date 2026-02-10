@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auditoria-sesiones")
 public class AuditoriaSesionController {
@@ -21,4 +20,3 @@ public class AuditoriaSesionController {
         return ResponseEntity.ok(auditoriaSesionRepository.findAllByOrderByFechaInicioDesc());
     }
 }
-

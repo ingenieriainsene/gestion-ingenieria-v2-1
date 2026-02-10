@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/contratos-mantenimiento")
-@CrossOrigin(origins = "http://localhost:4200")
+
 @RequiredArgsConstructor
 public class ContratoMantenimientoController {
 

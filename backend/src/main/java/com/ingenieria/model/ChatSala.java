@@ -20,6 +20,9 @@ public class ChatSala {
     @Column(name = "es_global")
     private Boolean esGlobal;
 
+    @Column(length = 20)
+    private String tipo; // 'GLOBAL' or 'PRIVADO'
+
     @Column(name = "fecha_creacion", insertable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 }

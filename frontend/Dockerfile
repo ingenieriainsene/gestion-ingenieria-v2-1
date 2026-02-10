@@ -1,13 +1,12 @@
-FROM node:20 AS build
+FROM node:18.10.0-slim as build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN npm run build
+RUN npm run build --configuration production
 
-# Usamos Nginx para servir la app de Angular
-FROM nginx:alpine
-COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
-# Copia una configuración básica de nginx si necesitas rutas (opcional)
+FROM nginx:stable-alpine
+COPY --from=build /app/dist/gestion-frontend /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

@@ -67,7 +67,14 @@ export class AuthService {
         return payload.exp <= nowSeconds;
     }
 
-    private decodeTokenPayload(token: string): { exp?: number } | null {
+    getUsername(): string | null {
+        const token = this.getToken();
+        if (!token) return null;
+        const payload = this.decodeTokenPayload(token);
+        return payload ? (payload.sub || payload.username) : null;
+    }
+
+    private decodeTokenPayload(token: string): any {
         try {
             const parts = token.split('.');
             if (parts.length !== 3) return null;

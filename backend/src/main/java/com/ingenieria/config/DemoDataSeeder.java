@@ -29,12 +29,18 @@ import java.util.List;
 @ConditionalOnProperty(prefix = "app.seed", name = "demo", havingValue = "true", matchIfMissing = false)
 public class DemoDataSeeder implements CommandLineRunner {
 
-    @Autowired private ClienteRepository clienteRepository;
-    @Autowired private LocalRepository localRepository;
-    @Autowired private ContratoRepository contratoRepository;
-    @Autowired private TramiteRepository tramiteRepository;
-    @Autowired private ProveedorRepository proveedorRepository;
-    @Autowired private PresupuestoRepository presupuestoRepository;
+    @Autowired
+    private ClienteRepository clienteRepository;
+    @Autowired
+    private LocalRepository localRepository;
+    @Autowired
+    private ContratoRepository contratoRepository;
+    @Autowired
+    private TramiteRepository tramiteRepository;
+    @Autowired
+    private ProveedorRepository proveedorRepository;
+    @Autowired
+    private PresupuestoRepository presupuestoRepository;
 
     @Override
     public void run(String... args) {
@@ -116,14 +122,14 @@ public class DemoDataSeeder implements CommandLineRunner {
         capitulo.setPresupuesto(presupuesto);
         capitulo.setOrden(1);
         capitulo.setConcepto("Instalacion");
-        capitulo.setTipoJerarquia(PresupuestoLinea.TipoJerarquia.CAPITULO);
+        capitulo.setTipoJerarquia("CAPITULO");
         capitulo.setCodigoVisual("01");
 
         PresupuestoLinea partida = new PresupuestoLinea();
         partida.setPresupuesto(presupuesto);
         partida.setOrden(2);
         partida.setConcepto("Paneles solares");
-        partida.setTipoJerarquia(PresupuestoLinea.TipoJerarquia.PARTIDA);
+        partida.setTipoJerarquia("PARTIDA");
         partida.setCodigoVisual("01.01");
         partida.setCantidad(new BigDecimal("1.00"));
         partida.setPrecioUnitario(new BigDecimal("1000.00"));

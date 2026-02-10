@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # BASE DE DATOS (MySQL)
+  # ==========================================
+  db:
+    image: mysql:8.0
+    container_name: gestion-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gestion_ingenieria
+    ports:
+      - "3307:3306" # Mapeamos al 3307 para no chocar con XAMPP si está encendido
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./sql/ddl_ingenieria_xampp.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - gestion-net
+
+  # ==========================================
+  # BACKEND (Spring Boot)
+  # ==========================================
+  backend:
+    build: ./backend
+    container_name: gestion-backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/gestion_ingenieria?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Europe/Madrid
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_SHOW_SQL: "false"
+    ports:
+      - "8082:8082"
+    networks:
+      - gestion-net
+
+  # ==========================================
+  # FRONTEND (Angular + Nginx)
+  # ==========================================
+  frontend:
+    build: ./frontend
+    container_name: gestion-frontend
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - gestion-net
+
+volumes:
+  db_data:
+
+
+networks:
+  gestion-net:
+    driver: bridge

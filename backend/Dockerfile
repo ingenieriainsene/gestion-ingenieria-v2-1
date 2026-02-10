@@ -1,13 +1,5 @@
-# Etapa 1: Construcción
-FROM maven:3.9.6-eclipse-temurin-21 AS build
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-# Etapa 2: Ejecución
-FROM eclipse-temurin:21-jre
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+FROM openjdk:17-jdk-alpine
+VOLUME /tmp
+ARG JAR_FILE=target/gestion-backend-0.0.1-SNAPSHOT.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]

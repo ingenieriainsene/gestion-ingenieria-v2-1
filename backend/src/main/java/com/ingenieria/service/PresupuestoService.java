@@ -34,9 +34,12 @@ public class PresupuestoService {
 
     private static final Logger log = LoggerFactory.getLogger(PresupuestoService.class);
 
-    @Autowired private PresupuestoRepository presupuestoRepository;
-    @Autowired private ClienteRepository clienteRepository;
-    @Autowired private LocalRepository localRepository;
+    @Autowired
+    private PresupuestoRepository presupuestoRepository;
+    @Autowired
+    private ClienteRepository clienteRepository;
+    @Autowired
+    private LocalRepository localRepository;
 
     @Transactional(readOnly = true)
     public List<PresupuestoListResponse> findAll() {
@@ -172,7 +175,7 @@ public class PresupuestoService {
         dto.setTotalPvp(l.getTotalPvp());
         dto.setImporteIva(l.getImporteIva());
         dto.setTotalFinal(l.getTotalFinal());
-        dto.setTipoJerarquia(l.getTipoJerarquia() != null ? l.getTipoJerarquia().name() : null);
+        dto.setTipoJerarquia(l.getTipoJerarquia());
         dto.setCodigoVisual(l.getCodigoVisual());
         dto.setPadreId(l.getPadre() != null ? l.getPadre().getIdLinea() : null);
         dto.setCantidad(l.getCantidad());
@@ -209,26 +212,31 @@ public class PresupuestoService {
                 p.getVivienda() != null ? p.getVivienda().getIdLocal() : null,
                 viviendaDir,
                 tipoLinea,
-                productoNombre
-        );
+                productoNombre);
     }
 
     private String normalizeTipo(String tipo) {
-        if (tipo == null || tipo.isBlank()) return "Obra";
+        if (tipo == null || tipo.isBlank())
+            return "Obra";
         String t = tipo.trim().toLowerCase();
-        if (t.equals("obra")) return "Obra";
-        if (t.equals("correctivo")) return "Correctivo";
-        if (t.equals("preventivo")) return "Preventivo";
+        if (t.equals("obra"))
+            return "Obra";
+        if (t.equals("correctivo"))
+            return "Correctivo";
+        if (t.equals("preventivo"))
+            return "Preventivo";
         return "Obra";
     }
 
     private String generarReferencia(String ref) {
-        if (ref != null && !ref.isBlank()) return ref.trim();
+        if (ref != null && !ref.isBlank())
+            return ref.trim();
         return "PRES-" + System.currentTimeMillis();
     }
 
     private BigDecimal calcularTotalLinea(BigDecimal cantidad, BigDecimal precioUnitario, BigDecimal totalLinea) {
-        if (totalLinea != null) return totalLinea;
+        if (totalLinea != null)
+            return totalLinea;
         BigDecimal qty = cantidad != null ? cantidad : BigDecimal.ZERO;
         BigDecimal pu = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
         return round2(qty.multiply(pu));
@@ -252,8 +260,8 @@ public class PresupuestoService {
             if (l.getConcepto() == null || l.getConcepto().isBlank()) {
                 throw new IllegalArgumentException("El concepto es obligatorio en todas las líneas");
             }
-            PresupuestoLinea.TipoJerarquia tipo = parseTipo(l.getTipoJerarquia());
-            if (tipo == PresupuestoLinea.TipoJerarquia.PARTIDA) {
+            String tipo = parseTipo(l.getTipoJerarquia());
+            if ("PARTIDA".equals(tipo)) {
                 if (l.getCantidad() == null || (l.getCosteUnitario() == null && l.getPrecioUnitario() == null)) {
                     throw new IllegalArgumentException("Cantidad y coste unitario son obligatorios en las partidas");
                 }
@@ -304,7 +312,7 @@ public class PresupuestoService {
         BigDecimal totalConIva = BigDecimal.ZERO;
 
         for (PresupuestoLinea linea : lineas) {
-            if (linea.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+            if ("CAPITULO".equals(linea.getTipoJerarquia())) {
                 BigDecimal capCoste = sumaHijosCoste(linea);
                 BigDecimal capPvp = sumaHijosPvp(linea);
                 BigDecimal capFinal = sumaHijosFinal(linea);
@@ -322,7 +330,8 @@ public class PresupuestoService {
                 continue;
             }
 
-            LineaCalculos calc = calcularLinea(linea.getCantidad(), linea.getCosteUnitario(), linea.getFactorMargen(), linea.getIvaPorcentaje());
+            LineaCalculos calc = calcularLinea(linea.getCantidad(), linea.getCosteUnitario(), linea.getFactorMargen(),
+                    linea.getIvaPorcentaje());
             linea.setTotalCoste(calc.totalCoste);
             linea.setPvpUnitario(calc.pvpUnitario);
             linea.setTotalPvp(calc.totalPvp);
@@ -339,31 +348,35 @@ public class PresupuestoService {
     }
 
     private BigDecimal round2(BigDecimal value) {
-        if (value == null) return BigDecimal.ZERO;
+        if (value == null)
+            return BigDecimal.ZERO;
         return value.setScale(2, RoundingMode.HALF_UP);
     }
 
     private static class Totales {
         private final BigDecimal totalSinIva;
         private final BigDecimal totalConIva;
+
         private Totales(BigDecimal totalSinIva, BigDecimal totalConIva) {
             this.totalSinIva = totalSinIva;
             this.totalConIva = totalConIva;
         }
     }
 
-    private PresupuestoLinea.TipoJerarquia parseTipo(String value) {
-        if (value == null) return PresupuestoLinea.TipoJerarquia.PARTIDA;
-        try {
-            return PresupuestoLinea.TipoJerarquia.valueOf(value);
-        } catch (Exception e) {
-            return PresupuestoLinea.TipoJerarquia.PARTIDA;
+    private String parseTipo(String value) {
+        if (value == null)
+            return "PARTIDA";
+        String upper = value.trim().toUpperCase();
+        if ("CAPITULO".equals(upper) || "PARTIDA".equals(upper)) {
+            return upper;
         }
+        return "PARTIDA";
     }
 
     private List<PresupuestoLineaDTO> flatten(List<PresupuestoLineaDTO> lineas) {
         List<PresupuestoLineaDTO> result = new ArrayList<>();
-        if (lineas == null) return result;
+        if (lineas == null)
+            return result;
         for (PresupuestoLineaDTO l : lineas) {
             result.add(l);
             if (l.getHijos() != null && !l.getHijos().isEmpty()) {
@@ -373,10 +386,12 @@ public class PresupuestoService {
         return result;
     }
 
-    private PresupuestoLinea findByCodigoOrId(PresupuestoLineaDTO dto, Map<String, PresupuestoLinea> byCodigo, Map<Long, PresupuestoLinea> byId) {
+    private PresupuestoLinea findByCodigoOrId(PresupuestoLineaDTO dto, Map<String, PresupuestoLinea> byCodigo,
+            Map<Long, PresupuestoLinea> byId) {
         if (dto.getIdLinea() != null) {
             PresupuestoLinea found = byId.get(dto.getIdLinea());
-            if (found != null) return found;
+            if (found != null)
+                return found;
         }
         if (dto.getCodigoVisual() != null) {
             return byCodigo.get(dto.getCodigoVisual());
@@ -385,19 +400,22 @@ public class PresupuestoService {
     }
 
     private String parentCode(String codigo) {
-        if (codigo == null) return null;
+        if (codigo == null)
+            return null;
         int idx = codigo.lastIndexOf('.');
-        if (idx <= 0) return null;
+        if (idx <= 0)
+            return null;
         return codigo.substring(0, idx);
     }
 
     private BigDecimal sumaHijosCoste(PresupuestoLinea capitulo) {
         BigDecimal total = BigDecimal.ZERO;
         for (PresupuestoLinea h : capitulo.getHijos()) {
-            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+            if ("CAPITULO".equals(h.getTipoJerarquia())) {
                 total = total.add(sumaHijosCoste(h));
             } else {
-                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(), h.getIvaPorcentaje());
+                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(),
+                        h.getIvaPorcentaje());
                 total = total.add(calc.totalCoste);
             }
         }
@@ -407,10 +425,11 @@ public class PresupuestoService {
     private BigDecimal sumaHijosPvp(PresupuestoLinea capitulo) {
         BigDecimal total = BigDecimal.ZERO;
         for (PresupuestoLinea h : capitulo.getHijos()) {
-            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+            if ("CAPITULO".equals(h.getTipoJerarquia())) {
                 total = total.add(sumaHijosPvp(h));
             } else {
-                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(), h.getIvaPorcentaje());
+                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(),
+                        h.getIvaPorcentaje());
                 total = total.add(calc.totalPvp);
             }
         }
@@ -420,10 +439,11 @@ public class PresupuestoService {
     private BigDecimal sumaHijosFinal(PresupuestoLinea capitulo) {
         BigDecimal total = BigDecimal.ZERO;
         for (PresupuestoLinea h : capitulo.getHijos()) {
-            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+            if ("CAPITULO".equals(h.getTipoJerarquia())) {
                 total = total.add(sumaHijosFinal(h));
             } else {
-                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(), h.getIvaPorcentaje());
+                LineaCalculos calc = calcularLinea(h.getCantidad(), h.getCosteUnitario(), h.getFactorMargen(),
+                        h.getIvaPorcentaje());
                 total = total.add(calc.totalFinal);
             }
         }
@@ -455,14 +475,16 @@ public class PresupuestoService {
     }
 
     private void sortTree(List<PresupuestoLineaDTO> nodes) {
-        if (nodes == null) return;
+        if (nodes == null)
+            return;
         nodes.sort(Comparator.comparing(PresupuestoLineaDTO::getCodigoVisual, Comparator.nullsLast(String::compareTo)));
         for (PresupuestoLineaDTO n : nodes) {
             sortTree(n.getHijos());
         }
     }
 
-    private LineaCalculos calcularLinea(BigDecimal cantidad, BigDecimal costeUnitario, BigDecimal factorMargen, BigDecimal ivaPorcentaje) {
+    private LineaCalculos calcularLinea(BigDecimal cantidad, BigDecimal costeUnitario, BigDecimal factorMargen,
+            BigDecimal ivaPorcentaje) {
         BigDecimal qty = cantidad != null ? cantidad : BigDecimal.ZERO;
         BigDecimal coste = costeUnitario != null ? costeUnitario : BigDecimal.ZERO;
         BigDecimal factor = factorMargen != null ? factorMargen : BigDecimal.ONE;
@@ -470,7 +492,8 @@ public class PresupuestoService {
         BigDecimal pvpUnitario = round2(coste.multiply(factor));
         BigDecimal totalPvp = round2(totalCoste.multiply(factor));
         BigDecimal ivaPct = ivaPorcentaje != null ? ivaPorcentaje : BigDecimal.valueOf(21);
-        BigDecimal importeIva = round2(totalPvp.multiply(ivaPct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+        BigDecimal importeIva = round2(
+                totalPvp.multiply(ivaPct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
         BigDecimal totalFinal = round2(totalPvp.add(importeIva));
         return new LineaCalculos(totalCoste, pvpUnitario, totalPvp, importeIva, totalFinal);
     }
@@ -482,7 +505,8 @@ public class PresupuestoService {
         private final BigDecimal importeIva;
         private final BigDecimal totalFinal;
 
-        private LineaCalculos(BigDecimal totalCoste, BigDecimal pvpUnitario, BigDecimal totalPvp, BigDecimal importeIva, BigDecimal totalFinal) {
+        private LineaCalculos(BigDecimal totalCoste, BigDecimal pvpUnitario, BigDecimal totalPvp, BigDecimal importeIva,
+                BigDecimal totalFinal) {
             this.totalCoste = totalCoste;
             this.pvpUnitario = pvpUnitario;
             this.totalPvp = totalPvp;
@@ -492,19 +516,24 @@ public class PresupuestoService {
     }
 
     private String joinLineField(List<PresupuestoLinea> lineas, Function<PresupuestoLinea, String> mapper) {
-        if (lineas == null || lineas.isEmpty()) return null;
+        if (lineas == null || lineas.isEmpty())
+            return null;
         Set<String> values = new LinkedHashSet<>();
         for (PresupuestoLinea l : lineas) {
-            if (l == null) continue;
-            if (l.getTipoJerarquia() != null && l.getTipoJerarquia() != PresupuestoLinea.TipoJerarquia.PARTIDA) {
+            if (l == null)
+                continue;
+            if (l.getTipoJerarquia() != null && !"PARTIDA".equals(l.getTipoJerarquia())) {
                 continue;
             }
             String value = mapper.apply(l);
-            if (value == null) continue;
+            if (value == null)
+                continue;
             String trimmed = value.trim();
-            if (!trimmed.isEmpty()) values.add(trimmed);
+            if (!trimmed.isEmpty())
+                values.add(trimmed);
         }
-        if (values.isEmpty()) return null;
+        if (values.isEmpty())
+            return null;
         return String.join(", ", values);
     }
 }

@@ -22,7 +22,7 @@ export interface ChatSala {
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private endpoint = 'chat';
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService) { }
 
   getSalaGeneral(): Observable<ChatSala> {
     return this.api.get<ChatSala>(`${this.endpoint}/sala-general`);
@@ -40,5 +40,13 @@ export class ChatService {
     const form = new FormData();
     form.append('file', file);
     return this.api.post<{ url: string; tipo?: string; nombre?: string }>(`${this.endpoint}/adjuntos`, form);
+  }
+
+  getMisChats(usuarioId: number): Observable<ChatSala[]> {
+    return this.api.get<ChatSala[]>(`${this.endpoint}/mis-chats`, { usuarioId: String(usuarioId) });
+  }
+
+  iniciarPrivado(usuario1Id: number, usuario2Id: number): Observable<ChatSala> {
+    return this.api.post<ChatSala>(`${this.endpoint}/iniciar-privado?usuario1Id=${usuario1Id}&usuario2Id=${usuario2Id}`, {});
   }
 }

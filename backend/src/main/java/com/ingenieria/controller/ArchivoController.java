@@ -1,4 +1,5 @@
 package com.ingenieria.controller;
+
 // Holaaaaa
 import com.ingenieria.model.ArchivoCliente;
 import com.ingenieria.model.ArchivoTramite;
@@ -17,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.nio.file.Path;
 import java.util.List;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/archivos")
 public class ArchivoController {

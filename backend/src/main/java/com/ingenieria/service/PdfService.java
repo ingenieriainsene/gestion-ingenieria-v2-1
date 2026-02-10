@@ -33,7 +33,8 @@ public class PdfService {
 
     private static final Logger log = LoggerFactory.getLogger(PdfService.class);
 
-    @Autowired private PresupuestoRepository presupuestoRepository;
+    @Autowired
+    private PresupuestoRepository presupuestoRepository;
 
     private static final Color COLOR_PRIMARY = new Color(15, 23, 42);
     private static final Color COLOR_LIGHT = new Color(241, 245, 249);
@@ -66,7 +67,7 @@ public class PdfService {
     private void addHeader(Document document, Presupuesto p) throws DocumentException {
         PdfPTable header = new PdfPTable(2);
         header.setWidthPercentage(100);
-        header.setWidths(new float[]{1.2f, 1.8f});
+        header.setWidths(new float[] { 1.2f, 1.8f });
 
         PdfPCell left = new PdfPCell();
         left.setBorder(Rectangle.NO_BORDER);
@@ -115,16 +116,18 @@ public class PdfService {
     }
 
     private String resolveTipo(Presupuesto p) {
-        if (p == null) return "Obra";
+        if (p == null)
+            return "Obra";
         String tipo = p.getTipoPresupuesto();
-        if (tipo == null || tipo.isBlank()) return "Obra";
+        if (tipo == null || tipo.isBlank())
+            return "Obra";
         return tipo.trim();
     }
 
     private void addLineasTable(Document document, Presupuesto p) throws DocumentException {
         PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{3.6f, 0.8f, 1.2f, 1.2f});
+        table.setWidths(new float[] { 3.6f, 0.8f, 1.2f, 1.2f });
 
         addHeaderCell(table, "CONCEPTO");
         addHeaderCell(table, "CANT.");
@@ -134,7 +137,7 @@ public class PdfService {
         List<PresupuestoLinea> lineas = p.getLineas();
         List<PresupuestoLinea> roots = buildTree(lineas);
         for (PresupuestoLinea l : roots) {
-            if (l.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+            if ("CAPITULO".equals(l.getTipoJerarquia())) {
                 String capitulo = (l.getCodigoVisual() != null ? l.getCodigoVisual() + " " : "") +
                         (l.getConcepto() != null ? l.getConcepto() : "—");
                 BigDecimal capTotal = sumarCapituloConIva(l);
@@ -162,7 +165,7 @@ public class PdfService {
         List<PresupuestoLinea> lineas = p.getLineas();
         if (lineas != null) {
             for (PresupuestoLinea l : lineas) {
-                if (l.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+                if ("CAPITULO".equals(l.getTipoJerarquia())) {
                     continue;
                 }
                 BigDecimal base = calcularBaseLinea(l);
@@ -178,7 +181,7 @@ public class PdfService {
         PdfPTable totals = new PdfPTable(2);
         totals.setWidthPercentage(40);
         totals.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totals.setWidths(new float[]{1.2f, 1f});
+        totals.setWidths(new float[] { 1.2f, 1f });
 
         addTotalsRow(totals, "Base imponible", formatMoney(round2(totalSinIva)));
         addTotalsRow(totals, "Total IVA", formatMoney(round2(totalIva)));
@@ -238,7 +241,7 @@ public class PdfService {
     private BigDecimal sumarCapituloConIva(PresupuestoLinea capitulo) {
         BigDecimal total = BigDecimal.ZERO;
         for (PresupuestoLinea h : capitulo.getHijos()) {
-            if (h.getTipoJerarquia() == PresupuestoLinea.TipoJerarquia.CAPITULO) {
+            if ("CAPITULO".equals(h.getTipoJerarquia())) {
                 total = total.add(sumarCapituloConIva(h));
             } else {
                 BigDecimal base = calcularBaseLinea(h);
@@ -250,7 +253,8 @@ public class PdfService {
     }
 
     private List<PresupuestoLinea> buildTree(List<PresupuestoLinea> lineas) {
-        if (lineas == null) return List.of();
+        if (lineas == null)
+            return List.of();
         Map<Long, PresupuestoLinea> byId = new HashMap<>();
         for (PresupuestoLinea l : lineas) {
             l.setHijos(new ArrayList<>());
@@ -296,7 +300,8 @@ public class PdfService {
     }
 
     private String buildClienteNombre(Cliente c) {
-        if (c == null) return "—";
+        if (c == null)
+            return "—";
         String nombre = c.getNombre() != null ? c.getNombre() : "";
         String ap1 = c.getApellido1() != null ? c.getApellido1() : "";
         String ap2 = c.getApellido2() != null ? " " + c.getApellido2() : "";
@@ -304,18 +309,22 @@ public class PdfService {
     }
 
     private String buildVivienda(Local l) {
-        if (l == null) return "—";
+        if (l == null)
+            return "—";
         return l.getDireccionCompleta() != null ? l.getDireccionCompleta() : "—";
     }
 
     private String formatDate(Presupuesto p) {
-        if (p.getFecha() == null) return "—";
+        if (p.getFecha() == null)
+            return "—";
         return p.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
     private BigDecimal calcularBaseLinea(PresupuestoLinea l) {
-        if (l.getTotalPvp() != null) return round2(l.getTotalPvp());
-        if (l.getTotalLinea() != null) return round2(l.getTotalLinea());
+        if (l.getTotalPvp() != null)
+            return round2(l.getTotalPvp());
+        if (l.getTotalLinea() != null)
+            return round2(l.getTotalLinea());
         BigDecimal qty = safe(l.getCantidad());
         BigDecimal pu = safe(l.getPvpUnitario() != null ? l.getPvpUnitario() : l.getPrecioUnitario());
         return round2(qty.multiply(pu));
@@ -331,7 +340,8 @@ public class PdfService {
     }
 
     private BigDecimal round2(BigDecimal value) {
-        if (value == null) return BigDecimal.ZERO;
+        if (value == null)
+            return BigDecimal.ZERO;
         return value.setScale(2, RoundingMode.HALF_UP);
     }
 

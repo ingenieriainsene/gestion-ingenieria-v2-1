@@ -23,7 +23,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Map;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -47,12 +46,14 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest,
-                                              jakarta.servlet.http.HttpServletRequest request) {
-        System.out.println("Intento de login recibido para: " + (loginRequest != null ? loginRequest.getUsername() : "null"));
+            jakarta.servlet.http.HttpServletRequest request) {
+        System.out.println(
+                "Intento de login recibido para: " + (loginRequest != null ? loginRequest.getUsername() : "null"));
 
         String username = loginRequest != null ? loginRequest.getUsername() : null;
         String password = loginRequest != null ? loginRequest.getPassword() : null;
-        log.info("[Auth] /login recibido – username: '{}', password presente: {}", username, password != null && !password.isEmpty());
+        log.info("[Auth] /login recibido – username: '{}', password presente: {}", username,
+                password != null && !password.isEmpty());
 
         if ("jefe_admin".equals(username)) {
             usuarioRepository.findByNombreUsuario(username).ifPresentOrElse(
@@ -141,19 +142,19 @@ public class AuthController {
         }
         return ip;
     }
-    
+
     // Endpoint helper to create admin user manually if needed (remove in prod)
     @PostMapping("/setup")
     public ResponseEntity<?> setupAdmin() {
-         if(usuarioRepository.findByNombreUsuario("admin").isPresent()) {
-             return ResponseEntity.badRequest().body("Admin ya existe");
-         }
-         Usuario u = new Usuario();
-         u.setNombreUsuario("admin");
-         u.setPasswordHash(encoder.encode("admin123"));
-         u.setRol(Usuario.Rol.ADMIN);
-         u.setEmail("admin@admin.com");
-         usuarioRepository.save(u);
-         return ResponseEntity.ok("Admin creado");
+        if (usuarioRepository.findByNombreUsuario("admin").isPresent()) {
+            return ResponseEntity.badRequest().body("Admin ya existe");
+        }
+        Usuario u = new Usuario();
+        u.setNombreUsuario("admin");
+        u.setPasswordHash(encoder.encode("admin123"));
+        u.setRol(Usuario.Rol.ADMIN);
+        u.setEmail("admin@admin.com");
+        usuarioRepository.save(u);
+        return ResponseEntity.ok("Admin creado");
     }
 }

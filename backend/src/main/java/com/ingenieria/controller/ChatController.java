@@ -1,6 +1,10 @@
 package com.ingenieria.controller;
 
-import com.ingenieria.dto.*;
+import com.ingenieria.dto.ChatLecturaRequest;
+import com.ingenieria.dto.ChatMessageDTO;
+import com.ingenieria.dto.ChatSalaDTO;
+import com.ingenieria.dto.ChatSendRequest;
+import com.ingenieria.dto.ChatUploadResponse;
 import com.ingenieria.model.ChatSala;
 import com.ingenieria.service.ChatService;
 import org.springframework.http.ResponseEntity;
@@ -13,12 +17,21 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/chat")
-@CrossOrigin(origins = "http://localhost:4200")
 public class ChatController {
     private final ChatService service;
 
     public ChatController(ChatService service) {
         this.service = service;
+    }
+
+    @GetMapping("/mis-chats")
+    public List<ChatSalaDTO> getMisChats(@RequestParam Long usuarioId) {
+        return service.getMisChats(usuarioId);
+    }
+
+    @PostMapping("/iniciar-privado")
+    public ChatSala iniciarPrivado(@RequestParam Long usuario1Id, @RequestParam Long usuario2Id) {
+        return service.iniciarChatPrivado(usuario1Id, usuario2Id);
     }
 
     @GetMapping("/sala-general")
@@ -50,13 +63,13 @@ public class ChatController {
             res.setTipo(file.getContentType());
             return ResponseEntity.ok(res);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("No se pudo subir el archivo");
+            return ResponseEntity.badRequest().body("No se pudo subir el archivo: " + e.getMessage());
         }
     }
 
     @MessageMapping("/chat.send")
-    @SendTo("/topic/chat.general")
     public ChatMessageDTO send(ChatSendRequest req) {
+        // Enviar a la sala específica
         return service.guardarMensaje(req);
     }
 }

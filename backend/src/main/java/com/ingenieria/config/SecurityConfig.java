@@ -31,7 +31,10 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-    /** BCrypt para jefe_admin / admin123. AdminInitializer codifica la contraseña al arrancar. */
+    /**
+     * BCrypt para jefe_admin / admin123. AdminInitializer codifica la contraseña al
+     * arrancar.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -43,9 +46,10 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:4200", "http://127.0.0.1:4200", "http://localhost:4201", "http://127.0.0.1:4201")
+                        .allowedOriginPatterns("*") // Permitir cualquier origen (incluyendo localhost:80)
                         .allowedMethods("*")
-                        .allowedHeaders("*");
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
         };
     }

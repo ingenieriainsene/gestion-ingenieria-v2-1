@@ -16,15 +16,37 @@
             "outputPath": "dist/gestion-frontend",
             "index": "src/index.html",
             "main": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/styles.css", "node_modules/bootstrap/dist/css/bootstrap.min.css"],
-            "scripts": ["node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"]
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css"
+            ],
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ]
           },
           "configurations": {
             "production": {
-              "budgets": [{"type": "initial", "maximumWarning": "2mb", "maximumError": "3mb"}],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environments.ts",
+                  "with": "src/environments/environments.prod.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "3mb"
+                }
+              ],
               "outputHashing": "all"
             },
             "development": {
@@ -41,8 +63,12 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "gestion-frontend:build:production" },
-            "development": { "buildTarget": "gestion-frontend:build:development" }
+            "production": {
+              "buildTarget": "gestion-frontend:build:production"
+            },
+            "development": {
+              "buildTarget": "gestion-frontend:build:development"
+            }
           },
           "defaultConfiguration": "development"
         }

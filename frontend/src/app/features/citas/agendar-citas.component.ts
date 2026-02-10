@@ -467,19 +467,19 @@ export class AgendarCitasComponent implements OnInit {
         right: 'dayGridMonth,timeGridWeek,timeGridDay'
       },
       selectable: true,
-      select: (arg) => this.onSelect(arg),
-      eventClick: (arg) => this.onEventClick(arg),
+      select: (arg: DateSelectArg) => this.onSelect(arg),
+      eventClick: (arg: EventClickArg) => this.onEventClick(arg),
       editable: true,
-      eventDrop: (arg) => this.onMoveEvent(arg),
-      eventResize: (arg) => this.onMoveEvent(arg),
-      eventClassNames: (arg) => {
+      eventDrop: (arg: any) => this.onMoveEvent(arg),
+      eventResize: (arg: any) => this.onMoveEvent(arg),
+      eventClassNames: (arg: any) => {
         const estado = ((arg.event.extendedProps as any)?.['estado'] ?? 'Programada').toString().toLowerCase();
         if (estado === 'confirmada') return ['evt-confirmada'];
         if (estado === 'cancelada') return ['evt-cancelada'];
         if (estado === 'realizada') return ['evt-realizada'];
         return ['evt-programada'];
       },
-      eventDidMount: (arg) => {
+      eventDidMount: (arg: any) => {
         const usuarioId = (arg.event.extendedProps as any)?.['usuarioId'];
         const color = this.getColorByUsuario(usuarioId);
         if (color) {
@@ -487,7 +487,7 @@ export class AgendarCitasComponent implements OnInit {
         }
       },
       eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-      events: (info, success) => {
+      events: (info: any, success: any) => {
         const from = info.startStr;
         const to = info.endStr;
         this.citas.listByRange(from, to).subscribe({

@@ -66,9 +66,8 @@ public class PresupuestoLinea {
     @Column(name = "total_final", precision = 12, scale = 2)
     private BigDecimal totalFinal;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_jerarquia", length = 20)
-    private TipoJerarquia tipoJerarquia;
+    @Column(name = "tipo_jerarquia", length = 20, columnDefinition = "VARCHAR(20)")
+    private String tipoJerarquia;
 
     @Column(name = "codigo_visual", length = 20)
     private String codigoVisual;
@@ -81,9 +80,4 @@ public class PresupuestoLinea {
 
     @Column(name = "total_linea", precision = 12, scale = 2)
     private BigDecimal totalLinea;
-
-    public enum TipoJerarquia {
-        CAPITULO,
-        PARTIDA
-    }
 }
