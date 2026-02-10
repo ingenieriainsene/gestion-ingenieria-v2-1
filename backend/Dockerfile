@@ -1,6 +1,5 @@
-# --- ETAPA 1: Compilación (Maven) ---
-# Usamos una imagen que SÍ existe y funciona
-FROM maven:3.8.5-openjdk-17 AS build
+# --- ETAPA 1: Compilación ---
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Copiamos archivos y descargamos librerías
@@ -11,12 +10,12 @@ RUN mvn dependency:go-offline
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# --- ETAPA 2: Ejecución (Java) ---
-# Usamos una imagen ligera y válida para correr la app
-FROM openjdk:17-jdk-slim
+# --- ETAPA 2: Ejecución ---
+# Cambiamos a Eclipse Temurin que es más estable y seguro
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copiamos el .jar que fabricamos en la etapa 1
+# Copiamos el .jar
 COPY --from=build /app/target/*.jar app.jar
 
 # Arrancamos
