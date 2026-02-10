@@ -1,22 +1,21 @@
-# --- ETAPA 1: Compilación ---
-FROM maven:3.9-eclipse-temurin-17 AS build
+# ETAPA 1: Compilar (Usamos una imagen de Maven que SÍ existe)
+FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 
-# Copiamos archivos y descargamos librerías
+# Copiamos archivos de configuración y descargamos librerías
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
-# Copiamos el código y compilamos
+# Copiamos el código fuente y compilamos el .jar
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# --- ETAPA 2: Ejecución ---
-# Cambiamos a Eclipse Temurin que es más estable y seguro
-FROM eclipse-temurin:17-jre-alpine
+# ETAPA 2: Ejecutar (Usamos una imagen ligera válida)
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 
-# Copiamos el .jar
+# Copiamos el .jar que acabamos de fabricar arriba
 COPY --from=build /app/target/*.jar app.jar
 
-# Arrancamos
+# Arrancamos la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
