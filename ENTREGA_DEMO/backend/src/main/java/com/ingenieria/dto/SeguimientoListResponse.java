@@ -1,0 +1,26 @@
+package com.ingenieria.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+/** DTO para listar hitos de seguimiento (evita LazyInit al serializar). */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class SeguimientoListResponse {
+    private Long idSeguimiento;
+    private Long idTramite;
+    private String comentario;
+    private LocalDate fechaSeguimiento;
+    private Boolean esUrgente;
+    private String estado;
+    private LocalDateTime fechaRegistro;
+    private String nombreAsignado;
+    private String nombreCreador;
+    private Long idProveedor;
+    private String nombreProveedor;
+}

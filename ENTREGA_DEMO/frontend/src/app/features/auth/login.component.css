@@ -1,0 +1,112 @@
+/* 1. RESET Y FONDO */
+:host {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(to bottom, #0f172a, #000000);
+}
+
+/* 2. EL CONTENEDOR INVISIBLE (Centrado Flexbox) */
+.main-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent !important;
+    pointer-events: none;
+}
+
+/* 3. LA TARJETA (Estilo Proyecto Antiguo) */
+.login-card {
+    pointer-events: auto;
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 380px;
+    padding: 2.5rem 2rem;
+    border-radius: 10px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* 4. TIPOGRAFÍA Y ELEMENTOS INTERNOS */
+.card-header h3 {
+    text-align: center;
+    color: #1a202c;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    display: block;
+    text-transform: uppercase;
+}
+
+input {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #F59E0B;
+    background-color: #fff;
+}
+
+button {
+    width: 100%;
+    padding: 1rem;
+    background-color: #94a3b8;
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+button:hover:not(:disabled) {
+    background-color: #64748b;
+}
+
+.card-footer p {
+    text-align: center;
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-top: 1rem;
+    text-transform: uppercase;
+}
