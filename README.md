@@ -2,60 +2,83 @@
 
 Sistema de gestión para proyectos de ingeniería con backend Spring Boot y frontend Angular.
 
-## 🚀 Inicio Rápido
+## 🚀 Inicio Rápido con Docker
 
-### Opción 1: XAMPP (MySQL) - **CONFIGURACIÓN ACTUAL**
+### Requisitos
+- Docker y Docker Compose instalados
+- Java JDK 17+ (para desarrollo local)
+- Node.js 18+ y npm (para desarrollo local del frontend)
 
-1. **Iniciar MySQL en XAMPP**
-   - Abre el Panel de Control de XAMPP
-   - Inicia el servicio MySQL
+### Pasos
 
-2. **Crear la base de datos**
-   - Abre http://localhost/phpmyadmin
-   - Ejecuta el script: `sql/ddl_ingenieria_xampp.sql`
-
-3. **Levantar el backend**
-   ```bash
-   run-backend-xampp.bat
-   ```
-
-4. **Levantar el frontend**
-   ```bash
-   cd frontend
-   npm install
-   npm start
-   ```
-
-5. **Acceder a la aplicación**
-   - Frontend: http://localhost:4200
-   - Backend: http://localhost:8082
-   - Usuario: `jefe_admin` / Contraseña: `admin123`
-
----
-
-### Opción 2: Docker (PostgreSQL)
-
-1. **Cambiar configuración**
-   - Abre `backend/src/main/resources/application.properties`
-   - Comenta las líneas de XAMPP (MySQL)
-   - Descomenta las líneas de DOCKER (PostgreSQL)
-
-2. **Iniciar Docker**
+1. **Iniciar los servicios con Docker**
    ```bash
    docker-compose up -d
    ```
 
-3. **Levantar el backend**
+2. **Verificar que los servicios estén corriendo**
    ```bash
-   run-backend-docker.bat
+   docker-compose ps
    ```
 
-4. **Levantar el frontend**
+3. **Acceder a la aplicación**
+   - Frontend: http://localhost
+   - Backend API: http://localhost:8082
+   - Base de datos PostgreSQL: localhost:5432
+   - Usuario: `jefe_admin` / Contraseña: `admin123`
+
+### Detener los servicios
+```bash
+docker-compose down
+```
+
+### Reconstruir los contenedores
+```bash
+docker-compose down -v
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+---
+
+## 🛠️ Desarrollo Local (sin Docker)
+
+Si prefieres ejecutar el backend y frontend localmente:
+
+### Backend
+
+1. **Asegúrate de tener PostgreSQL corriendo** (puede ser con Docker):
+   ```bash
+   docker run -d -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=gestion_ingenieria postgres:15-alpine
+   ```
+
+2. **Ejecuta el script SQL de inicialización**:
+   ```bash
+   psql -h localhost -U postgres -d gestion_ingenieria -f sql/ddl_ingenieria.sql
+   ```
+
+3. **Levantar el backend**:
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+
+### Frontend
+
+1. **Instalar dependencias**:
    ```bash
    cd frontend
    npm install
+   ```
+
+2. **Levantar el servidor de desarrollo**:
+   ```bash
    npm start
    ```
+
+3. **Acceder a la aplicación**:
+   - Frontend: http://localhost:4200
+   - Backend: http://localhost:8082
 
 ---
 
@@ -69,49 +92,90 @@ gestion-ingenieria-v2/
 │   │   │   ├── java/          # Código fuente
 │   │   │   └── resources/     # application.properties
 │   │   └── test/
-│   └── pom.xml                # Dependencias Maven
+│   ├── pom.xml                # Dependencias Maven
+│   └── Dockerfile             # Imagen Docker del backend
 ├── frontend/                  # Angular 17
 │   ├── src/
 │   │   └── app/              # Componentes Angular
-│   └── package.json          # Dependencias npm
+│   ├── package.json          # Dependencias npm
+│   └── Dockerfile            # Imagen Docker del frontend
 ├── sql/
-│   ├── ddl_ingenieria.sql           # Schema PostgreSQL (Docker)
-│   └── ddl_ingenieria_xampp.sql     # Schema MySQL (XAMPP)
-├── run-backend-xampp.bat     # Script para XAMPP
-└── run-backend-docker.bat    # Script para Docker
+│   ├── ddl_ingenieria.sql    # Schema PostgreSQL
+│   └── fix_chat_schema.sql   # Correcciones del schema
+├── docker-compose.yml         # Orquestación de servicios
+└── run-backend-docker.bat     # Script para desarrollo local
 ```
 
 ---
 
-## 🔧 Requisitos
+## 🔧 Configuración
 
-- **Java JDK 17** o superior
-- **Maven 3.6+**
-- **Node.js 18+** y npm
-- **XAMPP** (para MySQL) O **Docker** (para PostgreSQL)
+### Variables de Entorno
 
----
+El archivo `.env.example` contiene todas las variables de entorno disponibles. Para desarrollo local, puedes crear un archivo `.env` basado en este ejemplo.
 
-## 📝 Notas
+### Base de Datos
 
-- El archivo `application.properties` contiene ambas configuraciones
-- Por defecto está configurado para **XAMPP (MySQL)**
-- Para cambiar a Docker, solo comenta/descomenta las líneas correspondientes
-- Los datos de prueba se crean automáticamente al iniciar el backend
+- **Motor**: PostgreSQL 15
+- **Puerto**: 5432
+- **Base de datos**: gestion_ingenieria
+- **Usuario**: postgres
+- **Contraseña**: postgres
+
+### Puertos
+
+| Servicio | Puerto |
+|----------|--------|
+| Frontend | 80 (Docker) / 4200 (desarrollo) |
+| Backend | 8082 |
+| PostgreSQL | 5432 |
 
 ---
 
 ## 🆘 Problemas Comunes
 
 ### Backend no inicia
-- Verifica que MySQL/PostgreSQL esté corriendo
-- Verifica las credenciales en `application.properties`
-- Verifica que la base de datos exista
+- Verifica que PostgreSQL esté corriendo
+- Verifica las credenciales en `application.properties` o variables de entorno
+- Verifica que la base de datos `gestion_ingenieria` exista
 
 ### Frontend no se conecta
 - Verifica que el backend esté corriendo en http://localhost:8082
-- Revisa la consola del navegador (F12) para errores
+- Revisa la consola del navegador (F12) para errores CORS
 
 ### Puerto ocupado
-- Backend: Cambia `server.port` en `application.properties`
-- Frontend: Ejecuta `ng serve --port 4201`
+- Backend: Cambia `SERVER_PORT` en las variables de entorno
+- Frontend (desarrollo): Ejecuta `ng serve --port 4201`
+- Docker: Modifica los puertos en `docker-compose.yml`
+
+### Problemas con Docker
+```bash
+# Limpiar todo y empezar de nuevo
+docker-compose down -v
+docker system prune -a
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+---
+
+## 📝 Notas
+
+- El proyecto está configurado para usar PostgreSQL con Docker
+- Los datos de prueba se crean automáticamente al iniciar el backend
+- Para producción, asegúrate de cambiar las credenciales por defecto
+
+---
+
+## 🔐 Usuarios de Prueba
+
+El sistema crea automáticamente usuarios de prueba:
+
+| Usuario | Contraseña | Rol |
+|---------|-----------|-----|
+| `jefe_admin` | `admin123` | ADMIN |
+| `carlos_tec` | `tecnico123` | TÉCNICO |
+| `marta_tec` | `tecnico123` | TÉCNICO |
+| `raul_tec` | `tecnico123` | TÉCNICO |
+| `elena_tec` | `tecnico123` | TÉCNICO |
+| `pablo_tec` | `tecnico123` | TÉCNICO |

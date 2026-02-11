@@ -11,7 +11,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # ETAPA 2: Ejecutar (Usamos una imagen ligera válida)
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
 
 # Copiamos el .jar que acabamos de fabricar arriba

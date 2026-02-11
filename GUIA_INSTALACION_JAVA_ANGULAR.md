@@ -27,25 +27,28 @@ En la terminal, dentro de la carpeta del proyecto, ejecuta:
 ```bash
 docker-compose up -d --build
 ```
-*(Esto tardará unos minutos la primera vez mientras descarga las imágenes de base de datos, Java y Node).*
+*(Esto tardará unos minutos la primera vez mientras descarga las imágenes de PostgreSQL, Java y Node).*
 
 ### 4. Acceder
-- **Frontend:** http://localhost:80 (o simplemente http://localhost)
+- **Frontend:** http://localhost (puerto 80)
 - **Backend:** http://localhost:8082
-- **Base de Datos:** Puerto 3307 (usuario: root / clave: root)
+- **Base de Datos PostgreSQL:** Puerto 5432 (usuario: postgres / clave: postgres)
 
 ---
 
-## 🛠️ Opción B: INSTALACIÓN MANUAL (XAMPP + Java + Node)
+## 🛠️ Opción B: INSTALACIÓN MANUAL (PostgreSQL + Java + Node)
 Usa esta opción si Docker no funciona o prefieres tener control manual.
 
-### 1. Instalar Base de Datos (XAMPP)
-1.  Descarga XAMPP desde [https://www.apachefriends.org/es/index.html](https://www.apachefriends.org/es/index.html).
-2.  Instala solo **MySQL** y **Apache** (opcional).
-3.  Abre el Panel de Control de XAMPP e inicia "MySQL".
-4.  Ve a `http://localhost/phpmyadmin` (si instalaste Apache) o usa un cliente SQL (HeidiSQL, DBeaver).
+### 1. Instalar Base de Datos (PostgreSQL)
+1.  Descarga PostgreSQL desde [https://www.postgresql.org/download/](https://www.postgresql.org/download/).
+2.  Instala PostgreSQL 15 o superior.
+3.  Durante la instalación, establece una contraseña para el usuario `postgres`.
+4.  Abre pgAdmin (incluido con PostgreSQL) o usa la línea de comandos.
 5.  Crea una base de datos llamada `gestion_ingenieria`.
-6.  Importa el fichero `sql/ddl_ingenieria_xampp.sql`.
+6.  Importa el fichero `sql/ddl_ingenieria.sql`:
+    ```bash
+    psql -U postgres -d gestion_ingenieria -f sql/ddl_ingenieria.sql
+    ```
 
 ### 2. Instalar Java (JDK 17)
 1.  Descarga el JDK 17 desde [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) o usa OpenJDK.
@@ -64,16 +67,24 @@ Usa esta opción si Docker no funciona o prefieres tener control manual.
 3.  Añade `C:\Program Files\Apache\maven\bin` a tu variable de entorno PATH.
 4.  Ejecuta `mvn -v` para verificar.
 
-### 5. Ejecutar el Proyecto
+### 5. Configurar Variables de Entorno (Opcional)
+Si tu PostgreSQL usa credenciales diferentes, crea un archivo `.env` en la raíz del proyecto:
+```env
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/gestion_ingenieria
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=tu_contraseña
+```
 
-**Paso 5.1: Backend**
+### 6. Ejecutar el Proyecto
+
+**Paso 6.1: Backend**
 Abre una terminal en la carpeta `backend/`:
 ```bash
 mvn spring-boot:run
 ```
 *(Espera a que diga "Started GestionIngenieriaApplication in ... seconds")*
 
-**Paso 5.2: Frontend**
+**Paso 6.2: Frontend**
 Abre otra terminal en la carpeta `frontend/`:
 ```bash
 npm install
@@ -81,6 +92,39 @@ npm start
 ```
 *(Espera a que diga "Compiled successfully")*
 
-### 6. Acceder
+### 7. Acceder
 - **Frontend:** http://localhost:4200
 - **Backend:** http://localhost:8082
+
+---
+
+## 🔐 Credenciales por Defecto
+
+**Usuario Admin:**
+- Usuario: `jefe_admin`
+- Contraseña: `admin123`
+
+**Base de Datos (Docker):**
+- Host: `localhost`
+- Puerto: `5432`
+- Usuario: `postgres`
+- Contraseña: `postgres`
+- Base de datos: `gestion_ingenieria`
+
+---
+
+## 🚨 Solución de Problemas
+
+### Docker no inicia
+- Asegúrate de que la virtualización esté habilitada en la BIOS
+- Reinicia Docker Desktop
+- Verifica que no haya conflictos de puertos
+
+### Backend no se conecta a la base de datos
+- Verifica que PostgreSQL esté corriendo
+- Verifica las credenciales en `application.properties`
+- Asegúrate de que la base de datos `gestion_ingenieria` exista
+
+### Puerto ocupado
+- Cambia los puertos en `docker-compose.yml` o en la configuración manual
+- Detén otros servicios que puedan estar usando los puertos 80, 8082 o 5432
