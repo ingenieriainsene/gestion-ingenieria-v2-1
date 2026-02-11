@@ -68,8 +68,9 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.send")
+    @SendTo("/topic/chat.general")
     public ChatMessageDTO send(ChatSendRequest req) {
-        // Enviar a la sala específica
+        // Enviar a la sala específica (por ahora general para compatibilidad)
         return service.guardarMensaje(req);
     }
 }

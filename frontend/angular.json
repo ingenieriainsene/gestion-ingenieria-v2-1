@@ -67,7 +67,8 @@
               "buildTarget": "gestion-frontend:build:production"
             },
             "development": {
-              "buildTarget": "gestion-frontend:build:development"
+              "buildTarget": "gestion-frontend:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

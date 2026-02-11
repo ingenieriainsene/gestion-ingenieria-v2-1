@@ -1,24 +1,42 @@
 version: '3.8'
 
+# ==============================================================================
+# GESTIÓN INGENIERÍA V2 - DOCKER COMPOSE
+# ==============================================================================
+# USO:
+# 1. Copia .env.example a .env y ajusta los valores si es necesario.
+# 2. Arrancar TODO (Backend + Frontend + DB):
+#    docker-compose --profile full up -d
+# 3. Arrancar SOLO BASE DE DATOS (Para desarrollo local con Maven/Node):
+#    docker-compose --profile dev up -d
+# ==============================================================================
+
 services:
   # ==========================================
-  # BASE DE DATOS (PostgreSQL)
+  # BASE DE DATOS (PostgreSQL / Supabase compat)
   # ==========================================
   db:
     image: postgres:15-alpine
     container_name: gestion-db
     restart: always
+    profiles: [dev, full]
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: gestion_ingenieria
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-gestion_ingenieria}
     ports:
-      - "5432:5432"
+      # Mapea el puerto del host (ej. 54322) al puerto interno (5432)
+      - "${DB_PORT_HOST:-54322}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./sql/ddl_ingenieria.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - gestion-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ==========================================
   # BACKEND (Spring Boot)
@@ -27,16 +45,20 @@ services:
     build: ./backend
     container_name: gestion-backend
     restart: always
+    profiles: [full]
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/gestion_ingenieria
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      # Conexión interna a Docker (host = db, puerto = 5432)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-gestion_ingenieria}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
+      SERVER_PORT: 8082
     ports:
-      - "8082:8082"
+      - "${BACKEND_PORT:-8082}:8082"
     networks:
       - gestion-net
 
@@ -47,16 +69,16 @@ services:
     build: ./frontend
     container_name: gestion-frontend
     restart: always
+    profiles: [full]
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     networks:
       - gestion-net
 
 volumes:
   db_data:
-
 
 networks:
   gestion-net:
