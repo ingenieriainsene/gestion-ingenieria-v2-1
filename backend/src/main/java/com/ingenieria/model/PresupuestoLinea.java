@@ -80,4 +80,7 @@ public class PresupuestoLinea {
 
     @Column(name = "total_linea", precision = 12, scale = 2)
     private BigDecimal totalLinea;
+
+    @Column(name = "num_visitas")
+    private Integer numVisitas;
 }

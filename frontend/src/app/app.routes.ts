@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { ProveedorListComponent } from './features/proveedores/proveedor-list.component';
 import { ProveedorFichaComponent } from './features/proveedores/proveedor-ficha.component';
+import { ProveedorFichaViewComponent } from './features/proveedores/proveedor-ficha-view.component';
 import { ClienteListComponent } from './features/clientes/cliente-list.component';
 import { ClienteFichaComponent } from './features/clientes/cliente-ficha.component';
 import { ClienteFichaViewComponent } from './features/clientes/cliente-ficha-view.component';
@@ -9,6 +10,7 @@ import { LocalFichaComponent } from './features/locales/local-ficha.component';
 import { LocalFichaViewComponent } from './features/locales/local-ficha-view.component';
 import { ContratoListComponent } from './features/contratos/contrato-list.component';
 import { ContratoFichaComponent } from './features/contratos/contrato-ficha.component';
+import { ContratoFichaViewComponent } from './features/contratos/contrato-ficha-view.component';
 import { TramiteListComponent } from './features/tramites/tramite-list.component';
 import { GestionIntervencionComponent } from './features/tramites/gestion-intervencion.component';
 import { TramiteDetalleComponent } from './features/tramites/tramite-detalle.component';
@@ -25,16 +27,19 @@ import { ProductoFormComponent } from './features/productos/producto-form.compon
 import { SeguimientoListComponent } from './features/seguimientos/seguimiento-list.component';
 import { PlanificacionIntervencionesComponent } from './features/contratos/planificacion-intervenciones.component';
 
+import { adminGuard } from './core/admin.guard';
+
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
     {
         path: '',
         canActivate: [authGuard],
         children: [
-            { path: '', redirectTo: 'proveedores', pathMatch: 'full' },
+            { path: '', redirectTo: 'clientes', pathMatch: 'full' },
             { path: 'proveedores', component: ProveedorListComponent },
             { path: 'proveedores/nuevo', component: ProveedorFichaComponent },
-            { path: 'proveedores/:id', component: ProveedorFichaComponent },
+            { path: 'proveedores/:id/editar', component: ProveedorFichaComponent },
+            { path: 'proveedores/:id', component: ProveedorFichaViewComponent },
 
             { path: 'productos', component: ProductoListComponent },
             { path: 'productos/nuevo', component: ProductoFormComponent },
@@ -52,7 +57,8 @@ export const routes: Routes = [
 
             { path: 'contratos', component: ContratoListComponent },
             { path: 'contratos/nuevo', component: ContratoFichaComponent },
-            { path: 'contratos/:id', component: ContratoFichaComponent },
+            { path: 'contratos/:id/editar', component: ContratoFichaComponent },
+            { path: 'contratos/:id', component: ContratoFichaViewComponent },
 
             // Nested or Related Tramites Routes
             { path: 'contratos/:idContrato/tramites', component: TramiteListComponent },
@@ -60,11 +66,11 @@ export const routes: Routes = [
             { path: 'tramite-detalle/:id', component: TramiteDetalleComponent },
             { path: 'contratos/:id/planificacion', component: PlanificacionIntervencionesComponent },
 
-            { path: 'usuarios', component: UsuarioListComponent },
-            { path: 'usuarios/nuevo', component: UsuarioFichaComponent },
-            { path: 'usuarios/:id', component: UsuarioFichaComponent },
+            { path: 'usuarios', component: UsuarioListComponent, canActivate: [adminGuard] },
+            { path: 'usuarios/nuevo', component: UsuarioFichaComponent, canActivate: [adminGuard] },
+            { path: 'usuarios/:id', component: UsuarioFichaComponent, canActivate: [adminGuard] },
 
-            { path: 'auditoria', component: AuditoriaComponent },
+            { path: 'auditoria', component: AuditoriaComponent, canActivate: [adminGuard] },
             { path: 'seguimientos', component: SeguimientoListComponent },
             { path: 'agendar-citas', loadComponent: () => import('./features/citas/agendar-citas.component').then(m => m.AgendarCitasComponent) },
             { path: 'chat', loadComponent: () => import('./features/chat/chat-general.component').then(m => m.ChatGeneralComponent) },

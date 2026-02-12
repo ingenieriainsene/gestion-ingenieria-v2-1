@@ -21,6 +21,7 @@ export interface PresupuestoLineaDTO {
   codigoVisual?: string;
   padreId?: string | null;
   cantidad?: number;
+  numVisitas?: number;
   precioUnitario?: number;
   totalLinea?: number;
   hijos?: PresupuestoLineaDTO[];
@@ -38,6 +39,10 @@ export interface PresupuestoDTO {
   estado?: string;
   tipoPresupuesto?: string;
   lineas: PresupuestoLineaDTO[];
+  creadoPor?: string;
+  fechaAlta?: string;
+  modificadoPor?: string;
+  fechaModificacion?: string;
 }
 
 export interface PresupuestoListItem {
@@ -65,7 +70,7 @@ export interface ProductoItem {
 export class PresupuestoService {
   private endpoint = 'presupuestos';
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService) { }
 
   getBudgets(): Observable<PresupuestoListItem[]> {
     return this.api.get<PresupuestoListItem[]>(this.endpoint);

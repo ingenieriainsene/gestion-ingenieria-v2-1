@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ContratoService, TramiteService, SeguimientoService, Contrato, Tramite, Seguimiento } from '../../services/domain.services';
+import { ContratoService, ClienteService, LocalService, Contrato, Cliente, Local } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -10,550 +10,558 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <div *ngIf="contrato" class="main-container">
-      <div class="user-stamp">
-        <div>Creado por: <strong>{{ contrato.creadoPor || 'Sistema' }}</strong></div>
-        <div>Fecha registro: <span>{{ contrato.fechaAlta | date:'dd/MM/yyyy HH:mm' }}</span></div>
+    <div class="ficha-wrapper">
+      <div class="header-section">
+        <a [routerLink]="idContrato ? ['/contratos', idContrato] : ['/contratos']" class="back-link">
+          <span class="icon">←</span> {{ idContrato ? 'Volver al contrato' : 'Volver al listado' }}
+        </a>
+        <h2>{{ idContrato ? 'Editar Contrato' : 'Nuevo Contrato' }}</h2>
+        <p class="subtitle">{{ idContrato ? 'Modifique los datos del contrato.' : 'Complete la información para registrar un nuevo contrato.' }}</p>
+        
+        <div *ngIf="idContrato" class="header-actions">
+           <button type="button" class="btn-delete-header" (click)="eliminarContrato()">
+             🗑️ Eliminar Contrato
+           </button>
+        </div>
       </div>
 
-      <div class="gestion-container">
-        <div class="info-header">
-          <div>
-            <h1>CONTRATO #{{ contrato.idContrato }}</h1>
-            <p>Seguimiento Técnico y Expediente</p>
-          </div>
-          <div class="header-badge-wrap">
-            <span class="header-label">SERVICIO:</span>
-            <span class="badge-tipo">{{ contrato.tipoContrato }}</span>
-          </div>
-        </div>
-
-        <div class="filter-bar">
-          <span class="filter-label">Filtrar intervenciones:</span>
-          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'todos'" (click)="setFiltro('todos')">Todas</button>
-          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'mantenimiento'" (click)="setFiltro('mantenimiento')">Mantenimiento</button>
-          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'otros'" (click)="setFiltro('otros')">Otras</button>
-        </div>
-
-        <div class="panel-grid">
-          <div class="panel-section">
-            <h3>👤 Información del Cliente</h3>
-            <div class="data-row">
-              <span class="data-label">Nombre:</span>
-              <span class="data-value">
-                <a [routerLink]="['/clientes', contrato.cliente?.idCliente]" class="direct-link">
-                  {{ contrato.cliente?.nombre }} {{ contrato.cliente?.apellido1 }} 🔗
-                </a>
-              </span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">DNI / NIF:</span>
-              <span class="data-value">{{ contrato.cliente?.dni }}</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">IBAN:</span>
-              <span class="data-value">{{ contrato.cliente?.cuentaBancaria }}</span>
-            </div>
-          </div>
-
-          <div class="panel-section">
-            <h3>🏢 Localización</h3>
-            <div class="data-row">
-              <span class="data-label">Dirección:</span>
-              <span class="data-value">
-                <a [routerLink]="['/locales', contrato.local?.idLocal]" class="direct-link">
-                  {{ contrato.local?.direccionCompleta }} 🔗
-                </a>
-              </span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">Titular:</span>
-              <span class="data-value">{{ contrato.local?.nombreTitular }}</span>
-            </div>
-          </div>
-
-          <!-- Grid dos columnas: formulario intervención | panel ventas pendientes (gestionar_contrato.php) -->
-          <div class="grid-layout-wrap">
-          <div class="grid-layout">
-            <section class="formulario-intervencion">
-              <h3>🆕 Nueva Intervención</h3>
-              <form [formGroup]="nuevaIntervencionForm" (ngSubmit)="guardarIntervencion()">
-                <select class="tramite-sel" formControlName="tipoTramite">
-                  <option value="">-- Seleccionar intervención --</option>
-                  <option value="Legalización">Legalización</option>
-                  <option value="Licencia de Obras">Licencia de Obras</option>
-                  <option value="CE Previo">CE Previo</option>
-                  <option value="CE Post">CE Post</option>
+      <div class="form-card">
+        <form [formGroup]="form" (ngSubmit)="save()" class="modern-form">
+          <div class="form-grid">
+            <!-- Cliente -->
+            <div class="form-group">
+              <label class="form-label">Cliente <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select class="form-control" formControlName="idCliente" (change)="onClienteChange()">
+                  <option [ngValue]="null">-- Seleccionar Cliente --</option>
+                  <option *ngFor="let c of clientes" [ngValue]="c.idCliente">
+                    {{ c.nombre }} {{ c.apellido1 }} ({{ c.dni }})
+                  </option>
                 </select>
-                <input type="text" class="tramite-sel" formControlName="detalleSeguimiento" placeholder="Descripción opcional...">
-                <button type="submit" class="btn-add" [disabled]="nuevaIntervencionForm.invalid">Añadir a ventas</button>
-              </form>
-            </section>
-            <section class="panel-ventas-pendientes">
-              <h3>⏳ Ventas Pendientes</h3>
-              <div class="tramites-scroll-container">
-                <p *ngIf="ventas.length === 0" class="ventas-empty">No hay ventas pendientes.</p>
-                <div *ngFor="let t of ventas" class="venta-row">
-                  <div class="map-col">
-                    <span class="map-data">{{ t.tipoTramite }}</span>
-                  </div>
-                  <div class="map-col">
-                    <span class="map-data map-data-fecha">{{ (t.fechaCreacion || t.fechaSeguimiento) ? ((t.fechaCreacion || t.fechaSeguimiento) | date:'dd/MM/yyyy') : '—' }}</span>
-                  </div>
-                  <div class="map-col">
-                    <span class="status-badge pendiente">Pendiente</span>
-                  </div>
-                  <div class="venta-actions">
-                    <button type="button" class="btn-primary btn-generar" (click)="generarIntervencion(t)">⚡ Generar</button>
-                  </div>
-                </div>
               </div>
-            </section>
-          </div>
-          </div>
+            </div>
 
-          <div class="panel-section">
-            <h3>📆 Próximas intervenciones</h3>
-            <div class="tramites-scroll-container">
-              <p *ngIf="proximas.length === 0" class="ventas-empty">No hay intervenciones planificadas.</p>
-              <div *ngFor="let s of proximas" class="intervencion-row">
-                <div class="map-col">
-                  <span class="map-label">Fecha</span>
-                  <span class="map-data">📅 {{ s.fechaSeguimiento | date:'dd/MM/yyyy' }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">Tarea</span>
-                  <span class="map-data map-data-sm">{{ s.comentario || '—' }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">Estado</span>
-                  <span class="status-badge pendiente">{{ s.estado || 'Pendiente' }}</span>
-                </div>
+            <!-- Local -->
+            <div class="form-group">
+              <label class="form-label">Local / Suministro <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select class="form-control" formControlName="idLocal">
+                  <option [ngValue]="null">-- Seleccionar Local --</option>
+                  <option *ngFor="let l of localesFiltrados" [ngValue]="l.idLocal">
+                    {{ l.nombreTitular }} - {{ l.direccionCompleta }}
+                  </option>
+                </select>
               </div>
+              <small class="form-help" *ngIf="!form.get('idCliente')?.value">Seleccione primero un cliente para ver sus locales.</small>
+            </div>
+
+            <!-- Tipo de Contrato -->
+            <div class="form-group">
+              <label class="form-label">Tipo de Servicio <span class="required">*</span></label>
+              <select class="form-control" formControlName="tipoContrato">
+                <option value="">-- Seleccionar --</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+                <option value="Obra Nueva">Obra Nueva</option>
+                <option value="Reforma">Reforma</option>
+                <option value="Legalización">Legalización</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <!-- Fechas -->
+            <div class="form-group">
+              <label class="form-label">Fecha Inicio <span class="required">*</span></label>
+              <input type="date" class="form-control" formControlName="fechaInicio" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Fecha Vencimiento <span class="required">*</span></label>
+              <input type="date" class="form-control" formControlName="fechaVencimiento" />
             </div>
           </div>
 
-          <div class="panel-section panel-section-full mapa-visual-wrap">
-            <h3>🛠️ Mapa Visual de Intervenciones Activas / Finalizadas</h3>
-            <div class="tramites-scroll-container">
-              <p *ngIf="activas.length === 0" class="ventas-empty">No hay intervenciones activas.</p>
-              <div *ngFor="let ta of activas" class="intervencion-map-row clickable"
-                   (click)="irADetalle(ta)">
-                <div class="map-col">
-                  <span class="map-label">Intervención</span>
-                  <span class="map-data map-data-accent">{{ ta.tipoTramite }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">Descripción</span>
-                  <span class="map-data map-data-sm" [title]="ta.detalleSeguimiento || ''">{{ ta.detalleSeguimiento || '---' }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">Estado</span>
-                  <span class="status-badge" [ngClass]="ta.estado === 'En proceso' ? 'en-proceso' : 'terminado'">{{ ta.estado }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">F. Inicio</span>
-                  <span class="map-data">📅 {{ (ta.fechaCreacion || ta.fechaSeguimiento) ? ((ta.fechaCreacion || ta.fechaSeguimiento) | date:'dd/MM/yyyy') : '---' }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">F. Fin (Real/Prev.)</span>
-                  <span class="map-data" [class.map-data-fin]="ta.estado === 'Terminado'">{{ (ta.fechaEjecucion || ta.fechaSeguimiento) ? ('🏁 ' + ((ta.fechaEjecucion || ta.fechaSeguimiento) | date:'dd/MM/yyyy')) : '---' }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">Últ. Modificador</span>
-                  <span class="map-data map-data-sm">👤 {{ ta.tecnicoAsignado || 'N/A' }}</span>
-                </div>
-                <div class="map-actions">
-                  <span class="map-link-icon">→</span>
-                </div>
-              </div>
-            </div>
+          <div class="separator"></div>
+
+          <!-- Datos Técnicos (Checks) -->
+          <div class="form-row full-width">
+             <label class="form-label section-label">Datos Técnicos / Hitos</label>
+             <div class="checks-grid">
+                <label class="check-pill"><input type="checkbox" formControlName="cePrevio"> CE Previo</label>
+                <label class="check-pill"><input type="checkbox" formControlName="mtd"> MTD</label>
+                <label class="check-pill"><input type="checkbox" formControlName="cePost"> CE Post</label>
+                <label class="check-pill"><input type="checkbox" formControlName="planos"> Planos</label>
+                <label class="check-pill"><input type="checkbox" formControlName="enviadoCeePost"> Enviado CEE Post</label>
+                <label class="check-pill"><input type="checkbox" formControlName="licenciaObras"> Licencia Obras</label>
+                <label class="check-pill"><input type="checkbox" formControlName="subvencionEstado"> Subvención</label>
+                <label class="check-pill"><input type="checkbox" formControlName="libroEdifIncluido"> Libro Edificio</label>
+             </div>
           </div>
 
-          <div class="panel-section panel-section-full">
-            <h3>📝 Observaciones del Contrato</h3>
-            <form [formGroup]="obsForm" (ngSubmit)="guardarObservaciones()">
-              <textarea formControlName="observaciones" placeholder="Escriba notas generales..."></textarea>
-              <button type="submit" class="btn-save-obs">Actualizar Notas</button>
-            </form>
+          <div class="separator"></div>
+
+          <!-- Observaciones -->
+          <div class="form-group full-width">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" formControlName="observaciones" rows="4" placeholder="Notas adicionales del contrato..."></textarea>
           </div>
-        </div>
+
+          <div class="form-actions">
+            <button type="button" [routerLink]="idContrato ? ['/contratos', idContrato] : ['/contratos']" class="btn-cancel">Cancelar</button>
+            <button type="submit" class="btn-save" [disabled]="form.invalid || loading">
+              {{ idContrato ? 'Guardar Cambios' : 'Crear Contrato' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Links rápidos si es edición -->
+      <div *ngIf="idContrato" class="quick-links">
+         <h3>Accesos Directos</h3>
+         <div class="links-grid">
+           <a [routerLink]="['/contratos', idContrato, 'tramites']" class="quick-link-card">
+              <span class="icon">📂</span>
+              <span class="text">Ver Intervenciones / Trámites</span>
+           </a>
+           <a [routerLink]="['/contratos', idContrato, 'planificacion']" class="quick-link-card">
+              <span class="icon">📅</span>
+              <span class="text">Planificación de Mantenimiento</span>
+           </a>
+         </div>
       </div>
     </div>
   `,
   styles: [`
-    .main-container { max-width: 98%; width: 100%; margin: 0 auto; padding: 1rem; box-sizing: border-box; }
-    .user-stamp {
-      text-align: right; font-size: 0.75rem; color: #64748b; margin-bottom: 15px;
-      background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; float: right;
+    .ficha-wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding-bottom: 3rem;
+      animation: fadeIn 0.4s ease-out;
     }
-    .gestion-container {
-      clear: both; margin-top: 20px; background: white; width: 100%; max-width: 98%;
-      border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid #1e293b;
-      overflow: hidden; margin-bottom: 50px;
-    }
-    .info-header {
-      background: #1e293b; color: white; padding: 25px 40px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .info-header h1 { color: #f1c40f; margin: 0; font-size: 1.25rem; }
-    .info-header p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
-    .header-badge-wrap { text-align: right; }
-    .header-label { font-size: 0.7rem; font-weight: bold; opacity: 0.8; display: block; margin-bottom: 5px; }
-    .badge-tipo {
-      background: #f1c40f; color: #1e293b; padding: 4px 12px; border-radius: 6px;
-      font-weight: 800; font-size: 0.8rem; text-transform: uppercase;
-    }
-    .panel-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 25px;
-      padding: 1rem;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .panel-section {
-      background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 15px;
-    }
-    .panel-section-full { grid-column: span 2; border-top: 4px solid #f1c40f; }
 
-    .grid-layout-wrap { grid-column: span 2; }
-    .grid-layout {
+    .header-section {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-top: 1rem;
+      position: relative;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #64748b;
+      text-decoration: none;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #3b82f6; }
+
+    .header-section h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+    
+    .header-actions {
+      position: absolute;
+      right: 0;
+      top: 1rem;
+    }
+    
+    .btn-delete-header {
+      padding: 0.5rem 1rem;
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-delete-header:hover {
+      background: #fecaca;
+      color: #b91c1c;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+      padding: 2.5rem;
+    }
+
+    .modern-form {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .full-width { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    .section-label {
+      font-size: 1rem;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #f1c40f;
+      display: inline-block;
+      padding-bottom: 0.25rem;
+    }
+
+    .required { color: #ef4444; }
+
+    .form-control {
+      padding: 0.75rem 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      background: #f8fafc;
+      box-sizing: border-box;
       width: 100%;
     }
-    .formulario-intervencion {
-      background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 15px;
+
+    .form-control:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
-    .formulario-intervencion h3 {
-      margin-bottom: 15px; color: #1e293b; font-size: 0.85rem; text-transform: uppercase;
-      border-bottom: 2px solid #f1c40f; padding-bottom: 5px; display: inline-block;
+
+    .select-wrapper {
+      position: relative;
     }
-    .panel-ventas-pendientes {
-      background: #fee2e2; border: 1px solid #fecaca; padding: 20px; border-radius: 15px;
-      max-height: 600px;
-      overflow-y: auto;
+
+    .form-help {
+      font-size: 0.8rem;
+      color: #94a3b8;
     }
-    .panel-ventas-pendientes::-webkit-scrollbar { width: 6px; }
-    .panel-ventas-pendientes::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .panel-ventas-pendientes h3 {
-      margin-bottom: 15px; color: #1e293b; font-size: 0.85rem; text-transform: uppercase;
-      border-bottom: 2px solid #f1c40f; padding-bottom: 5px; display: inline-block;
+
+    .separator {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 1rem 0;
     }
-    .panel-section h3 {
-      margin-bottom: 15px; color: #1e293b; font-size: 0.85rem; text-transform: uppercase;
-      border-bottom: 2px solid #f1c40f; padding-bottom: 5px; display: inline-block;
+
+    /* Checks Grid */
+    .checks-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
-    .filter-bar {
+
+    .check-pill {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      background: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .filter-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      margin-right: 6px;
-    }
-    .filter-chip {
-      border: 1px solid #cbd5e1;
-      background: #fff;
-      color: #1e293b;
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 0.75rem;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #475569;
       cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
     }
-    .filter-chip.active {
-      background: #1e293b;
-      color: #f8fafc;
-      border-color: #1e293b;
+    .check-pill:hover { background: #e2e8f0; }
+    .check-pill:has(input:checked) {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+      font-weight: 600;
     }
-    .intervencion-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .data-row { margin-bottom: 10px; display: flex; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-    .data-label { font-weight: 700; color: #64748b; font-size: 0.8rem; text-transform: uppercase; width: 140px; flex-shrink: 0; }
-    .data-value { color: #1e293b; font-size: 0.95rem; font-weight: 600; }
-    .direct-link { color: #3498db; text-decoration: none; font-weight: 700; border-bottom: 1px dashed #3498db; }
-    .direct-link:hover { color: #1e293b; }
+    .check-pill input { accent-color: #3b82f6; width: 16px; height: 16px; margin: 0; }
 
-    .tramite-sel {
-      width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1;
-      margin-bottom: 12px; font-weight: 600; box-sizing: border-box;
+    /* Actions */
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1rem;
     }
-    .tramite-sel + .tramite-sel { margin-top: -5px; }
-    .btn-add {
-      background: #1e293b; color: white; border: none; padding: 12px; border-radius: 10px;
-      font-weight: bold; width: 100%; cursor: pointer; transition: 0.2s;
-    }
-    .btn-add:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .panel-ventas-pendientes .tramites-scroll-container {
-      max-height: none; overflow-y: visible; padding-right: 0;
+    .btn-cancel {
+      padding: 0.75rem 1.5rem;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      text-decoration: none;
     }
-    .tramites-scroll-container {
-      max-height: 400px; overflow-y: auto; padding-right: 10px;
-    }
-    .tramites-scroll-container::-webkit-scrollbar { width: 6px; }
-    .tramites-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .ventas-empty { text-align: center; color: #94a3b8; font-size: 0.8rem; margin: 0; padding: 20px 0; }
+    .btn-cancel:hover { background: #f8fafc; color: #334155; }
 
-    .venta-row {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-      align-items: center;
-      padding: 10px 15px;
-      background: #fee2e2;
-      border: 1px solid #fecaca;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      gap: 15px;
+    .btn-save {
+      padding: 0.75rem 2rem;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
     }
-    .venta-row .map-data { color: #b91c1c; font-size: 0.85rem; font-weight: 700; }
-    .venta-row .map-data-fecha { font-size: 0.75rem; color: #991b1b; }
-    .map-col { display: flex; flex-direction: column; overflow: hidden; }
-    .map-label { font-size: 0.6rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
-    .map-data { font-size: 0.85rem; font-weight: 700; color: #1e293b; }
-    .map-data-accent { color: #0369a1; }
-    .map-data-sm { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .btn-save:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+    }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    /* Quick Links */
+    .quick-links { margin-top: 3rem; border-top: 1px solid #e2e8f0; padding-top: 2rem; }
+    .quick-links h3 { color: #64748b; font-size: 1rem; margin-bottom: 1rem; text-transform: uppercase; }
+    .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+    .quick-link-card {
+       display: flex; align-items: center; gap: 1rem; padding: 1.5rem;
+       background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+       text-decoration: none; color: #1e293b; font-weight: 600;
+       transition: all 0.2s;
+    }
+    .quick-link-card:hover {
+       border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); transform: translateY(-2px);
+    }
+    .quick-link-card .icon { font-size: 1.5rem; }
 
-    .status-badge {
-      padding: 4px 10px; border-radius: 5px; font-size: 0.7rem; font-weight: 800;
-      text-transform: uppercase; text-align: center; border: 1px solid transparent;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .status-badge.pendiente { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-    .status-badge.en-proceso { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
-    .status-badge.terminado { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-
-    .venta-actions { display: flex; justify-content: center; align-items: center; gap: 8px; }
-    .btn-primary {
-      padding: 6px 12px; font-size: 0.7rem; font-weight: bold; border-radius: 5px;
-      text-decoration: none; text-align: center; cursor: pointer; border: none;
+    
+    @media (max-width: 768px) {
+       .header-actions { position: static; margin-top: 1rem; }
+       .form-grid { grid-template-columns: 1fr; }
     }
-    .btn-gestionar, .btn-generar { background: #f1c40f; color: #1e293b; }
-    .btn-icon { background: #1e293b; color: white; padding: 8px 12px; }
-
-    .mapa-visual-wrap { border-top: 4px solid #f1c40f; width: 100%; }
-    .intervencion-map-row {
-      display: grid; grid-template-columns: 1.2fr 1.5fr 0.8fr 1fr 1fr 1fr 0.8fr;
-      align-items: center; padding: 15px; background: white; border: 1px solid #e2e8f0;
-      border-radius: 12px; margin-bottom: 12px; gap: 15px; transition: 0.3s;
-    }
-    .intervencion-map-row:hover {
-      border-color: #f1c40f; transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    .map-data-fin { color: #059669; font-weight: 800; }
-    .map-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
-    .intervencion-map-row.clickable { cursor: pointer; }
-    .intervencion-map-row.clickable:hover { border-color: #f1c40f; background: #fffbeb; }
-    .map-link-icon { color: #1e293b; font-weight: 800; font-size: 1rem; }
-
-    textarea {
-      width: 100%; min-height: 120px; padding: 15px; border-radius: 10px;
-      border: 1px solid #cbd5e1; resize: vertical; font-family: inherit; margin-bottom: 15px; box-sizing: border-box;
-    }
-    .btn-save-obs {
-      background: #1e293b; color: white; border: none; padding: 15px; border-radius: 10px;
-      font-weight: 800; width: 100%; cursor: pointer; text-transform: uppercase; transition: 0.3s;
-    }
-  `],
+  `]
 })
 export class ContratoFichaComponent implements OnInit {
-  contrato: Contrato | null = null;
-  ventas: Tramite[] = [];
-  activas: Tramite[] = [];
-  allTramites: Tramite[] = [];
-  filtroTipo: 'todos' | 'mantenimiento' | 'otros' = 'todos';
-  proximas: Seguimiento[] = [];
-
-  nuevaIntervencionForm: FormGroup;
-  obsForm: FormGroup;
+  form: FormGroup;
+  idContrato: number | null = null;
+  loading = false;
+  clientes: Cliente[] = [];
+  locales: Local[] = [];
+  localesFiltrados: Local[] = [];
 
   constructor(
-    private contratos: ContratoService,
-    private tramites: TramiteService,
-    private seguimientos: SeguimientoService,
+    private fb: FormBuilder,
+    private contratoService: ContratoService,
+    private clienteService: ClienteService,
+    private localService: LocalService,
     private route: ActivatedRoute,
-    private router: Router,
-    private fb: FormBuilder
+    private router: Router
   ) {
-    this.nuevaIntervencionForm = this.fb.group({
-      tipoTramite: ['', Validators.required],
-      detalleSeguimiento: ['']
-    });
-    this.obsForm = this.fb.group({
-      observaciones: ['']
+    this.form = this.fb.group({
+      idCliente: [null, Validators.required],
+      idLocal: [null, Validators.required],
+      tipoContrato: ['', Validators.required],
+      fechaInicio: ['', Validators.required],
+      fechaVencimiento: ['', Validators.required],
+      observaciones: [''],
+      // Checks
+      cePrevio: [false],
+      cePost: [false],
+      mtd: [false],
+      planos: [false],
+      enviadoCeePost: [false],
+      licenciaObras: [false],
+      subvencionEstado: [false],
+      libroEdifIncluido: [false]
     });
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
+    // Load dependencies first
+    this.loadDependencies();
+
     this.route.paramMap.subscribe(params => {
-      const id = Number(params.get('id'));
-      if (!id || isNaN(id)) return;
-      this.cargarContrato(id);
-      this.cargarDatos(id);
-    });
-  }
-
-  cargarContrato(id: number) {
-    this.contratos.getById(id).subscribe(c => {
-      this.contrato = c;
-      this.obsForm.patchValue({ observaciones: c.observaciones || '' });
-    });
-  }
-
-  /**
-   * Recarga desde el backend TODOS los trámites del contrato y los distribuye por estado.
-   * Replica gestionar_contrato.php: Ventas = Pendiente, Mapa = En proceso / Terminado.
-   * No se mueven objetos en memoria; única fuente de verdad = base de datos.
-   */
-  cargarDatos(idContrato: number) {
-    this.contratos.getTramitesPorContrato(idContrato).subscribe({
-      next: (lista) => {
-        const all = Array.isArray(lista) ? lista : [];
-        this.allTramites = all;
-        this.aplicarFiltros();
-        this.cargarProximas(all);
-      },
-      error: (err) => {
-        console.error('Error al cargar trámites por contrato', err?.status, err?.error);
+      const id = params.get('id');
+      if (id && id !== 'nuevo') {
+        this.idContrato = +id;
+        this.loadContrato(this.idContrato);
       }
     });
   }
 
-  setFiltro(tipo: 'todos' | 'mantenimiento' | 'otros') {
-    this.filtroTipo = tipo;
-    this.aplicarFiltros();
-  }
-
-  private aplicarFiltros() {
-    const e = (s: string | undefined) => (s || '').trim().toLowerCase();
-    let list = this.allTramites;
-    if (this.filtroTipo === 'mantenimiento') {
-      list = list.filter(t => e(t.tipoTramite) === 'mantenimiento');
-    } else if (this.filtroTipo === 'otros') {
-      list = list.filter(t => e(t.tipoTramite) !== 'mantenimiento');
-    }
-    this.ventas = list.filter(t => e(t.estado) === 'pendiente');
-    this.activas = list.filter(t => {
-      const est = e(t.estado);
-      return est === 'en proceso' || est === 'terminado';
+  loadDependencies() {
+    this.clienteService.getAll().subscribe(res => {
+      this.clientes = res;
+      this.checkInitialLoad();
+    });
+    this.localService.getAll().subscribe(res => {
+      this.locales = res;
+      this.checkInitialLoad();
     });
   }
 
-  private cargarProximas(lista: Tramite[]) {
-    const mantenimiento = lista.find(t => (t.tipoTramite || '').toLowerCase() === 'mantenimiento');
-    if (!mantenimiento?.idTramite) {
-      this.proximas = [];
-      return;
+  // Ensure we filter locales only after both contract (if editing) and locales are loaded
+  private dependenciesLoaded = 0;
+  private contractLoaded = false;
+
+  checkInitialLoad() {
+    this.dependenciesLoaded++;
+    if (this.dependenciesLoaded >= 2) {
+      if (this.idContrato && this.contractLoaded) {
+        this.onClienteChange();
+      } else if (!this.idContrato) {
+        this.localesFiltrados = [];
+      }
     }
-    this.seguimientos.getByTramite(mantenimiento.idTramite).subscribe({
-      next: (segs) => {
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        this.proximas = (segs || [])
-          .filter(s => !!s.fechaSeguimiento)
-          .sort((a, b) => {
-            const da = new Date(String(a.fechaSeguimiento));
-            const db = new Date(String(b.fechaSeguimiento));
-            return da.getTime() - db.getTime();
-          })
-          .filter(s => new Date(String(s.fechaSeguimiento)) >= hoy)
-          .slice(0, 6);
+  }
+
+  loadContrato(id: number) {
+    this.loading = true;
+    this.contratoService.getById(id).subscribe({
+      next: (c) => {
+        this.loading = false;
+        this.contractLoaded = true;
+
+        // Map string 'Realizado'/'Concedida' to boolean checks if needed
+        this.form.patchValue({
+          idCliente: c.idCliente,
+          idLocal: c.idLocal,
+          tipoContrato: c.tipoContrato,
+          fechaInicio: this.formatDate(c.fechaInicio),
+          fechaVencimiento: this.formatDate(c.fechaVencimiento),
+          observaciones: c.observaciones || '',
+          cePrevio: c.cePrevio === 'Realizado',
+          cePost: c.cePost === 'Realizado',
+          mtd: !!c.mtd,
+          planos: !!c.planos,
+          enviadoCeePost: !!c.enviadoCeePost,
+          licenciaObras: c.licenciaObras === 'Concedida',
+          subvencionEstado: c.subvencionEstado === 'Concedida',
+          libroEdifIncluido: !!c.libroEdifIncluido
+        });
+
+        // Filter locales for the loaded client if dependencies are ready
+        if (this.dependenciesLoaded >= 2) {
+          this.onClienteChange();
+        }
       },
       error: () => {
-        this.proximas = [];
+        this.loading = false;
+        Swal.fire('Error', 'No se pudo cargar el contrato.', 'error');
+        this.router.navigate(['/contratos']);
       }
     });
   }
 
-  guardarIntervencion() {
-    if (!this.contrato || this.nuevaIntervencionForm.invalid) {
-      Swal.fire('Datos incompletos', 'Debes seleccionar un tipo de intervención.', 'warning');
-      return;
+  onClienteChange() {
+    const selectedClientId = this.form.get('idCliente')?.value;
+    // Reset selected local when client changes to prevent cross-client linking
+    this.form.get('idLocal')?.setValue(null);
+
+    if (selectedClientId && this.locales.length > 0) {
+      this.localesFiltrados = this.locales.filter(l =>
+        l.idCliente === selectedClientId ||
+        (l.cliente && l.cliente.idCliente === selectedClientId)
+      );
+    } else {
+      this.localesFiltrados = [];
     }
-    const id = this.contrato.idContrato!;
-    const { tipoTramite, detalleSeguimiento } = this.nuevaIntervencionForm.value;
-    const datos = { tipoTramite, detalleSeguimiento: detalleSeguimiento || undefined };
+  }
 
-    this.contratos.addIntervencion(id, datos).subscribe({
-      next: () => {
-        this.cargarDatos(id);
-        this.nuevaIntervencionForm.reset();
-        this.nuevaIntervencionForm.patchValue({ tipoTramite: '' });
-        Swal.fire('Añadido a ventas', 'La intervención se ha creado y aparece en Ventas Pendientes.', 'success');
-      },
-      error: (err) => {
-        console.error('Error al añadir a ventas', err);
-        Swal.fire('Error', err?.error?.message || 'No se pudo añadir a ventas. Revisa la consola.', 'error');
+  eliminarContrato() {
+    if (!this.idContrato) return;
+    Swal.fire({
+      title: '¿Eliminar Contrato?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(res => {
+      if (res.isConfirmed) {
+        this.contratoService.delete(this.idContrato!).subscribe({
+          next: () => {
+            Swal.fire('Eliminado', 'Contrato eliminado.', 'success');
+            this.router.navigate(['/contratos']);
+          },
+          error: () => Swal.fire('Error', 'No se pudo eliminar el contrato.', 'error')
+        });
       }
     });
   }
 
-  /**
-   * Navega a la página de detalle del trámite (replica detalle_tramite.php).
-   */
-  irADetalle(ta: Tramite) {
-    if (ta?.idTramite == null) return;
-    this.router.navigate(['/tramite-detalle', ta.idTramite]);
-  }
+  save() {
+    if (this.form.invalid) return;
+    this.loading = true;
+    const v = this.form.value;
 
-  /**
-   * Generar: Pendiente → En proceso. Llama al endpoint generar del backend.
-   * Tras éxito, recarga la lista desde la base de datos.
-   */
-  generarIntervencion(t: Tramite) {
-    if (!this.contrato || !t.idTramite) return;
-    const idContrato = this.contrato.idContrato!;
-    this.tramites.generar(t.idTramite).subscribe({
-      next: () => {
-        this.cargarDatos(idContrato);
-        Swal.fire('Generado', 'La intervención ya aparece en el Mapa Visual.', 'success');
-      },
-      error: (err) => {
-        console.error('Error al generar', err);
-        const msg = typeof err?.error === 'string' ? err.error : (err?.error?.message ?? err?.message ?? 'No se pudo generar la intervención.');
-        Swal.fire('Error', msg, 'error');
-      }
-    });
-  }
+    // Map booleans/forms back to payload
+    const payload: Contrato = {
+      idCliente: v.idCliente,
+      idLocal: v.idLocal,
+      tipoContrato: v.tipoContrato,
+      fechaInicio: v.fechaInicio,
+      fechaVencimiento: v.fechaVencimiento,
+      observaciones: v.observaciones,
+      // Booleans mapped to strings/booleans as per interface/backend logic
+      cePrevio: v.cePrevio ? 'Realizado' : 'Pendiente',
+      cePost: v.cePost ? 'Realizado' : 'Pendiente',
+      mtd: !!v.mtd,
+      planos: !!v.planos,
+      enviadoCeePost: !!v.enviadoCeePost,
+      licenciaObras: v.licenciaObras ? 'Concedida' : 'No requerida',
+      subvencionEstado: v.subvencionEstado ? 'Concedida' : 'No solicitada',
+      libroEdifIncluido: !!v.libroEdifIncluido
+    };
 
-  guardarObservaciones() {
-    if (!this.contrato) return;
-    const obs = this.obsForm.value.observaciones;
-    this.contratos.getById(this.contrato.idContrato!).subscribe(actual => {
-      const body: Record<string, unknown> = {
-        idCliente: actual.cliente?.idCliente,
-        idLocal: actual.local?.idLocal,
-        fechaInicio: actual.fechaInicio,
-        fechaVencimiento: actual.fechaVencimiento,
-        tipoContrato: actual.tipoContrato,
-        cePrevio: actual.cePrevio,
-        cePost: actual.cePost,
-        enviadoCeePost: actual.enviadoCeePost,
-        licenciaObras: actual.licenciaObras,
-        mtd: actual.mtd,
-        planos: actual.planos,
-        subvencionEstado: actual.subvencionEstado,
-        libroEdifIncluido: actual.libroEdifIncluido,
-        observaciones: obs
-      };
-      this.contratos.update(actual.idContrato!, body).subscribe(() => {
-        Swal.fire('Actualizado', 'Observaciones guardadas', 'success');
+    if (this.idContrato) {
+      this.contratoService.update(this.idContrato, payload as any).subscribe({
+        next: () => {
+          this.loading = false;
+          Swal.fire('Guardado', 'Contrato actualizado correctamente.', 'success');
+          this.router.navigate(['/contratos', this.idContrato]);
+        },
+        error: () => {
+          this.loading = false;
+          Swal.fire('Error', 'No se pudo actualizar el contrato.', 'error');
+        }
       });
-    });
+    } else {
+      this.contratoService.create(payload).subscribe({
+        next: (created) => {
+          this.loading = false;
+          Swal.fire('Creado', 'Contrato creado correctamente.', 'success');
+          this.router.navigate(['/contratos', created.idContrato]);
+        },
+        error: () => {
+          this.loading = false;
+          Swal.fire('Error', 'No se pudo crear el contrato.', 'error');
+        }
+      });
+    }
+  }
+
+  private formatDate(dateStr?: string): string {
+    if (!dateStr) return '';
+    // Handle ISO strings with time
+    return dateStr.split('T')[0];
   }
 }

@@ -1,6 +1,7 @@
 <div class="ficha-top">
   <a routerLink="/locales" class="direct-link">&larr; Volver al listado</a>
 </div>
+<app-audit-stamp [data]="local"></app-audit-stamp>
 
 <div *ngIf="loading" class="ficha-loading">Cargando…</div>
 
@@ -16,18 +17,22 @@
   <div class="info-card-grid">
     <div class="info-card info-card-wide">
       <h3>Titular del Suministro</h3>
-      <p>{{ local.nombreTitular }} {{ local.apellido1Titular }}{{ local.apellido2Titular ? ' ' + local.apellido2Titular : '' }}</p>
-      <a *ngIf="idCliente()" [routerLink]="['/clientes', idCliente()]" class="badge-ver" title="Ver ficha del cliente">👁️ Ver Ficha del Cliente</a>
+      <p>{{ local.nombreTitular }} {{ local.apellido1Titular }}{{ local.apellido2Titular ? ' ' + local.apellido2Titular
+        : '' }}</p>
+      <a *ngIf="idCliente()" [routerLink]="['/clientes', idCliente()]" class="badge-ver"
+        title="Ver ficha del cliente">👁️ Ver Ficha del Cliente</a>
     </div>
     <div class="info-card info-card-wide">
       <h3>Dirección (Mapa)</h3>
       <p>{{ local.direccionCompleta || '—' }}</p>
-      <a [href]="buildMapsUrl(local.direccionCompleta)" target="_blank" rel="noopener" class="map-link-simple">📍 Ver en Google Maps</a>
+      <a [href]="buildMapsUrl(local.direccionCompleta)" target="_blank" rel="noopener" class="map-link-simple">📍 Ver en
+        Google Maps</a>
     </div>
     <div class="info-card">
       <h3>Referencia Catastral</h3>
       <p>{{ local.referenciaCatastral || '—' }}</p>
-      <a *ngIf="local.referenciaCatastral" [href]="buildCatastroUrl(local.referenciaCatastral)" target="_blank" rel="noopener" class="catastro-badge">📑 Abrir plano en Catastro</a>
+      <a *ngIf="local.referenciaCatastral" [href]="buildCatastroUrl(local.referenciaCatastral)" target="_blank"
+        rel="noopener" class="catastro-badge">📑 Abrir plano en Catastro</a>
     </div>
     <div class="info-card">
       <h3>CUPS</h3>
@@ -64,9 +69,11 @@
             <td>{{ direccionLocalContrato(c) }}</td>
             <td>{{ titularContrato(c) }}</td>
             <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
-            <td><span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">{{ vigente(c) ? 'Vigente' : 'Vencido' }}</span></td>
+            <td><span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">{{ vigente(c) ?
+                'Vigente' : 'Vencido' }}</span></td>
             <td>
-              <a [routerLink]="['/contratos', c.idContrato]" class="badge-edit" title="Gestionar contrato">✏️ Gestionar</a>
+              <a [routerLink]="['/contratos', c.idContrato]" class="badge-edit" title="Gestionar contrato">✏️
+                Gestionar</a>
             </td>
           </tr>
           <tr *ngIf="contratos.length === 0">

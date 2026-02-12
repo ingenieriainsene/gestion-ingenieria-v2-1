@@ -13,33 +13,34 @@ public class Cliente {
     @Column(name = "id_cliente")
     private Long idCliente;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String apellido1;
 
+    @Column(length = 50)
     private String apellido2;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 15)
     private String dni;
 
-    @Column(name = "direccion_fiscal_completa")
+    @Column(name = "direccion_fiscal_completa", length = 255)
     private String direccionFiscalCompleta;
 
-    @Column(name = "codigo_postal")
+    @Column(name = "codigo_postal", length = 10)
     private String codigoPostal;
 
-    @Column(name = "cuenta_bancaria")
+    @Column(name = "cuenta_bancaria", length = 34)
     private String cuentaBancaria;
 
     @Column(name = "fecha_alta", insertable = false, updatable = false)
     private LocalDateTime fechaAlta;
 
-    @Column(name = "creado_por")
+    @Column(name = "creado_por", length = 100)
     private String creadoPor;
 
-    @Column(name = "modificado_por")
+    @Column(name = "modificado_por", length = 100)
     private String modificadoPor;
 
     @Column(name = "fecha_modificacion")
@@ -47,6 +48,7 @@ public class Cliente {
 
     @PrePersist
     protected void onCreate() {
-        if (fechaAlta == null) fechaAlta = LocalDateTime.now();
+        if (fechaAlta == null)
+            fechaAlta = LocalDateTime.now();
     }
 }

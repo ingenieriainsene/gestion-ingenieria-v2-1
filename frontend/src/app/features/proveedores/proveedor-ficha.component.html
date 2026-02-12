@@ -1,6 +1,7 @@
 <div class="ficha-top">
   <a routerLink="/proveedores" class="direct-link">&larr; Volver al listado</a>
 </div>
+<app-audit-stamp [data]="detail"></app-audit-stamp>
 
 <div *ngIf="loading" class="ficha-loading">Cargando…</div>
 
@@ -15,13 +16,16 @@
 
   <ul class="nav-tabs">
     <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="activeTab === 'general'" (click)="activeTab = 'general'">Datos Generales</button>
+      <button type="button" class="nav-link" [class.active]="activeTab === 'general'"
+        (click)="activeTab = 'general'">Datos Generales</button>
     </li>
     <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="activeTab === 'oficios'" (click)="activeTab = 'oficios'">🛠️ Oficios</button>
+      <button type="button" class="nav-link" [class.active]="activeTab === 'oficios'"
+        (click)="activeTab = 'oficios'">🛠️ Oficios</button>
     </li>
     <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="activeTab === 'contactos'" (click)="activeTab = 'contactos'">📞 Contactos</button>
+      <button type="button" class="nav-link" [class.active]="activeTab === 'contactos'"
+        (click)="activeTab = 'contactos'">📞 Contactos</button>
     </li>
   </ul>
 
@@ -70,7 +74,8 @@
     <div class="mini-form">
       <label class="form-label">Añadir Oficio</label>
       <div class="add-oficio-row">
-        <input type="text" class="form-input" [(ngModel)]="oficioNuevo" placeholder="Ej. Electricidad, Fontanería" (keyup.enter)="agregarOficio()" />
+        <input type="text" class="form-input" [(ngModel)]="oficioNuevo" placeholder="Ej. Electricidad, Fontanería"
+          (keyup.enter)="agregarOficio()" />
         <button type="button" class="btn-primary" (click)="agregarOficio()">Añadir</button>
       </div>
     </div>

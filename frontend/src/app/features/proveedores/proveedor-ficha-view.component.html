@@ -1,0 +1,91 @@
+<div class="ficha-top">
+    <a routerLink="/proveedores" class="direct-link">&larr; Volver al listado</a>
+</div>
+<app-audit-stamp [data]="detail"></app-audit-stamp>
+
+<div *ngIf="loading" class="ficha-loading">Cargando…</div>
+
+<div *ngIf="!loading && detail" class="ficha-container">
+    <div class="ficha-header clearfix">
+        <h1 class="ficha-title">FICHA TÉCNICA DE PROVEEDOR 🛠️</h1>
+        <div class="ficha-actions">
+            <a [routerLink]="['/proveedores', id, 'editar']" class="link-editar">✏️ Editar Proveedor</a>
+            <a routerLink="/proveedores" class="link-volver">Volver</a>
+        </div>
+    </div>
+
+    <div class="info-card-grid">
+        <div class="info-card info-card-wide">
+            <h3>Nombre Comercial</h3>
+            <p>{{ detail.nombreComercial || '—' }}</p>
+        </div>
+        <div class="info-card info-card-wide">
+            <h3>Razón Social</h3>
+            <p>{{ detail.razonSocial || '—' }}</p>
+        </div>
+        <div class="info-card">
+            <h3>CIF / NIF</h3>
+            <p>{{ detail.cif || '—' }}</p>
+        </div>
+        <div class="info-card">
+            <h3>Tipo</h3>
+            <p>{{ detail.esAutonomo ? 'Profesional Autónomo' : 'Empresa / Sociedad' }}</p>
+        </div>
+        <div class="info-card info-card-wide">
+            <h3>Dirección Fiscal</h3>
+            <p>{{ detail.direccionFiscal || '—' }}</p>
+        </div>
+        <div class="info-card">
+            <h3>Fecha de alta</h3>
+            <p>{{ fechaAltaFormatted() }}</p>
+        </div>
+    </div>
+
+    <section class="ficha-section">
+        <div class="section-header">
+            <h2>🛠️ Especialidades / Oficios</h2>
+        </div>
+        <div class="oficios-grid">
+            <div *ngFor="let o of detail.listaOficios" class="oficio-badge">
+                {{ o.oficio }}
+            </div>
+            <div *ngIf="!detail.listaOficios?.length" class="empty-msg">
+                No hay oficios registrados.
+            </div>
+        </div>
+    </section>
+
+    <section class="ficha-section">
+        <div class="section-header">
+            <h2>📞 Contactos del Proveedor</h2>
+        </div>
+        <div class="table-wrap">
+            <table class="ficha-table">
+                <thead>
+                    <tr>
+                        <th>NOMBRE</th>
+                        <th>CARGO</th>
+                        <th>TELÉFONO</th>
+                        <th>EMAIL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let c of detail.listaContactos">
+                        <td><strong>{{ c.nombre }}</strong></td>
+                        <td>{{ c.cargo || '—' }}</td>
+                        <td>{{ c.telefono || '—' }}</td>
+                        <td>{{ c.email || '—' }}</td>
+                    </tr>
+                    <tr *ngIf="!detail.listaContactos?.length">
+                        <td colspan="4" class="empty-cell">No hay contactos registrados.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div *ngIf="!loading && !detail" class="ficha-missing">
+    <p>Proveedor no encontrado.</p>
+    <a routerLink="/proveedores" class="direct-link">Volver al listado</a>
+</div>

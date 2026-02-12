@@ -70,7 +70,7 @@ interface ProveedorRow {
           </td>
           <td style="text-align: right; white-space: nowrap;">
             <a [routerLink]="['/proveedores', p.id]" class="action-badge" style="background:#3498db;" title="Ver ficha">👁️</a>
-            <a [routerLink]="['/proveedores', p.id]" class="action-badge badge-edit" title="Editar">✏️</a>
+            <a [routerLink]="['/proveedores', p.id, 'editar']" class="action-badge badge-edit" title="Editar">✏️</a>
             <button class="action-badge badge-delete" style="border:none; cursor:pointer;" title="Eliminar" (click)="eliminar(p)">🗑️</button>
           </td>
         </tr>

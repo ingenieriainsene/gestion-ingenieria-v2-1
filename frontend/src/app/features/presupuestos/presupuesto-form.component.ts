@@ -13,346 +13,386 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   template: `
-    <div class="mb-3">
-      <a [routerLink]="idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos']" class="direct-link">
-        &larr; {{ idPresupuesto ? 'Volver a la ficha' : 'Volver al listado' }}
-      </a>
+    <div class="ficha-wrapper">
+      <div class="header-section">
+        <a [routerLink]="idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos']" class="back-link">
+          <span class="icon">←</span> {{ idPresupuesto ? 'Volver a la ficha' : 'Volver al listado' }}
+        </a>
+        <h2>{{ idPresupuesto ? 'Editar Presupuesto' : 'Nuevo Presupuesto' }}</h2>
+        <p class="subtitle">Gestión detallada del presupuesto, capítulos y partidas.</p>
+      </div>
+
+      <div class="form-card">
+        <form [formGroup]="form" (ngSubmit)="guardar()" class="modern-form">
+          
+          <!-- Cabecera del Presupuesto -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Cliente <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="clienteLabel"
+                  list="clientes-presupuestos-list"
+                  placeholder="Busca por nombre o DNI"
+                  (input)="onClienteInput()"
+                />
+                <datalist id="clientes-presupuestos-list">
+                  <option *ngFor="let c of clientesOptionsView" [value]="c.label"></option>
+                </datalist>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Vivienda <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">🏠</span>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="viviendaLabel"
+                  list="viviendas-presupuestos-list"
+                  placeholder="Busca por dirección o CUPS"
+                  (input)="onViviendaInput()"
+                />
+                <datalist id="viviendas-presupuestos-list">
+                  <option *ngFor="let l of localesOptionsView" [value]="l.label"></option>
+                </datalist>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Fecha <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">📅</span>
+                <input type="date" class="form-control" formControlName="fecha" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <div class="input-wrapper">
+                <span class="input-icon">📊</span>
+                <select class="form-control" formControlName="estado">
+                  <option value="Borrador">Borrador</option>
+                  <option value="Enviado">Enviado</option>
+                  <option value="Aceptado">Aceptado</option>
+                  <option value="Rechazado">Rechazado</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tipo</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🏷️</span>
+                <select class="form-control" formControlName="tipoPresupuesto">
+                  <option value="Obra">Obra</option>
+                  <option value="Correctivo">Correctivo</option>
+                  <option value="Preventivo">Preventivo</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Código Ref.</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🔖</span>
+                 <input type="text" class="form-control" formControlName="codigoReferencia" placeholder="Automático si vacío" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Líneas del Presupuesto -->
+          <div class="lines-section">
+            <div class="lines-header">
+              <h3>📦 Capítulos y Partidas</h3>
+              <button type="button" class="btn-create-small" (click)="addCapitulo()">
+                + Nuevo Capítulo
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="tree-table" formArrayName="capitulos">
+                <thead>
+                  <tr>
+                    <th class="col-code">Cód.</th>
+                    <th class="col-product">Producto</th>
+                    <th class="col-concept">Concepto</th>
+                    <th class="col-num">Cant.</th>
+                    <th class="col-num">Coste U.</th>
+                    <th class="col-num">Total Coste</th>
+                    <th class="col-num">Mg.</th>
+                    <th class="col-num">PVP U.</th>
+                    <th class="col-num" *ngIf="form.get('tipoPresupuesto')?.value === 'Preventivo'">Visitas</th>
+                    <th class="col-num">IVA %</th>
+                    <th class="col-num">Imp. IVA</th>
+                    <th class="col-num">Total</th>
+                    <th class="col-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ng-container *ngFor="let cap of capitulos.controls; let i = index" [formGroupName]="i">
+                     <!-- Capítulo Row -->
+                    <tr class="row-capitulo" (click)="selectCapitulo(i)" [class.selected]="selectedCapituloIndex === i">
+                      <td class="code-cell">{{ cap.get('codigoVisual')?.value }}</td>
+                      <td></td>
+                      <td>
+                        <div class="capitulo-concept">
+                          <button type="button" class="toggle-btn" (click)="toggleCapitulo(i); $event.stopPropagation()">
+                            {{ collapsed[i] ? '▶' : '▼' }}
+                          </button>
+                          <input type="text" class="form-control-flat bold" formControlName="concepto" placeholder="Nombre del capítulo" />
+                        </div>
+                      </td>
+                      <td></td>
+                      <td></td>
+                      <td class="num readonly-cell">{{ getCapituloTotalCoste(i) | number:'1.2-2' }} €</td>
+                      <td></td>
+                      <td class="num readonly-cell">{{ getCapituloTotalPvp(i) | number:'1.2-2' }} €</td>
+                      <td class="num" *ngIf="form.get('tipoPresupuesto')?.value === 'Preventivo'"></td>
+                      <td></td>
+                      <td class="num readonly-cell">{{ getCapituloImporteIva(i) | number:'1.2-2' }} €</td>
+                      <td class="num readonly-cell bold">{{ getCapituloTotalFinal(i) | number:'1.2-2' }} €</td>
+                      <td class="actions-cell">
+                        <button type="button" class="btn-icon-add" title="Añadir Partida" (click)="addPartida(i); $event.stopPropagation()">➕</button>
+                        <button type="button" class="btn-icon-delete" title="Eliminar Capítulo" (click)="removeCapitulo(i); $event.stopPropagation()">🗑️</button>
+                      </td>
+                    </tr>
+                    
+                    <!-- Partidas Rows -->
+                    <ng-container formArrayName="partidas" *ngIf="!collapsed[i]">
+                      <tr *ngFor="let part of getPartidas(i).controls; let j = index" [formGroupName]="j" class="row-partida">
+                        <td class="code-cell indent">{{ part.get('codigoVisual')?.value }}</td>
+                        <td>
+                          <div class="product-input-group">
+                            <input
+                              type="text"
+                              class="form-control-flat small-text"
+                              formControlName="productoTexto"
+                              placeholder="Buscar..."
+                              (input)="onProductoInput(i, j)"
+                            />
+                            <button type="button" class="btn-micro-search" (click)="abrirProductoModal(i, j)">🔍</button>
+                          </div>
+                        </td>
+                        <td><input type="text" class="form-control-flat" formControlName="concepto" placeholder="Concepto partida" /></td>
+                        <td class="num"><input type="number" class="form-control-flat num-input" formControlName="cantidad" min="0" step="0.01" /></td>
+                        <td class="num"><input type="number" class="form-control-flat num-input" formControlName="costeUnitario" min="0" step="0.01" /></td>
+                        <td class="num readonly-cell light">{{ getPartidaTotalCoste(i, j) | number:'1.2-2' }} €</td>
+                        <td class="num"><input type="number" class="form-control-flat num-input" formControlName="factorMargen" min="1" step="0.01" /></td>
+                        <td class="num readonly-cell light">{{ getPartidaTotalPvp(i, j) | number:'1.2-2' }} €</td>
+                        <td class="num" *ngIf="form.get('tipoPresupuesto')?.value === 'Preventivo'">
+                          <input type="number" class="form-control-flat num-input" formControlName="numVisitas" min="0" step="1" placeholder="0" />
+                        </td>
+                        <td class="num"><input type="number" class="form-control-flat num-input" formControlName="ivaPorcentaje" min="0" step="1" /></td>
+                        <td class="num readonly-cell light">{{ getPartidaImporteIva(i, j) | number:'1.2-2' }} €</td>
+                        <td class="num readonly-cell">{{ getPartidaTotalFinal(i, j) | number:'1.2-2' }} €</td>
+                        <td class="actions-cell">
+                          <button type="button" class="btn-icon-delete small" (click)="removePartida(i, j)">🗑️</button>
+                        </td>
+                      </tr>
+                    </ng-container>
+                  </ng-container>
+                </tbody>
+              </table>
+              <div *ngIf="capitulos.length === 0" class="empty-state">
+                No hay capítulos. Añade uno para comenzar.
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen Totales -->
+          <div class="totales-section">
+            <div class="resumen-card">
+              <div class="resumen-row">
+                <span>Base Imponible</span>
+                <strong>{{ totalSinIva | number:'1.2-2' }} €</strong>
+              </div>
+              <div class="resumen-row">
+                <span>Total IVA</span>
+                <strong>{{ totalIva | number:'1.2-2' }} €</strong>
+              </div>
+              <div class="resumen-row total">
+                <span>TOTAL PRESUPUESTO</span>
+                <strong>{{ totalConIva | number:'1.2-2' }} €</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" [routerLink]="idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos']" class="btn-cancel">Cancelar</button>
+            <button type="submit" class="btn-save" [disabled]="guardando || form.invalid">
+              {{ idPresupuesto ? 'Guardar Cambios' : 'Crear Presupuesto' }}
+            </button>
+          </div>
+
+        </form>
+      </div>
     </div>
 
-    <div class="main-container">
-      <h1>{{ idPresupuesto ? 'Editar Presupuesto' : 'Nuevo Presupuesto' }}</h1>
-
-      <form [formGroup]="form" (ngSubmit)="guardar()">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Cliente *</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="clienteLabel"
-              list="clientes-presupuestos-list"
-              placeholder="Busca por nombre o DNI"
-              (input)="onClienteInput()"
-            />
-            <datalist id="clientes-presupuestos-list">
-              <option *ngFor="let c of clientesOptionsView" [value]="c.label"></option>
-            </datalist>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Vivienda *</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="viviendaLabel"
-              list="viviendas-presupuestos-list"
-              placeholder="Busca por dirección o CUPS"
-              (input)="onViviendaInput()"
-            />
-            <datalist id="viviendas-presupuestos-list">
-              <option *ngFor="let l of localesOptionsView" [value]="l.label"></option>
-            </datalist>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Fecha *</label>
-            <input type="date" class="form-control" formControlName="fecha" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Estado</label>
-            <select class="form-control" formControlName="estado">
-              <option value="Borrador">Borrador</option>
-              <option value="Enviado">Enviado</option>
-              <option value="Aceptado">Aceptado</option>
-              <option value="Rechazado">Rechazado</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tipo de presupuesto</label>
-            <select class="form-control" formControlName="tipoPresupuesto">
-              <option value="Obra">Obra</option>
-              <option value="Correctivo">Correctivo</option>
-              <option value="Preventivo">Preventivo</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Total</label>
-            <input type="text" class="form-control" [value]="totalConIva | number:'1.2-2'" disabled />
-          </div>
+    <!-- Modal Producto -->
+    <div class="modal-overlay" [class.active]="modalProductoVisible" (click)="cerrarProductoModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Seleccionar Producto</h3>
+          <button class="close-btn" (click)="cerrarProductoModal()">✕</button>
         </div>
-
-        <div class="lineas-header">
-          <h2>Capítulos y partidas</h2>
-          <button type="button" class="btn-primary" (click)="addCapitulo()">+ Nuevo Capítulo</button>
-        </div>
-
-        <table class="tree-table" formArrayName="capitulos">
-          <thead>
-            <tr>
-              <th style="width:90px;">CÓDIGO</th>
-              <th style="width:220px;">PRODUCTO</th>
-              <th>CONCEPTO</th>
-              <th style="width:80px; text-align:right;">CANT.</th>
-              <th style="width:110px; text-align:right;">P. COSTE</th>
-              <th style="width:120px; text-align:right;">TOT. COSTE</th>
-              <th style="width:90px; text-align:right;">MARGEN</th>
-              <th style="width:120px; text-align:right;">TOT. PVP</th>
-              <th style="width:80px; text-align:right;">% IVA</th>
-              <th style="width:120px; text-align:right;">IMP. IVA</th>
-              <th style="width:120px; text-align:right;">TOTAL</th>
-              <th style="width:140px; text-align:right;">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let cap of capitulos.controls; let i = index" [formGroupName]="i">
-              <tr class="row-capitulo" (click)="selectCapitulo(i)">
-                <td class="code-cell">{{ cap.get('codigoVisual')?.value }}</td>
-                <td></td>
-                <td>
-                  <button type="button" class="toggle-btn" (click)="toggleCapitulo(i); $event.stopPropagation()">
-                    {{ collapsed[i] ? '▶' : '▼' }}
-                  </button>
-                  <input type="text" class="form-control flat-input" formControlName="concepto" placeholder="Nombre del capítulo" />
-                </td>
-                <td></td>
-                <td></td>
-                <td class="num readonly-cell">{{ getCapituloTotalCoste(i) | number:'1.2-2' }} €</td>
-                <td></td>
-                <td class="num readonly-cell">{{ getCapituloTotalPvp(i) | number:'1.2-2' }} €</td>
-                <td></td>
-                <td class="num readonly-cell">{{ getCapituloImporteIva(i) | number:'1.2-2' }} €</td>
-                <td class="num readonly-cell">{{ getCapituloTotalFinal(i) | number:'1.2-2' }} €</td>
-                <td class="actions">
-                  <button type="button" class="btn-secondary" *ngIf="selectedCapituloIndex === i" (click)="addPartida(i); $event.stopPropagation()">+ Partida</button>
-                  <button type="button" class="btn-secondary" (click)="removeCapitulo(i); $event.stopPropagation()">Eliminar</button>
-                </td>
-              </tr>
-              <ng-container formArrayName="partidas" *ngIf="!collapsed[i]">
-                <tr *ngFor="let part of getPartidas(i).controls; let j = index" [formGroupName]="j" class="row-partida">
-                  <td class="code-cell indent">{{ part.get('codigoVisual')?.value }}</td>
-                  <td>
-                    <div class="product-input">
-                      <input
-                        type="text"
-                        class="form-control flat-input"
-                        formControlName="productoTexto"
-                        placeholder="Selecciona o escribe"
-                        (input)="onProductoInput(i, j)"
-                      />
-                      <button type="button" class="product-btn" (click)="abrirProductoModal(i, j)">🔍</button>
-                    </div>
-                  </td>
-                  <td><input type="text" class="form-control flat-input" formControlName="concepto" placeholder="Concepto de partida" /></td>
-                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="cantidad" min="0" step="0.01" /></td>
-                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="costeUnitario" min="0" step="0.01" /></td>
-                  <td class="num readonly-cell">{{ getPartidaTotalCoste(i, j) | number:'1.2-2' }} €</td>
-                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="factorMargen" min="1" step="0.01" /></td>
-                  <td class="num readonly-cell">{{ getPartidaTotalPvp(i, j) | number:'1.2-2' }} €</td>
-                  <td class="num"><input type="number" class="form-control flat-input num" formControlName="ivaPorcentaje" min="0" step="0.01" /></td>
-                  <td class="num readonly-cell">{{ getPartidaImporteIva(i, j) | number:'1.2-2' }} €</td>
-                  <td class="num readonly-cell">{{ getPartidaTotalFinal(i, j) | number:'1.2-2' }} €</td>
-                  <td class="actions">
-                    <button type="button" class="btn-secondary" (click)="removePartida(i, j)">Eliminar</button>
-                  </td>
-                </tr>
-              </ng-container>
-            </ng-container>
-          </tbody>
-        </table>
-
-        <div class="modal-overlay" *ngIf="modalProductoVisible" (click)="cerrarProductoModal()">
-          <div class="modal-bubble modal-form" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <h2>Seleccionar producto</h2>
-              <button type="button" class="close-btn" (click)="cerrarProductoModal()">✕</button>
-            </div>
-            <div class="modal-search">
-              <input
+        <div class="modal-body">
+          <div class="search-box">
+             <span class="search-icon">🔍</span>
+             <input
                 type="text"
-                class="form-control"
-                placeholder="Buscar por código o descripción..."
+                class="search-input"
+                placeholder="Buscar por código, nombre o descripción..."
                 [(ngModel)]="productoQuery"
                 (ngModelChange)="filtrarProductos()"
               />
-            </div>
-            <div class="product-list">
-              <button
-                type="button"
+          </div>
+          <div class="product-list">
+             <div
                 class="product-item"
                 *ngFor="let p of productosFiltrados"
                 (click)="seleccionarProducto(p)"
               >
-                <strong>{{ p.codRef || '—' }}</strong>
-                <span>{{ p.descripcion }}</span>
-                <em>{{ p.coste | number:'1.2-2' }} €</em>
-              </button>
-              <div *ngIf="productosFiltrados.length === 0" class="product-empty">
-                No hay resultados para "{{ productoQuery }}".
+                <div class="prod-info">
+                   <div class="prod-code">{{ p.codRef || '—' }}</div>
+                   <div class="prod-desc">{{ p.descripcion }}</div>
+                </div>
+                <div class="prod-price">{{ p.coste | number:'1.2-2' }} €</div>
               </div>
-            </div>
-            <div class="modal-actions">
-              <button type="button" class="btn-secondary" (click)="cerrarProductoModal()">Cerrar</button>
-            </div>
+              <div *ngIf="productosFiltrados.length === 0" class="product-empty">
+                Sin resultados para "{{ productoQuery }}".
+              </div>
           </div>
         </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn-primary" [disabled]="guardando">
-            Guardar presupuesto
-          </button>
+        <div class="modal-footer">
+           <button class="btn-cancel" (click)="cerrarProductoModal()">Cerrar</button>
         </div>
-        <div class="totales-resumen">
-          <div class="resumen-item">
-            <span>Total sin IVA</span>
-            <strong>{{ totalSinIva | number:'1.2-2' }} €</strong>
-          </div>
-          <div class="resumen-item">
-            <span>IVA total</span>
-            <strong>{{ totalIva | number:'1.2-2' }} €</strong>
-          </div>
-          <div class="resumen-item total">
-            <span>TOTAL con IVA</span>
-            <strong>{{ totalConIva | number:'1.2-2' }} €</strong>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   `,
   styles: [`
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; }
-    .lineas-header { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px; }
-    .tree-table { width: 100%; border-collapse: collapse; }
-    .tree-table th {
-      background: #f1f5f9;
-      padding: 12px;
-      text-align: left;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      color: #64748b;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .tree-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-    .row-capitulo { background: #f8fafc; font-weight: 700; }
-    .row-partida { background: #fff; }
-    .toggle-btn {
-      border: none;
-      background: transparent;
-      margin-right: 6px;
-      cursor: pointer;
-      font-weight: 700;
-      color: #334155;
-    }
-    .flat-input {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-      font-family: inherit;
-      box-sizing: border-box;
-    }
-    .num { text-align: right; }
-    .readonly-cell { background: #f1f5f9; }
-    .actions { text-align: right; }
-    .code-cell { white-space: nowrap; color: #0f172a; }
-    .indent { padding-left: 24px; }
-    .form-actions { margin-top: 20px; }
-    .totales-resumen {
-      margin-top: 24px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      padding: 16px;
-      border-radius: 12px;
-    }
-    .resumen-item {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      color: #1e293b;
-    }
-    .resumen-item span {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #64748b;
-      font-weight: 700;
-    }
-    .resumen-item.total strong {
-      font-size: 1.1rem;
-      color: #0f172a;
-    }
-    .btn-secondary {
-      background: #94a3b8;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      width: 100%;
-    }
-    .product-input {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-    .product-btn {
-      border: 1px solid #e2e8f0;
-      background: #f8fafc;
-      border-radius: 8px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .modal-search {
-      margin: 8px 0 16px;
-    }
-    .product-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 360px;
-      overflow: auto;
-      margin-bottom: 16px;
-    }
-    .product-item {
-      display: grid;
-      grid-template-columns: 120px 1fr 100px;
-      gap: 12px;
-      text-align: left;
-      border: 1px solid #e2e8f0;
-      background: #fff;
-      padding: 10px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      align-items: center;
-    }
-    .product-item:hover {
-      border-color: #94a3b8;
-      background: #f8fafc;
-    }
-    .product-item strong { color: #0f172a; }
-    .product-item span { color: #334155; }
-    .product-item em { color: #64748b; font-style: normal; text-align: right; }
-    .product-empty {
-      padding: 16px;
-      color: #64748b;
-      text-align: center;
-      border: 1px dashed #e2e8f0;
-      border-radius: 10px;
-    }
-    @media (max-width: 1200px) {
-      .form-grid { grid-template-columns: 1fr 1fr; }
-      .tree-table th, .tree-table td { font-size: 0.8rem; }
-      .totales-resumen { grid-template-columns: 1fr; }
-    }
+    .ficha-wrapper { max-width: 1400px; margin: 0 auto; animation: fadeIn 0.4s ease-out; }
+    .header-section { margin-bottom: 2rem; text-align: center; }
+    .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: #64748b; text-decoration: none; font-weight: 500; font-size: 0.9rem; margin-bottom: 1rem; transition: color 0.2s; }
+    .back-link:hover { color: #3b82f6; }
+    h2 { font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0 0 0.5rem 0; }
+    .subtitle { color: #64748b; font-size: 1.1rem; }
+    
+    .form-card { background: white; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; overflow: hidden; }
+    .modern-form { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; }
+    
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    
+    .lines-section { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .lines-header { background: #f8fafc; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+    .lines-header h3 { margin: 0; font-size: 1.1rem; color: #334155; }
+    
+    /* Table Styles */
+    .table-responsive { overflow-x: auto; }
+    .tree-table { width: 100%; min-width: 1000px; border-collapse: collapse; }
+    .tree-table th { background: #f1f5f9; padding: 0.75rem 0.5rem; text-align: left; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 700; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    .tree-table td { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; font-size: 0.85rem; }
+    
+    .col-code { width: 70px; }
+    .col-product { width: 180px; }
+    .col-concept { width: 250px; }
+    .col-num { width: 80px; text-align: right; }
+    .col-actions { width: 90px; text-align: center; }
+    
+    .row-capitulo { background: #f8fafc; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .row-capitulo:hover { background: #f1f5f9; }
+    .row-capitulo.selected { background: #e0f2fe; }
+    
+    .row-partida { background: white; }
+    .row-partida:hover { background: #fafafa; }
+    
+    .code-cell { font-family: monospace; color: #475569; }
+    .indent { padding-left: 20px; color: #64748b; }
+    .capitulo-concept { display: flex; align-items: center; gap: 0.5rem; }
+    .toggle-btn { background: none; border: none; font-size: 0.8rem; cursor: pointer; color: #64748b; width: 20px; text-align: center; }
+    
+    .form-control-flat { width: 100%; border: 1px solid transparent; background: transparent; padding: 4px 6px; border-radius: 4px; font-size: inherit; color: inherit; transition: all 0.2s; }
+    .form-control-flat:hover, .form-control-flat:focus { background: white; border-color: #cbd5e1; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .form-control-flat.bold { font-weight: 700; color: #1e293b; }
+    .form-control-flat.num-input { text-align: right; }
+    .form-control-flat.small-text { font-size: 0.8rem; }
+    
+    .readonly-cell { text-align: right; padding-right: 8px; color: #334155; }
+    .readonly-cell.bold { font-weight: 700; color: #0f172a; }
+    .readonly-cell.light { color: #64748b; }
+    
+    .table-responsive::-webkit-scrollbar { height: 8px; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    
+    .product-input-group { display: flex; gap: 4px; }
+    .btn-micro-search { padding: 0 4px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .btn-micro-search:hover { background: #e2e8f0; }
+
+    .actions-cell { text-align: center; }
+    .btn-icon-add, .btn-icon-delete { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 4px; opacity: 0.7; transition: opacity 0.2s; }
+    .btn-icon-add:hover, .btn-icon-delete:hover { opacity: 1; transform: scale(1.1); }
+    .btn-icon-delete.small { font-size: 0.9rem; }
+
+    .empty-state { padding: 3rem; text-align: center; color: #94a3b8; font-style: italic; }
+
+    /* Totales */
+    .totales-section { display: flex; justify-content: flex-end; margin-top: 1rem; }
+    .resumen-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; min-width: 300px; display: flex; flex-direction: column; gap: 0.75rem; }
+    .resumen-row { display: flex; justify-content: space-between; align-items: center; color: #475569; font-size: 0.95rem; }
+    .resumen-row strong { color: #1e293b; font-weight: 600; }
+    .resumen-row.total { border-top: 1px solid #cbd5e1; padding-top: 0.75rem; margin-top: 0.5rem; color: #0f172a; font-size: 1.1rem; }
+    .resumen-row.total strong { color: #2563eb; font-weight: 800; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem; }
+    
+    /* Common Inputs (Header) */
+    .form-label { font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.25rem; }
+    .required { color: #ef4444; }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-icon { position: absolute; left: 0.75rem; font-size: 1rem; color: #94a3b8; pointer-events: none; }
+    .form-control { width: 100%; padding: 0.6rem 0.75rem 0.6rem 2.25rem; font-size: 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; background-color: #f8fafc; transition: all 0.2s; }
+    .form-control:focus { outline: none; border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    
+    .btn-create-small { padding: 0.5rem 1rem; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; width: auto; font-size: 0.85rem; }
+    .btn-create-small:hover { background: #059669; }
+    
+    .btn-cancel { padding: 0.75rem 1.5rem; background: white; border: 1px solid #cbd5e1; color: #64748b; font-weight: 600; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-cancel:hover { background: #f1f5f9; }
+    .btn-save { padding: 0.75rem 2rem; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; font-weight: 600; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+    .btn-save:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.2s; }
+    .modal-overlay.active { display: flex; }
+    .modal-card { background: white; width: 90%; max-width: 600px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; max-height: 80vh; }
+    .modal-header { padding: 1rem 1.5rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; color: #1e293b; }
+    .close-btn { background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; }
+    .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; background: #f8fafc; }
+    
+    .search-box { position: relative; width: 100%; }
+    .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+    .search-input:focus { outline: none; border-color: #3b82f6; }
+    
+    .product-list { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; overflow-y: auto; }
+    .product-item { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+    .product-item:hover { border-color: #3b82f6; background: #eff6ff; }
+    .prod-info { display: flex; flex-direction: column; gap: 2px; }
+    .prod-code { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .prod-desc { font-weight: 600; color: #1e293b; font-size: 0.9rem; }
+    .prod-price { font-weight: 700; color: #059669; font-size: 0.95rem; }
+    .product-empty { text-align: center; color: #94a3b8; padding: 2rem; font-style: italic; }
+
+    @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   `]
 })
 export class PresupuestoFormComponent implements OnInit {
@@ -486,6 +526,7 @@ export class PresupuestoFormComponent implements OnInit {
       costeUnitario: [0, [Validators.required, Validators.min(0)]],
       factorMargen: [1.00, [Validators.min(1)]],
       ivaPorcentaje: [21, [Validators.min(0)]],
+      numVisitas: [0, [Validators.min(0)]],
       totalCoste: [0],
       pvpUnitario: [0],
       totalPvp: [0],
@@ -768,6 +809,7 @@ export class PresupuestoFormComponent implements OnInit {
               productoTexto: part.productoTexto ?? '',
               concepto: part.concepto,
               cantidad: part.cantidad,
+              numVisitas: part.numVisitas ?? 0,
               costeUnitario: part.costeUnitario ?? part.precioUnitario ?? 0,
               factorMargen: part.factorMargen ?? 1,
               ivaPorcentaje: part.ivaPorcentaje ?? 21,
@@ -868,10 +910,11 @@ export class PresupuestoFormComponent implements OnInit {
         return {
           tipoJerarquia: 'PARTIDA',
           codigoVisual: v.codigoVisual,
-            productoId: v.productoId ?? null,
-            productoTexto: v.productoTexto,
+          productoId: v.productoId ?? null,
+          productoTexto: v.productoTexto,
           concepto: v.concepto,
           cantidad: Number(v.cantidad),
+          numVisitas: Number(v.numVisitas ?? 0),
           costeUnitario: Number(v.costeUnitario),
           factorMargen: Number(v.factorMargen ?? 1),
           ivaPorcentaje: Number(v.ivaPorcentaje ?? 21),

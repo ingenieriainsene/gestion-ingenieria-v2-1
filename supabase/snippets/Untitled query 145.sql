@@ -252,6 +252,7 @@ CREATE TABLE IF NOT EXISTS presupuesto_lineas (
     tipo_jerarquia VARCHAR(20) DEFAULT 'PARTIDA',
     codigo_visual VARCHAR(20),
     padre_id BIGINT NULL,
+    num_visitas INT DEFAULT 0,
     CONSTRAINT fk_linea_presupuesto FOREIGN KEY (presupuesto_id) REFERENCES presupuestos(id_presupuesto) ON DELETE CASCADE
 );
 
@@ -488,6 +489,9 @@ ALTER TABLE presupuesto_lineas
 
 ALTER TABLE presupuesto_lineas
     ADD COLUMN IF NOT EXISTS padre_id BIGINT;
+
+ALTER TABLE presupuesto_lineas
+    ADD COLUMN IF NOT EXISTS num_visitas INT DEFAULT 0;
 
 ALTER TABLE presupuesto_lineas
     ALTER COLUMN cantidad DROP NOT NULL;
@@ -730,25 +734,25 @@ cap04 AS (
   RETURNING id_linea
 )
 INSERT INTO presupuesto_lineas (
-  presupuesto_id, orden, concepto, cantidad, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  presupuesto_id, orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
   importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, tipo_jerarquia, codigo_visual, padre_id
 )
 VALUES
-  ((SELECT id_presupuesto FROM p), 1, 'Redacción de Proyecto Técnico de BT', 1, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, 'PARTIDA', '01.01', (SELECT id_linea FROM cap01)),
-  ((SELECT id_presupuesto FROM p), 2, 'Dirección de Obra y Coordinación CSS', 1, 900.00, 1.00, 900.00, 900.00, 900.00, 189.00, 1089.00, 21, 900.00, 900.00, 'PARTIDA', '01.02', (SELECT id_linea FROM cap01)),
-  ((SELECT id_presupuesto FROM p), 3, 'Tasas Municipales (ICIO) y Gestión de Subvenciones', 1, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, 'PARTIDA', '01.03', (SELECT id_linea FROM cap01)),
+  ((SELECT id_presupuesto FROM p), 1, 'Redacción de Proyecto Técnico de BT', 1, 0, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, 'PARTIDA', '01.01', (SELECT id_linea FROM cap01)),
+  ((SELECT id_presupuesto FROM p), 2, 'Dirección de Obra y Coordinación CSS', 1, 0, 900.00, 1.00, 900.00, 900.00, 900.00, 189.00, 1089.00, 21, 900.00, 900.00, 'PARTIDA', '01.02', (SELECT id_linea FROM cap01)),
+  ((SELECT id_presupuesto FROM p), 3, 'Tasas Municipales (ICIO) y Gestión de Subvenciones', 1, 0, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, 'PARTIDA', '01.03', (SELECT id_linea FROM cap01)),
 
-  ((SELECT id_presupuesto FROM p), 4, '18x Módulo Jinko Solar Tiger Neo N-Type 475W', 18, 160.00, 1.00, 2880.00, 160.00, 2880.00, 604.80, 3484.80, 21, 160.00, 2880.00, 'PARTIDA', '02.01', (SELECT id_linea FROM cap02)),
-  ((SELECT id_presupuesto FROM p), 5, 'Inversor Híbrido Huawei SUN2000-6KTL-L1', 1, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, 'PARTIDA', '02.02', (SELECT id_linea FROM cap02)),
-  ((SELECT id_presupuesto FROM p), 6, 'Estructura Coplanar K2 Systems (Aluminio)', 1, 650.00, 1.00, 650.00, 650.00, 650.00, 136.50, 786.50, 21, 650.00, 650.00, 'PARTIDA', '02.03', (SELECT id_linea FROM cap02)),
+  ((SELECT id_presupuesto FROM p), 4, '18x Módulo Jinko Solar Tiger Neo N-Type 475W', 18, 0, 160.00, 1.00, 2880.00, 160.00, 2880.00, 604.80, 3484.80, 21, 160.00, 2880.00, 'PARTIDA', '02.01', (SELECT id_linea FROM cap02)),
+  ((SELECT id_presupuesto FROM p), 5, 'Inversor Híbrido Huawei SUN2000-6KTL-L1', 1, 0, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, 'PARTIDA', '02.02', (SELECT id_linea FROM cap02)),
+  ((SELECT id_presupuesto FROM p), 6, 'Estructura Coplanar K2 Systems (Aluminio)', 1, 0, 650.00, 1.00, 650.00, 650.00, 650.00, 136.50, 786.50, 21, 650.00, 650.00, 'PARTIDA', '02.03', (SELECT id_linea FROM cap02)),
 
-  ((SELECT id_presupuesto FROM p), 7, 'Batería Huawei LUNA2000 10kWh', 1, 3400.00, 1.00, 3400.00, 3400.00, 3400.00, 714.00, 4114.00, 21, 3400.00, 3400.00, 'PARTIDA', '03.01', (SELECT id_linea FROM cap03)),
-  ((SELECT id_presupuesto FROM p), 8, 'Smart Power Sensor Huawei DTSU666-H', 1, 180.00, 1.00, 180.00, 180.00, 180.00, 37.80, 217.80, 21, 180.00, 180.00, 'PARTIDA', '03.02', (SELECT id_linea FROM cap03)),
-  ((SELECT id_presupuesto FROM p), 9, 'Protecciones DC/AC (Sobretensiones, Diferenciales Clase A)', 1, 380.00, 1.00, 380.00, 380.00, 380.00, 79.80, 459.80, 21, 380.00, 380.00, 'PARTIDA', '03.03', (SELECT id_linea FROM cap03)),
-  ((SELECT id_presupuesto FROM p), 10, 'Cableado solar 6mm y canalización reforzada', 1, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, 'PARTIDA', '03.04', (SELECT id_linea FROM cap03)),
+  ((SELECT id_presupuesto FROM p), 7, 'Batería Huawei LUNA2000 10kWh', 1, 0, 3400.00, 1.00, 3400.00, 3400.00, 3400.00, 714.00, 4114.00, 21, 3400.00, 3400.00, 'PARTIDA', '03.01', (SELECT id_linea FROM cap03)),
+  ((SELECT id_presupuesto FROM p), 8, 'Smart Power Sensor Huawei DTSU666-H', 1, 0, 180.00, 1.00, 180.00, 180.00, 180.00, 37.80, 217.80, 21, 180.00, 180.00, 'PARTIDA', '03.02', (SELECT id_linea FROM cap03)),
+  ((SELECT id_presupuesto FROM p), 9, 'Protecciones DC/AC (Sobretensiones, Diferenciales Clase A)', 1, 0, 380.00, 1.00, 380.00, 380.00, 380.00, 79.80, 459.80, 21, 380.00, 380.00, 'PARTIDA', '03.03', (SELECT id_linea FROM cap03)),
+  ((SELECT id_presupuesto FROM p), 10, 'Cableado solar 6mm y canalización reforzada', 1, 0, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, 'PARTIDA', '03.04', (SELECT id_linea FROM cap03)),
 
-  ((SELECT id_presupuesto FROM p), 11, 'Apertura de rozas y ayudas de albañilería', 1, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, 'PARTIDA', '04.01', (SELECT id_linea FROM cap04)),
-  ((SELECT id_presupuesto FROM p), 12, 'Bancada de hormigón para unidad exterior (si procede)', 1, 300.00, 1.00, 300.00, 300.00, 300.00, 63.00, 363.00, 21, 300.00, 300.00, 'PARTIDA', '04.02', (SELECT id_linea FROM cap04));
+  ((SELECT id_presupuesto FROM p), 11, 'Apertura de rozas y ayudas de albañilería', 1, 0, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, 'PARTIDA', '04.01', (SELECT id_linea FROM cap04)),
+  ((SELECT id_presupuesto FROM p), 12, 'Bancada de hormigón para unidad exterior (si procede)', 1, 0, 300.00, 1.00, 300.00, 300.00, 300.00, 63.00, 363.00, 21, 300.00, 300.00, 'PARTIDA', '04.02', (SELECT id_linea FROM cap04));
 
 -- ======================================================
 -- 3.2 SEED PRESUPUESTO PREVENTIVO (FV)
@@ -892,16 +896,16 @@ cap AS (
   RETURNING id_linea
 )
 INSERT INTO presupuesto_lineas (
-  presupuesto_id, orden, concepto, cantidad, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  presupuesto_id, orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
   importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, tipo_jerarquia, codigo_visual, padre_id
 )
 VALUES
-  ((SELECT id_presupuesto FROM p), 1, 'Limpieza de módulos FV', 1, 400.00, 1.00, 400.00, 400.00, 400.00, 84.00, 484.00, 21, 400.00, 400.00, 'PARTIDA', '01.01', (SELECT id_linea FROM cap)),
-  ((SELECT id_presupuesto FROM p), 2, 'Revisión de inversores', 1, 350.00, 1.00, 350.00, 350.00, 350.00, 73.50, 423.50, 21, 350.00, 350.00, 'PARTIDA', '01.02', (SELECT id_linea FROM cap)),
-  ((SELECT id_presupuesto FROM p), 3, 'Termografía de cuadros DC/AC', 1, 500.00, 1.00, 500.00, 500.00, 500.00, 105.00, 605.00, 21, 500.00, 500.00, 'PARTIDA', '01.03', (SELECT id_linea FROM cap)),
-  ((SELECT id_presupuesto FROM p), 4, 'Inspección de estructura y anclajes', 1, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, 'PARTIDA', '01.04', (SELECT id_linea FROM cap)),
-  ((SELECT id_presupuesto FROM p), 5, 'Verificación de protecciones', 1, 200.00, 1.00, 200.00, 200.00, 200.00, 42.00, 242.00, 21, 200.00, 200.00, 'PARTIDA', '01.05', (SELECT id_linea FROM cap)),
-  ((SELECT id_presupuesto FROM p), 6, 'Revisión de monitorización', 1, 180.00, 1.00, 180.00, 180.00, 180.00, 37.80, 217.80, 21, 180.00, 180.00, 'PARTIDA', '01.06', (SELECT id_linea FROM cap));
+  ((SELECT id_presupuesto FROM p), 1, 'Limpieza de módulos FV', 1, 2, 400.00, 1.00, 400.00, 400.00, 400.00, 84.00, 484.00, 21, 400.00, 400.00, 'PARTIDA', '01.01', (SELECT id_linea FROM cap)),
+  ((SELECT id_presupuesto FROM p), 2, 'Revisión de inversores', 1, 1, 350.00, 1.00, 350.00, 350.00, 350.00, 73.50, 423.50, 21, 350.00, 350.00, 'PARTIDA', '01.02', (SELECT id_linea FROM cap)),
+  ((SELECT id_presupuesto FROM p), 3, 'Termografía de cuadros DC/AC', 1, 1, 500.00, 1.00, 500.00, 500.00, 500.00, 105.00, 605.00, 21, 500.00, 500.00, 'PARTIDA', '01.03', (SELECT id_linea FROM cap)),
+  ((SELECT id_presupuesto FROM p), 4, 'Inspección de estructura y anclajes', 1, 1, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, 'PARTIDA', '01.04', (SELECT id_linea FROM cap)),
+  ((SELECT id_presupuesto FROM p), 5, 'Verificación de protecciones', 1, 1, 200.00, 1.00, 200.00, 200.00, 200.00, 42.00, 242.00, 21, 200.00, 200.00, 'PARTIDA', '01.05', (SELECT id_linea FROM cap)),
+  ((SELECT id_presupuesto FROM p), 6, 'Revisión de monitorización', 1, 1, 180.00, 1.00, 180.00, 180.00, 180.00, 37.80, 217.80, 21, 180.00, 180.00, 'PARTIDA', '01.06', (SELECT id_linea FROM cap));
 
 -- ======================================================
 -- 4. PERMISOS (Supabase)

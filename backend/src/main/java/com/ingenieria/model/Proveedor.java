@@ -15,25 +15,25 @@ public class Proveedor {
     @Column(name = "id_proveedor")
     private Long idProveedor;
 
-    @Column(name = "nombre_comercial", nullable = false)
+    @Column(name = "nombre_comercial", nullable = false, length = 100)
     private String nombreComercial;
 
-    @Column(name = "razon_social")
+    @Column(name = "razon_social", length = 100)
     private String razonSocial;
 
     @Column(name = "es_autonomo")
     private Boolean esAutonomo;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private String cif;
 
-    @Column(name = "direccion_fiscal")
+    @Column(name = "direccion_fiscal", length = 255)
     private String direccionFiscal;
 
     @Column(name = "fecha_alta", insertable = false, updatable = false)
     private LocalDateTime fechaAlta;
 
-    @Column(name = "creado_por")
+    @Column(name = "creado_por", length = 100)
     private String creadoPor;
 
     @OneToMany(mappedBy = "proveedor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -46,6 +46,7 @@ public class Proveedor {
 
     @PrePersist
     protected void onCreate() {
-        if (fechaAlta == null) fechaAlta = LocalDateTime.now();
+        if (fechaAlta == null)
+            fechaAlta = LocalDateTime.now();
     }
 }

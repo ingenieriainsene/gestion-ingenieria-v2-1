@@ -19,24 +19,25 @@ public class Local {
     @JoinColumn(name = "id_cliente", nullable = false)
     private Cliente cliente;
 
-    @Column(name = "nombre_titular", nullable = false)
+    @Column(name = "nombre_titular", nullable = false, length = 50)
     private String nombreTitular;
 
-    @Column(name = "apellido1_titular", nullable = false)
+    @Column(name = "apellido1_titular", nullable = false, length = 50)
     private String apellido1Titular;
 
-    @Column(name = "apellido2_titular")
+    @Column(name = "apellido2_titular", length = 50)
     private String apellido2Titular;
 
-    @Column(name = "dni_titular")
+    @Column(name = "dni_titular", length = 15)
     private String dniTitular;
 
+    @Column(length = 22)
     private String cups;
 
-    @Column(name = "referencia_catastral")
+    @Column(name = "referencia_catastral", length = 20)
     private String referenciaCatastral;
 
-    @Column(name = "direccion_completa", nullable = false)
+    @Column(name = "direccion_completa", nullable = false, length = 255)
     private String direccionCompleta;
 
     private BigDecimal latitud;
@@ -45,11 +46,25 @@ public class Local {
     @Column(name = "fecha_alta", insertable = false, updatable = false)
     private LocalDateTime fechaAlta;
 
-    @Column(name = "creado_por")
+    @Column(name = "creado_por", length = 100)
     private String creadoPor;
+
+    @Column(name = "modificado_por", length = 100)
+    private String modificadoPor;
+
+    @Column(name = "fecha_modificacion")
+    private LocalDateTime fechaModificacion;
 
     @PrePersist
     protected void onCreate() {
-        if (fechaAlta == null) fechaAlta = LocalDateTime.now();
+        if (fechaAlta == null)
+            fechaAlta = LocalDateTime.now();
+        if (fechaModificacion == null)
+            fechaModificacion = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        fechaModificacion = LocalDateTime.now();
     }
 }

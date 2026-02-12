@@ -39,7 +39,7 @@ public class ContratoMantenimiento {
     @Column(length = 30)
     private String estado;
 
-    @Column(name = "creado_por")
+    @Column(name = "creado_por", length = 100)
     private String creadoPor;
 
     @Column(name = "fecha_alta", insertable = false, updatable = false)

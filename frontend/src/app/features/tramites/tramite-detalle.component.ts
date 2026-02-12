@@ -12,6 +12,7 @@ import {
 import { UsuarioService as UsuarioApi, Usuario } from '../../services/usuario.service';
 import { ProveedorService, ProveedorDTO } from '../../services/proveedor.service';
 import { HttpClient } from '@angular/common/http';
+import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environments';
 
@@ -26,7 +27,7 @@ interface ArchivoTramite {
 @Component({
   selector: 'app-tramite-detalle',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, AuditStampComponent],
   templateUrl: './tramite-detalle.component.html',
   styleUrls: ['./tramite-detalle.component.css'],
 })
@@ -151,14 +152,14 @@ export class TramiteDetalleComponent implements OnInit {
     if (!this.idTramite) return;
     this.seguimientoService.getByTramite(this.idTramite).subscribe({
       next: (list) => (this.hitos = list || []),
-      error: () => {},
+      error: () => { },
     });
   }
 
   cargarTecnicos() {
     this.usuarioService.getTecnicos().subscribe({
       next: (list) => (this.tecnicos = list || []),
-      error: () => {},
+      error: () => { },
     });
   }
 
@@ -173,7 +174,7 @@ export class TramiteDetalleComponent implements OnInit {
           }))
           .filter((p: any) => typeof p.id === 'number');
       },
-      error: () => {},
+      error: () => { },
     });
   }
 
@@ -181,7 +182,7 @@ export class TramiteDetalleComponent implements OnInit {
     if (!this.idTramite) return;
     this.http.get<ArchivoTramite[]>(`${this.archivosBaseUrl}/tramite/${this.idTramite}`).subscribe({
       next: (list) => (this.archivos = list || []),
-      error: () => {},
+      error: () => { },
     });
   }
 

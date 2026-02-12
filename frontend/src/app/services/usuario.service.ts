@@ -8,13 +8,14 @@ export interface Usuario {
   passwordHash: string;
   rol: 'ADMIN' | 'TÉCNICO' | 'LECTURA';
   email?: string;
+  fechaCreacion?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
   private endpoint = 'usuarios';
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService) { }
 
   getAll(): Observable<Usuario[]> {
     return this.api.get<Usuario[]>(this.endpoint);

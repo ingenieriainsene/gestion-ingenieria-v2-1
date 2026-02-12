@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClienteService, LocalService, ContratoService } from '../../services/domain.services';
+import { PresupuestoService, PresupuestoListItem } from '../../services/presupuesto.service';
+import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import type { Cliente, Local, Contrato } from '../../services/domain.services';
 
 @Component({
   selector: 'app-cliente-ficha-view',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AuditStampComponent],
   templateUrl: './cliente-ficha-view.component.html',
   styleUrls: ['./cliente-ficha-view.component.css'],
 })
@@ -15,6 +17,7 @@ export class ClienteFichaViewComponent implements OnInit {
   cliente: Cliente | null = null;
   locales: Local[] = [];
   contratos: Contrato[] = [];
+  presupuestos: PresupuestoListItem[] = [];
   loading = true;
   idCliente: number | null = null;
 
@@ -24,7 +27,8 @@ export class ClienteFichaViewComponent implements OnInit {
     private clienteService: ClienteService,
     private localService: LocalService,
     private contratoService: ContratoService,
-  ) {}
+    private presupuestoService: PresupuestoService,
+  ) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -56,14 +60,21 @@ export class ClienteFichaViewComponent implements OnInit {
         const id = this.idCliente;
         this.locales = (list || []).filter((l: any) => (l.cliente?.idCliente ?? l.idCliente) === id);
       },
-      error: () => {},
+      error: () => { },
     });
     this.contratoService.getAll().subscribe({
       next: (list) => {
         const id = this.idCliente;
         this.contratos = (list || []).filter((c: any) => (c.cliente?.idCliente ?? c.idCliente) === id);
       },
-      error: () => {},
+      error: () => { },
+    });
+    this.presupuestoService.getBudgets().subscribe({
+      next: (list) => {
+        const id = this.idCliente;
+        this.presupuestos = (list || []).filter((p) => p.clienteId === id);
+      },
+      error: () => { },
     });
   }
 
@@ -88,5 +99,9 @@ export class ClienteFichaViewComponent implements OnInit {
   direccionLocalContrato(c: Contrato): string {
     const loc = (c as any).local;
     return (loc?.direccionCompleta as string) || '—';
+  }
+
+  getContratosPorLocal(idLocal: number): Contrato[] {
+    return this.contratos.filter(c => (c.idLocal ?? (c as any).local?.idLocal) === idLocal);
   }
 }

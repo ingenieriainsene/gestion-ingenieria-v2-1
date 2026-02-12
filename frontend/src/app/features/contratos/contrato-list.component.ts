@@ -1,385 +1,451 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { ContratoService, Contrato, ClienteService, LocalService, Cliente, Local } from '../../services/domain.services';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 
 @Component({
-    selector: 'app-contrato-list',
-    standalone: true,
-    imports: [CommonModule, RouterLink, ReactiveFormsModule],
-    template: `
-    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
+  selector: 'app-contrato-list',
+  standalone: true,
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  template: `
+    <div class="header-bar">
       <h1>Gestión de Contratos</h1>
-      <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Contrato</button>
+      <a routerLink="/contratos/nuevo" class="btn-primary">+ Nuevo Contrato</a>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>CLIENTE (FICHA)</th>
-          <th>LOCAL (FICHA)</th>
-          <th>TIPO</th>
-          <th>ALTA</th>
-          <th>VENCIMIENTO</th>
-          <th style="text-align:right;">ACCIONES</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let c of contratos">
-          <td><strong>#{{ c.idContrato }}</strong></td>
-          <td>
-            <a
-              [routerLink]="['/clientes', c.cliente?.idCliente || c.idCliente]"
-              class="maps-link"
-              style="font-weight:bold;"
-              title="Ver expediente completo del cliente"
-            >
-              👤 {{ c.cliente?.nombre }} {{ c.cliente?.apellido1 }}
-            </a>
-          </td>
-          <td>
-            <a
-              [routerLink]="['/locales', c.local?.idLocal || c.idLocal]"
-              class="maps-link"
-              title="Ver historial técnico de esta ubicación"
-            >
-              🏢 {{ c.local?.direccionCompleta }}
-            </a>
-          </td>
-          <td>{{ c.tipoContrato }}</td>
-          <td>{{ c.fechaAlta || c.fechaInicio | date:'dd/MM/yyyy' }}</td>
-          <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
-          <td style="text-align:right; white-space:nowrap;">
-            <a
-              [routerLink]="['/contratos', c.idContrato]"
-              class="action-badge"
-              title="Gestionar contrato (intervenciones, documentos, notas)"
-              style="margin-right:6px; background:#0f172a; color:white;"
-            >👁️</a>
-            <a
-              [routerLink]="['/contratos', c.idContrato, 'tramites']"
-              class="action-badge badge-edit"
-              title="Ver listado simple de trámites"
-            >✏️</a>
-            <button
-              class="action-badge badge-delete"
-              style="border:none; cursor:pointer;"
-              (click)="eliminar(c)"
-              title="Eliminar contrato"
-            >🗑️</button>
-          </td>
-        </tr>
-        <tr *ngIf="contratos.length === 0">
-          <td colspan="7" style="text-align:center; padding:40px; color:#64748b;">
-            No se encontraron contratos.
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="modal-overlay" *ngIf="modalVisible" (click)="onOverlayClick($event)">
-      <div class="modal-bubble" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Nuevo Contrato</h2>
-          <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+    <div class="filter-card">
+      <form [formGroup]="filterForm" class="filter-toolbar">
+        <div class="filter-group small">
+          <label>ID</label>
+          <input type="text" formControlName="searchId" placeholder="Ej: #2">
         </div>
-        <form [formGroup]="formNuevo" (ngSubmit)="crearContrato()">
-          <div class="modal-grid">
-            <div class="modal-field">
-              <label>Cliente *</label>
-              <input
-                type="text"
-                formControlName="clienteLabel"
-                list="clientes-list"
-                placeholder="Busca por nombre o DNI"
-                (input)="onClienteInput()"
-              />
-              <datalist id="clientes-list">
-                <option *ngFor="let c of clientesOptions" [value]="c.label"></option>
-              </datalist>
-            </div>
-            <div class="modal-field">
-              <label>Local *</label>
-              <input
-                type="text"
-                formControlName="localLabel"
-                list="locales-list"
-                placeholder="Busca por dirección o CUPS"
-                (input)="onLocalInput()"
-              />
-              <datalist id="locales-list">
-                <option *ngFor="let l of localesOptions" [value]="l.label"></option>
-              </datalist>
-            </div>
-            <div class="modal-field">
-              <label>Tipo de contrato *</label>
-              <select formControlName="tipoContrato">
-                <option value="">Selecciona un tipo</option>
-                <option value="Instalación">Instalación</option>
-                <option value="Ampliacion">Ampliacion</option>
-                <option value="Preventivo">Preventivo</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label>Fecha inicio *</label>
-              <input type="date" formControlName="fechaInicio" />
-            </div>
-            <div class="modal-field">
-              <label>Fecha vencimiento *</label>
-              <input type="date" formControlName="fechaVencimiento" />
-            </div>
-            <div class="modal-field full">
-              <label>Observaciones</label>
-              <textarea rows="3" formControlName="observaciones" placeholder="Notas generales del contrato..."></textarea>
-            </div>
+        
+        <div class="filter-group search-cliente">
+          <label>Cliente / DNI</label>
+          <div class="input-with-icon">
+            <span class="icon">🔍</span>
+            <input type="text" formControlName="searchCliente" placeholder="Buscar por nombre o DNI...">
           </div>
-          <div class="modal-actions">
-            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
-            <button type="submit" class="btn-primary" [disabled]="formNuevo.invalid || guardando">Crear contrato</button>
+        </div>
+
+        <div class="filter-group search-local">
+          <label>Local / Dirección</label>
+          <div class="input-with-icon">
+            <span class="icon">🏢</span>
+            <input type="text" formControlName="searchLocal" placeholder="Buscar por dirección...">
           </div>
-        </form>
-      </div>
+        </div>
+
+        <div class="filter-group">
+          <label>Tipo</label>
+          <select formControlName="tipo">
+            <option value="">Todos los tipos</option>
+            <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-clear" (click)="clearFilters()" title="Limpiar filtros">
+          🔄 Limpiar
+        </button>
+      </form>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>CLIENTE</th>
+            <th>DNI/CIF</th>
+            <th>LOCAL</th>
+            <th>TIPO</th>
+            <th>INICIO</th>
+            <th>VENCIMIENTO</th>
+            <th style="min-width: 150px; text-align: right;">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of filteredContratos">
+            <td><strong>#{{ c.idContrato }}</strong></td>
+            <td>
+              <a
+                [routerLink]="['/clientes', c.cliente?.idCliente || c.idCliente]"
+                class="entity-link"
+                title="Ver ficha cliente"
+              >
+                👤 {{ c.cliente?.nombre }} {{ c.cliente?.apellido1 }}
+              </a>
+            </td>
+            <td>
+              <span class="dni-text">{{ c.cliente?.dni || '—' }}</span>
+            </td>
+            <td>
+              <a
+                [routerLink]="['/locales', c.local?.idLocal || c.idLocal]"
+                class="entity-link"
+                title="Ver local"
+              >
+                🏠 {{ c.local?.direccionCompleta }}
+              </a>
+            </td>
+            <td>
+              <span class="badge-tipo">{{ c.tipoContrato }}</span>
+            </td>
+            <td>{{ c.fechaInicio | date:'dd/MM/yyyy' }}</td>
+            <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+            <td class="actions-cell">
+              <a
+                [routerLink]="['/contratos', c.idContrato]"
+                class="action-btn view"
+                title="Ver Gestión del Contrato"
+              >👁️</a>
+              
+              <a
+                [routerLink]="['/contratos', c.idContrato, 'editar']"
+                class="action-btn edit"
+                title="Editar Datos del Contrato"
+              >✏️</a>
+
+              <button
+                class="action-btn delete"
+                (click)="eliminar(c)"
+                title="Eliminar contrato"
+              >🗑️</button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredContratos.length === 0">
+            <td colspan="8" class="empty-state">
+              No se encontraron contratos con los filtros aplicados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   `
   ,
   styles: [`
-    .modal-bubble {
-      text-align: left;
-      overflow: hidden;
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    
+    .header-bar h1 {
+      font-size: 1.8rem;
+      color: #1e293b;
+      font-weight: 800;
+      margin: 0;
     }
 
-    .modal-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 8px;
+    .btn-primary {
+      background: #1e293b;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      background: #334155;
+      transform: translateY(-1px);
     }
 
-    .modal-field.full {
-      grid-column: span 2;
+    .filter-card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 25px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
     }
-
-    .modal-field {
+    .filter-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-end;
+    }
+    .filter-group {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
-      margin-bottom: 1rem;
-      min-width: 0;
+      gap: 6px;
     }
+    .filter-group.small { width: 80px; }
+    .filter-group.search-cliente { flex: 1.5; min-width: 200px; }
+    .filter-group.search-local { flex: 2; min-width: 250px; }
 
-    .modal-field input,
-    .modal-field select,
-    .modal-field textarea {
-      padding: 0.75rem;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
-      font-family: inherit;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .modal-field label {
+    .filter-group label {
+      font-size: 0.75rem;
       font-weight: 700;
-      color: #1e293b;
-      font-size: 0.8rem;
+      color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      margin-top: 1.5rem;
+    
+    .input-with-icon {
+      position: relative;
+    }
+    .input-with-icon .icon {
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      color: #94a3b8;
+    }
+    .input-with-icon input {
+      padding-left: 36px !important;
     }
 
-    .btn-secondary {
-      background: #94a3b8;
-      color: white;
-      padding: 10px 18px;
+    .filter-group input, .filter-group select {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.9rem;
+      color: #1e293b;
+      background: #f8fafc;
+      transition: all 0.2s;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .filter-group input:focus, .filter-group select:focus {
+      border-color: #1e293b;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.05);
+    }
+
+    .btn-clear {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-clear:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    
+    th {
+      background: #f8fafc;
+      padding: 1rem 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      border-bottom: 2px solid #e2e8f0;
+      text-align: left;
+    }
+    
+    td {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+    
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    
+    .entity-link {
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+      display: block;
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .entity-link:hover { color: #1d4ed8; text-decoration: underline; }
+
+    .dni-text {
+      font-weight: 700;
+      color: #475569;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+
+    .badge-tipo {
+      background: #eff6ff;
+      color: #1d4ed8;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: 1px solid #bfdbfe;
+      white-space: nowrap;
+    }
+
+    .actions-cell {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 32px;
+      height: 32px;
       border-radius: 8px;
+      margin-left: 8px;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: all 0.2s;
       border: none;
       cursor: pointer;
-      font-weight: 600;
     }
+    
+    .action-btn.edit { background: #f1c40f; color: #1e293b; }
+    .action-btn.edit:hover { transform: scale(1.1); }
+    
+    .action-btn.view { background: #3498db; color: white; }
+    .action-btn.view:hover { transform: scale(1.1); }
+    
+    .action-btn.delete { background: #e74c3c; color: white; }
+    .action-btn.delete:hover { transform: scale(1.1); }
 
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #94a3b8;
+      font-style: italic;
+    }
   `]
 })
-export class ContratoListComponent implements OnInit {
-    contratos: Contrato[] = [];
-    clientes: Cliente[] = [];
-    locales: Local[] = [];
-    clientesOptions: { id: number; label: string }[] = [];
-    localesOptions: { id: number; label: string }[] = [];
-    modalVisible = false;
-    formNuevo: FormGroup;
-    guardando = false;
-    private prefill: { idCliente?: number; idLocal?: number; tipoContrato?: string; fechaInicio?: string } | null = null;
-    constructor(
-        private service: ContratoService,
-        private clientesService: ClienteService,
-        private localesService: LocalService,
-        private fb: FormBuilder,
-        private route: ActivatedRoute
-    ) {
-        this.formNuevo = this.fb.group({
-            idCliente: [null, Validators.required],
-            idLocal: [null, Validators.required],
-            clienteLabel: [''],
-            localLabel: [''],
-            tipoContrato: ['', Validators.required],
-            fechaInicio: ['', Validators.required],
-            fechaVencimiento: ['', Validators.required],
-            observaciones: ['']
-        });
-    }
+export class ContratoListComponent implements OnInit, OnDestroy {
+  allContratos: Contrato[] = [];
+  filteredContratos: Contrato[] = [];
+  filterForm: FormGroup;
+  types: string[] = [];
+  private destroy$ = new Subject<void>();
 
-    ngOnInit() {
-        this.service.getAll().subscribe(data => this.contratos = data);
-        this.clientesService.getAll().subscribe(data => {
-            this.clientes = data || [];
-            this.clientesOptions = this.clientes
-                .filter(c => typeof c.idCliente === 'number')
-                .map(c => ({
-                    id: c.idCliente!,
-                    label: this.buildClienteLabel(c),
-                }));
-            this.applyPrefillIfReady();
-        });
-        this.localesService.getAll().subscribe(data => {
-            this.locales = data || [];
-            this.localesOptions = this.locales
-                .filter(l => typeof l.idLocal === 'number')
-                .map(l => ({
-                    id: l.idLocal!,
-                    label: this.buildLocalLabel(l),
-                }));
-            this.applyPrefillIfReady();
-        });
-        this.route.queryParamMap.subscribe((params) => {
-            const open = params.get('openModal');
-            if (open !== '1') return;
-            const idCliente = Number(params.get('clienteId') || '');
-            const idLocal = Number(params.get('localId') || '');
-            const tipoContrato = params.get('tipoContrato') || undefined;
-            const fechaInicio = params.get('fechaInicio') || undefined;
-            this.prefill = {
-                ...(Number.isFinite(idCliente) ? { idCliente } : {}),
-                ...(Number.isFinite(idLocal) ? { idLocal } : {}),
-                ...(tipoContrato ? { tipoContrato } : {}),
-                ...(fechaInicio ? { fechaInicio } : {}),
-            };
-            this.abrirModalNuevo();
-            this.applyPrefillIfReady();
-        });
-    }
+  constructor(
+    private service: ContratoService,
+    private fb: FormBuilder,
+    private router: Router
+  ) {
+    this.filterForm = this.fb.group({
+      searchId: [''],
+      searchCliente: [''],
+      searchLocal: [''],
+      tipo: ['']
+    });
+  }
 
-    abrirModalNuevo() {
-        this.modalVisible = true;
-    }
+  ngOnInit() {
+    this.loadContratos();
 
-    cerrarModal() {
-        this.modalVisible = false;
-    }
+    this.filterForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => this.applyFilters());
+  }
 
-    onOverlayClick(e: Event) {
-        if ((e.target as HTMLElement).classList.contains('modal-overlay')) {
-            this.cerrarModal();
-        }
-    }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-    crearContrato() {
-        if (this.formNuevo.invalid || this.guardando) return;
-        this.guardando = true;
-        const v = this.formNuevo.value;
-        const payload: Contrato = {
-            idCliente: v.idCliente,
-            idLocal: v.idLocal,
-            tipoContrato: v.tipoContrato,
-            fechaInicio: v.fechaInicio,
-            fechaVencimiento: v.fechaVencimiento,
-            observaciones: v.observaciones || undefined
-        };
-        this.service.create(payload).subscribe({
-            next: (created) => {
-                this.guardando = false;
-                this.cerrarModal();
-                this.formNuevo.reset();
-                this.contratos = [created, ...this.contratos];
-                Swal.fire('Creado', 'Contrato creado correctamente.', 'success');
-            },
-            error: (err) => {
-                this.guardando = false;
-                const msg = err?.error?.message ?? 'No se pudo crear el contrato.';
-                Swal.fire('Error', msg, 'error');
-            }
-        });
-    }
+  loadContratos() {
+    this.service.getAll().subscribe(data => {
+      this.allContratos = data || [];
+      this.extractFilterOptions();
+      this.applyFilters();
+    });
+  }
 
-    onClienteInput() {
-        const label = String(this.formNuevo.get('clienteLabel')?.value || '').trim();
-        const match = this.clientesOptions.find(c => c.label === label);
-        this.formNuevo.patchValue({ idCliente: match?.id ?? null }, { emitEvent: false });
-    }
+  private extractFilterOptions() {
+    const typesSet = new Set<string>();
+    this.allContratos.forEach(c => {
+      if (c.tipoContrato) typesSet.add(c.tipoContrato);
+    });
+    this.types = Array.from(typesSet).sort();
+  }
 
-    onLocalInput() {
-        const label = String(this.formNuevo.get('localLabel')?.value || '').trim();
-        const match = this.localesOptions.find(l => l.label === label);
-        this.formNuevo.patchValue({ idLocal: match?.id ?? null }, { emitEvent: false });
-    }
+  private normalizeString(str: string): string {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
 
-    private applyPrefillIfReady() {
-        if (!this.prefill) return;
-        const { idCliente, idLocal, tipoContrato, fechaInicio } = this.prefill;
-        this.formNuevo.patchValue({
-            ...(idCliente ? { idCliente } : {}),
-            ...(idLocal ? { idLocal } : {}),
-            ...(tipoContrato ? { tipoContrato } : {}),
-            ...(fechaInicio ? { fechaInicio } : {}),
-        }, { emitEvent: false });
-        if (idCliente && this.clientesOptions.length) {
-            const match = this.clientesOptions.find(c => c.id === idCliente);
-            if (match) this.formNuevo.patchValue({ clienteLabel: match.label }, { emitEvent: false });
-        }
-        if (idLocal && this.localesOptions.length) {
-            const match = this.localesOptions.find(l => l.id === idLocal);
-            if (match) this.formNuevo.patchValue({ localLabel: match.label }, { emitEvent: false });
-        }
-    }
+  private applyFilters() {
+    const { searchId, searchCliente, searchLocal, tipo } = this.filterForm.value;
+    const sId = (searchId || '').toLowerCase().trim().replace('#', '');
+    const sCli = this.normalizeString(searchCliente || '').trim();
+    const sLoc = this.normalizeString(searchLocal || '').trim();
 
-    private buildClienteLabel(c: Cliente): string {
-        const nombre = `${c.nombre} ${c.apellido1}${c.apellido2 ? ' ' + c.apellido2 : ''}`.trim();
-        const dni = c.dni ? ` (${c.dni})` : '';
-        return `${nombre}${dni}`;
-    }
+    this.filteredContratos = this.allContratos.filter(c => {
+      const matchesId = !sId || String(c.idContrato) === sId;
 
-    private buildLocalLabel(l: Local): string {
-        const dir = l.direccionCompleta || 'Local sin dirección';
-        const cups = l.cups ? ` · ${l.cups}` : '';
-        return `${dir}${cups}`;
-    }
+      const matchesCliente = !sCli ||
+        this.normalizeString(c.cliente?.nombre || '').includes(sCli) ||
+        this.normalizeString(c.cliente?.apellido1 || '').includes(sCli) ||
+        this.normalizeString(c.cliente?.dni || '').includes(sCli);
 
-    eliminar(c: Contrato) {
-        if (!c.idContrato) return;
-        Swal.fire({
-            title: '¿Eliminar contrato?',
-            text: `¿Seguro que deseas eliminar el contrato #${c.idContrato}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1e293b',
-            cancelButtonText: 'Cancelar',
-        }).then((res) => {
-            if (!res.isConfirmed) return;
-            this.service.delete(c.idContrato!).subscribe({
-                next: () => {
-                    this.contratos = this.contratos.filter(x => x.idContrato !== c.idContrato);
-                    Swal.fire('Eliminado', 'Contrato borrado correctamente.', 'success');
-                },
-                error: () => Swal.fire('Error', 'No se pudo eliminar el contrato.', 'error'),
-            });
-        });
-    }
+      const matchesLocal = !sLoc ||
+        this.normalizeString(c.local?.direccionCompleta || '').includes(sLoc);
+
+      const matchesTipo = !tipo || c.tipoContrato === tipo;
+
+      return matchesId && matchesCliente && matchesLocal && matchesTipo;
+    });
+  }
+
+  clearFilters() {
+    this.filterForm.reset({
+      searchId: '',
+      searchCliente: '',
+      searchLocal: '',
+      tipo: ''
+    });
+  }
+
+  eliminar(c: Contrato) {
+    if (!c.idContrato) return;
+    Swal.fire({
+      title: '¿Eliminar contrato?',
+      text: `¿Seguro que deseas eliminar el contrato #${c.idContrato}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Sí, eliminar'
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.service.delete(c.idContrato!).subscribe({
+        next: () => {
+          this.allContratos = this.allContratos.filter(x => x.idContrato !== c.idContrato);
+          this.applyFilters();
+          Swal.fire('Eliminado', 'Contrato borrado correctamente.', 'success');
+        },
+        error: () => Swal.fire('Error', 'No se pudo eliminar el contrato.', 'error'),
+      });
+    });
+  }
 }

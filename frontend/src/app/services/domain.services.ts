@@ -31,6 +31,9 @@ export interface Local {
     latitud?: number;
     longitud?: number;
     fechaAlta?: string;
+    creadoPor?: string;
+    modificadoPor?: string;
+    fechaModificacion?: string;
     /** Cuando el backend devuelve el local con cliente anidado (GET por id). */
     cliente?: Cliente;
 }
@@ -68,6 +71,9 @@ export interface Tramite {
     tecnicoAsignado?: string;
     fechaSeguimiento?: string | Date;
     fechaCreacion?: string | Date;
+    creadoPor?: string;
+    modificadoPor?: string;
+    fechaModificacion?: string | Date;
     esUrgente?: boolean;
     detalleSeguimiento?: string;
     fechaEjecucion?: string | Date;
@@ -88,6 +94,8 @@ export interface Seguimiento {
     nombreProveedor?: string;
     nombreCreador?: string;
     fechaRegistro?: string;
+    modificadoPor?: string;
+    fechaModificacion?: string;
 }
 
 export interface Cita {
@@ -136,8 +144,12 @@ export interface Proveedor {
     nombreComercial: string;
     razonSocial: string;
     cif: string;
-    direccionFiscal: string;
+    direcciónFiscal: string;
     esAutonomo: boolean;
+    fechaAlta?: string;
+    creadoPor?: string;
+    modificadoPor?: string;
+    fechaModificacion?: string;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalService, ContratoService } from '../../services/domain.services';
+import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import type { Local, Contrato, Cliente } from '../../services/domain.services';
 
 @Component({
   selector: 'app-local-ficha-view',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AuditStampComponent],
   templateUrl: './local-ficha-view.component.html',
   styleUrls: ['./local-ficha-view.component.css'],
 })
@@ -22,7 +23,7 @@ export class LocalFichaViewComponent implements OnInit {
     private router: Router,
     private localService: LocalService,
     private contratoService: ContratoService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -54,7 +55,7 @@ export class LocalFichaViewComponent implements OnInit {
         const id = this.idLocal;
         this.contratos = (list || []).filter((c: any) => (c.local?.idLocal ?? c.idLocal) === id);
       },
-      error: () => {},
+      error: () => { },
     });
   }
 

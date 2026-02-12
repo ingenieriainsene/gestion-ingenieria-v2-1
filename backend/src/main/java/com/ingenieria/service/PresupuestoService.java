@@ -179,6 +179,7 @@ public class PresupuestoService {
         dto.setCodigoVisual(l.getCodigoVisual());
         dto.setPadreId(l.getPadre() != null ? l.getPadre().getIdLinea() : null);
         dto.setCantidad(l.getCantidad());
+        dto.setNumVisitas(l.getNumVisitas());
         dto.setPrecioUnitario(l.getPrecioUnitario());
         dto.setTotalLinea(l.getTotalLinea());
         return dto;
@@ -279,6 +280,7 @@ public class PresupuestoService {
             linea.setTipoJerarquia(tipo);
             linea.setCodigoVisual(l.getCodigoVisual());
             linea.setCantidad(l.getCantidad());
+            linea.setNumVisitas(l.getNumVisitas());
             linea.setCosteUnitario(l.getCosteUnitario() != null ? l.getCosteUnitario() : l.getPrecioUnitario());
             linea.setFactorMargen(l.getFactorMargen() != null ? l.getFactorMargen() : BigDecimal.ONE);
             linea.setPrecioUnitario(l.getPrecioUnitario());

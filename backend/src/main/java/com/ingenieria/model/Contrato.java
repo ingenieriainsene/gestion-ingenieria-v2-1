@@ -31,7 +31,7 @@ public class Contrato {
     private LocalDate fechaVencimiento;
 
     @Column(name = "tipo_contrato", nullable = false)
-    private String tipoContrato; 
+    private String tipoContrato;
 
     @Column(name = "ce_previo")
     private String cePrevio; // Enum in DB
@@ -66,11 +66,19 @@ public class Contrato {
     @Column(name = "modificado_por")
     private String modificadoPor;
 
-    @Column(name = "fecha_modificacion", insertable = false, updatable = false)
+    @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
     @PrePersist
     protected void onCreate() {
-        if (fechaAlta == null) fechaAlta = LocalDateTime.now();
+        if (fechaAlta == null)
+            fechaAlta = LocalDateTime.now();
+        if (fechaModificacion == null)
+            fechaModificacion = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        fechaModificacion = LocalDateTime.now();
     }
 }

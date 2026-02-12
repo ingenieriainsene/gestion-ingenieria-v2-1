@@ -24,6 +24,7 @@ public class PresupuestoLineaDTO {
     private String codigoVisual;
     private Long padreId;
     private BigDecimal cantidad;
+    private Integer numVisitas;
     private BigDecimal precioUnitario;
     private BigDecimal totalLinea;
     private List<PresupuestoLineaDTO> hijos;

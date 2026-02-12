@@ -26,7 +26,7 @@ public class Presupuesto {
     @JoinColumn(name = "vivienda_id", nullable = false)
     private Local vivienda;
 
-    @Column(name = "codigo_referencia", nullable = false)
+    @Column(name = "codigo_referencia", nullable = false, length = 50)
     private String codigoReferencia;
 
     @Column(nullable = false)
@@ -51,4 +51,5 @@ public class Presupuesto {
     @OrderBy("orden ASC")
     @JsonManagedReference("presupuesto-lineas")
     private List<PresupuestoLinea> lineas = new ArrayList<>();
+
 }

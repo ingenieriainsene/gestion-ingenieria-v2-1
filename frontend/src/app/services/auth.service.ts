@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 export class AuthService {
     private endpoint = 'auth';
     private tokenKey = 'authToken';
+    private roleKey = 'authRole';
 
     constructor(private api: ApiService, private router: Router) { }
 
@@ -17,6 +18,9 @@ export class AuthService {
             tap((response: any) => {
                 if (response.token) {
                     localStorage.setItem(this.tokenKey, response.token);
+                }
+                if (response.rol) {
+                    localStorage.setItem(this.roleKey, response.rol);
                 }
             })
         );
@@ -47,6 +51,10 @@ export class AuthService {
         return token;
     }
 
+    getRole(): string | null {
+        return localStorage.getItem(this.roleKey);
+    }
+
     isLoggedIn(): boolean {
         return !!this.getToken();
     }
@@ -58,11 +66,12 @@ export class AuthService {
 
     private clearToken(): void {
         localStorage.removeItem(this.tokenKey);
+        localStorage.removeItem(this.roleKey);
     }
 
     private isTokenExpired(token: string): boolean {
         const payload = this.decodeTokenPayload(token);
-        if (!payload || typeof payload.exp !== 'number') return false;
+        if (!payload || typeof payload.exp !== 'number') return true;
         const nowSeconds = Math.floor(Date.now() / 1000);
         return payload.exp <= nowSeconds;
     }

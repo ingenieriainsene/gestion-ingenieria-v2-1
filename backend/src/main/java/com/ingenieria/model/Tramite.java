@@ -38,11 +38,17 @@ public class Tramite {
     @Column(name = "detalle_seguimiento", columnDefinition = "TEXT")
     private String detalleSeguimiento;
 
-    @Column(name = "fecha_creacion", insertable = false, updatable = false)
+    @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
     @Column(name = "fecha_ejecucion")
     private LocalDateTime fechaEjecucion;
+
+    @PrePersist
+    protected void onCreate() {
+        if (fechaCreacion == null)
+            fechaCreacion = LocalDateTime.now();
+    }
 
     // El concepto de "Venta Pendiente" se gestiona ahora a través del estado:
     // estado = "Pendiente" -> Venta Pendiente

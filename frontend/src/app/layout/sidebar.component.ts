@@ -31,26 +31,28 @@ interface NavCategory {
       </div>
 
       <nav class="sidebar-main">
-        <div *ngFor="let category of categories" class="nav-category">
-          <div class="category-header" (click)="toggleCategory(category.id)">
-            <span class="category-icon">{{ category.icon }}</span>
-            <span class="category-label">{{ category.label }}</span>
-            <span class="category-arrow" [class.expanded]="expandedCategories[category.id]">
-              ❯
-            </span>
+        <ng-container *ngFor="let category of categories">
+          <div class="nav-category" *ngIf="canViewCategory(category.id)">
+            <div class="category-header" (click)="toggleCategory(category.id)">
+              <span class="category-icon">{{ category.icon }}</span>
+              <span class="category-label">{{ category.label }}</span>
+              <span class="category-arrow" [class.expanded]="expandedCategories[category.id]">
+                ❯
+              </span>
+            </div>
+            
+            <div class="category-items" [class.expanded]="expandedCategories[category.id]">
+              <a
+                *ngFor="let item of category.items"
+                class="side-item"
+                [routerLink]="item.route"
+                routerLinkActive="active"
+              >
+                <span>{{ item.label }}</span>
+              </a>
+            </div>
           </div>
-          
-          <div class="category-items" [class.expanded]="expandedCategories[category.id]">
-            <a
-              *ngFor="let item of category.items"
-              class="side-item"
-              [routerLink]="item.route"
-              routerLinkActive="active"
-            >
-              <span>{{ item.label }}</span>
-            </a>
-          </div>
-        </div>
+        </ng-container>
       </nav>
 
       <div class="sidebar-footer">
@@ -349,7 +351,6 @@ export class SidebarComponent implements OnInit {
       icon: '📊',
       items: [
         { label: 'Clientes', route: '/clientes' },
-        { label: 'Seguimientos', route: '/seguimientos' },
         { label: 'Presupuestos', route: '/presupuestos' },
         { label: 'Contratos', route: '/contratos' }
       ]
@@ -359,8 +360,9 @@ export class SidebarComponent implements OnInit {
       label: 'Operaciones',
       icon: '⚙️',
       items: [
+        { label: 'Seguimientos', route: '/seguimientos' },
         { label: 'Agendar citas', route: '/agendar-citas' },
-        { label: 'Almacén', route: '/productos' },
+        { label: 'Almacen', route: '/productos' },
         { label: 'Proveedores', route: '/proveedores' },
         { label: 'Locales', route: '/locales' }
       ]
@@ -410,5 +412,13 @@ export class SidebarComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  canViewCategory(categoryId: string): boolean {
+    if (categoryId === 'admin') {
+      const role = this.auth.getRole();
+      return role === 'ROLE_ADMIN';
+    }
+    return true;
   }
 }

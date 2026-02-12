@@ -52,7 +52,7 @@ interface TareaPlan {
       <div class="stepper">
         <div class="step done">1. Presupuesto aceptado</div>
         <div class="step done">2. Planificación</div>
-        <div class="step" [class.done]="!!(contratoBaseId || contrato?.contratoId)">3. Contrato creado</div>
+        <div class="step" [class.done]="!!(contratoBaseId || contrato.contratoId)">3. Contrato creado</div>
         <div class="step" [class.done]="yaGenerado">4. Intervenciones</div>
       </div>
 
@@ -207,7 +207,7 @@ export class PlanificacionIntervencionesComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: MantenimientoPreventivoService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {

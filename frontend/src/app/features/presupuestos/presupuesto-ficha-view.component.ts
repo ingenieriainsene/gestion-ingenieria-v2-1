@@ -4,16 +4,18 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PresupuestoService, PresupuestoDTO } from '../../services/presupuesto.service';
 import { ClienteService, LocalService, Cliente, Local } from '../../services/domain.services';
 import { MantenimientoPreventivoService } from '../../services/mantenimiento-preventivo.service';
+import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-presupuesto-ficha-view',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AuditStampComponent],
   template: `
     <div class="ficha-top">
       <a routerLink="/presupuestos" class="direct-link">&larr; Volver al listado</a>
     </div>
+    <app-audit-stamp [data]="presupuesto"></app-audit-stamp>
 
     <div *ngIf="loading" class="ficha-loading">Cargando…</div>
 
@@ -98,6 +100,7 @@ import Swal from 'sweetalert2';
                 <th style="text-align:right;">TOT. COSTE</th>
                 <th style="text-align:right;">MARGEN</th>
                 <th style="text-align:right;">TOT. PVP</th>
+                <th style="text-align:right;" *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">VISITAS</th>
                 <th style="text-align:right;">% IVA</th>
                 <th style="text-align:right;">IMP. IVA</th>
                 <th style="text-align:right;">TOTAL</th>
@@ -118,6 +121,7 @@ import Swal from 'sweetalert2';
                   <td style="text-align:right;">{{ getCapituloTotalCoste(cap) | number:'1.2-2' }} €</td>
                   <td style="text-align:right;">—</td>
                   <td style="text-align:right;">{{ getCapituloTotalPvp(cap) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;" *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">—</td>
                   <td style="text-align:right;">—</td>
                   <td style="text-align:right;">{{ getCapituloImporteIva(cap) | number:'1.2-2' }} €</td>
                   <td style="text-align:right;">{{ getCapituloTotalFinal(cap) | number:'1.2-2' }} €</td>
@@ -130,6 +134,7 @@ import Swal from 'sweetalert2';
                   <td style="text-align:right;">{{ getPartidaTotalCoste(l) | number:'1.2-2' }} €</td>
                   <td style="text-align:right;">{{ l.factorMargen | number:'1.2-2' }}</td>
                   <td style="text-align:right;">{{ getPartidaTotalPvp(l) | number:'1.2-2' }} €</td>
+                  <td style="text-align:right;" *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">{{ l.numVisitas || 0 }}</td>
                   <td style="text-align:right;">{{ l.ivaPorcentaje ?? 21 }}</td>
                   <td style="text-align:right;">{{ getPartidaImporteIva(l) | number:'1.2-2' }} €</td>
                   <td style="text-align:right;">{{ getPartidaTotalFinal(l) | number:'1.2-2' }} €</td>
@@ -168,7 +173,7 @@ export class PresupuestoFichaViewComponent implements OnInit {
     private mantenimientoService: MantenimientoPreventivoService,
     private clienteService: ClienteService,
     private localService: LocalService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -204,13 +209,13 @@ export class PresupuestoFichaViewComponent implements OnInit {
         const nombre = `${c.nombre} ${c.apellido1}${c.apellido2 ? ' ' + c.apellido2 : ''}`.trim();
         this.clienteNombre = nombre || null;
       },
-      error: () => {}
+      error: () => { }
     });
     this.localService.getById(viviendaId).subscribe({
       next: (l: Local) => {
         this.viviendaDireccion = l.direccionCompleta || null;
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
