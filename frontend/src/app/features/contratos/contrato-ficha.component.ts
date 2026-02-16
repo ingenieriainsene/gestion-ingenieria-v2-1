@@ -5,10 +5,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContratoService, ClienteService, LocalService, Contrato, Cliente, Local } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
+import { AutocompleteComponent } from '../../shared/components/autocomplete/autocomplete.component';
+
 @Component({
   selector: 'app-contrato-ficha',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AutocompleteComponent],
   template: `
     <div class="ficha-wrapper">
       <div class="header-section">
@@ -32,27 +34,34 @@ import Swal from 'sweetalert2';
             <div class="form-group">
               <label class="form-label">Cliente <span class="required">*</span></label>
               <div class="select-wrapper">
-                <select class="form-control" formControlName="idCliente" (change)="onClienteChange()">
-                  <option [ngValue]="null">-- Seleccionar Cliente --</option>
-                  <option *ngFor="let c of clientes" [ngValue]="c.idCliente">
-                    {{ c.nombre }} {{ c.apellido1 }} ({{ c.dni }})
-                  </option>
-                </select>
+                <app-autocomplete
+                    formControlName="idCliente"
+                    [data]="clientes"
+                    [searchProps]="['nombre', 'apellido1', 'dni', 'email']"
+                    valueProp="idCliente"
+                    [displayFn]="displayCliente"
+                    placeholder="Buscar cliente por nombre o DNI..."
+                    (ngModelChange)="onClienteChange()"
+                ></app-autocomplete>
               </div>
             </div>
 
             <!-- Local -->
+            <!-- Local -->
             <div class="form-group">
               <label class="form-label">Local / Suministro <span class="required">*</span></label>
               <div class="select-wrapper">
-                <select class="form-control" formControlName="idLocal">
-                  <option [ngValue]="null">-- Seleccionar Local --</option>
-                  <option *ngFor="let l of localesFiltrados" [ngValue]="l.idLocal">
-                    {{ l.nombreTitular }} - {{ l.direccionCompleta }}
-                  </option>
-                </select>
+                <app-autocomplete
+                    formControlName="idLocal"
+                    [data]="localesFiltrados"
+                    [searchProps]="['nombreTitular', 'direccionCompleta', 'referenciaCatastral']"
+                    valueProp="idLocal"
+                    [displayFn]="displayLocal"
+                    placeholder="Buscar local por dirección o titular..."
+                    (ngModelChange)="onLocalChange()"
+                ></app-autocomplete>
               </div>
-              <small class="form-help" *ngIf="!form.get('idCliente')?.value">Seleccione primero un cliente para ver sus locales.</small>
+              <small class="form-help" *ngIf="!form.get('idCliente')?.value">Puede buscar un local directamente para auto-seleccionar el cliente.</small>
             </div>
 
             <!-- Tipo de Contrato -->
@@ -426,9 +435,11 @@ export class ContratoFichaComponent implements OnInit {
     this.dependenciesLoaded++;
     if (this.dependenciesLoaded >= 2) {
       if (this.idContrato && this.contractLoaded) {
-        this.onClienteChange();
+        // If editing, filter locals for the current client but keeping the current local valid
+        this.filterLocales(this.form.get('idCliente')?.value);
       } else if (!this.idContrato) {
-        this.localesFiltrados = [];
+        // If new, show ALL locales initially
+        this.localesFiltrados = this.locales;
       }
     }
   }
@@ -460,7 +471,7 @@ export class ContratoFichaComponent implements OnInit {
 
         // Filter locales for the loaded client if dependencies are ready
         if (this.dependenciesLoaded >= 2) {
-          this.onClienteChange();
+          this.filterLocales(c.idCliente);
         }
       },
       error: () => {
@@ -473,16 +484,46 @@ export class ContratoFichaComponent implements OnInit {
 
   onClienteChange() {
     const selectedClientId = this.form.get('idCliente')?.value;
-    // Reset selected local when client changes to prevent cross-client linking
-    this.form.get('idLocal')?.setValue(null);
+    const currentLocalId = this.form.get('idLocal')?.value;
 
-    if (selectedClientId && this.locales.length > 0) {
+    // If we have a local selected, check if it belongs to the new client
+    if (currentLocalId) {
+      const local = this.locales.find(l => l.idLocal === currentLocalId);
+      // If local doesn't belong to new client, clear it
+      if (local && local.idCliente !== selectedClientId &&
+        (!local.cliente || local.cliente.idCliente !== selectedClientId)) {
+        this.form.get('idLocal')?.setValue(null);
+      }
+    }
+
+    this.filterLocales(selectedClientId);
+  }
+
+  onLocalChange() {
+    const selectedLocalId = this.form.get('idLocal')?.value;
+    if (selectedLocalId) {
+      const local = this.locales.find(l => l.idLocal === selectedLocalId);
+      if (local) {
+        const clientId = local.idCliente || local.cliente?.idCliente;
+        const currentClientId = this.form.get('idCliente')?.value;
+        // If local has a client and it's different from selected, update client
+        if (clientId && clientId !== currentClientId) {
+          this.form.get('idCliente')?.setValue(clientId);
+          this.filterLocales(clientId);
+        }
+      }
+    }
+  }
+
+  filterLocales(clientId: number | null) {
+    if (clientId && this.locales.length > 0) {
       this.localesFiltrados = this.locales.filter(l =>
-        l.idCliente === selectedClientId ||
-        (l.cliente && l.cliente.idCliente === selectedClientId)
+        l.idCliente === clientId ||
+        (l.cliente && l.cliente.idCliente === clientId)
       );
     } else {
-      this.localesFiltrados = [];
+      // If no client selected, show ALL locales to allow global search
+      this.localesFiltrados = this.locales;
     }
   }
 
@@ -563,5 +604,17 @@ export class ContratoFichaComponent implements OnInit {
     if (!dateStr) return '';
     // Handle ISO strings with time
     return dateStr.split('T')[0];
+  }
+
+  // Display functions for Autocomplete
+  displayCliente(c: Cliente): string {
+    if (!c) return '';
+    // Use optional chaining or defaults just in case
+    return `${c.nombre} ${c.apellido1} (${c.dni})`;
+  }
+
+  displayLocal(l: Local): string {
+    if (!l) return '';
+    return `${l.nombreTitular} - ${l.direccionCompleta}`;
   }
 }

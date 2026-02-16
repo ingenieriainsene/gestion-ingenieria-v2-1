@@ -8,7 +8,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Respuesta para GET /api/tramites/{id}/detalle. Incluye trámite, contrato, cliente y local
+ * Respuesta para GET /api/tramites/{id}/detalle. Incluye trámite, contrato,
+ * cliente y local
  * para pintar la página de detalle (replica detalle_tramite.php).
  */
 @Data
@@ -44,4 +45,8 @@ public class TramiteDetalleResponse {
 
     private String localDireccion;
     private String localNombreTitular;
+
+    // Fechas Contrato
+    private LocalDate fechaInicio;
+    private LocalDate fechaVencimiento;
 }

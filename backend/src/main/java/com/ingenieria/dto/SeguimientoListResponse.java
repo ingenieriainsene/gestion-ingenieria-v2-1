@@ -20,7 +20,9 @@ public class SeguimientoListResponse {
     private String estado;
     private LocalDateTime fechaRegistro;
     private String nombreAsignado;
+    private Long idUsuarioAsignado;
     private String nombreCreador;
+    private Long idCreador;
     private Long idProveedor;
     private String nombreProveedor;
 }

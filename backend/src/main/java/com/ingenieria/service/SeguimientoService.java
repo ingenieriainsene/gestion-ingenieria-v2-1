@@ -25,18 +25,24 @@ public class SeguimientoService {
 
     private static final String COMENTARIO_APERTURA = "Iniciar Actividad";
 
-    @Autowired private SeguimientoRepository seguimientoRepo;
-    @Autowired private TramiteRepository tramiteRepo;
-    @Autowired private UsuarioRepository usuarioRepo;
-    @Autowired private ProveedorRepository proveedorRepo;
+    @Autowired
+    private SeguimientoRepository seguimientoRepo;
+    @Autowired
+    private TramiteRepository tramiteRepo;
+    @Autowired
+    private UsuarioRepository usuarioRepo;
+    @Autowired
+    private ProveedorRepository proveedorRepo;
 
     public List<Seguimiento> findByTramite(Long idTramite) {
         return seguimientoRepo.findByTramite_IdTramiteOrderByFechaRegistroDesc(idTramite);
     }
 
     /**
-     * Si el trámite no tiene hitos, crea el primero («Iniciar Actividad»). Luego devuelve la lista.
-     * Replica acciones_tramites.php?accion=iniciar_seguimiento (auto-crear al entrar al detalle).
+     * Si el trámite no tiene hitos, crea el primero («Iniciar Actividad»). Luego
+     * devuelve la lista.
+     * Replica acciones_tramites.php?accion=iniciar_seguimiento (auto-crear al
+     * entrar al detalle).
      */
     private static SeguimientoListResponse toListResponse(Seguimiento s) {
         return new SeguimientoListResponse(
@@ -48,7 +54,9 @@ public class SeguimientoService {
                 s.getEstado(),
                 s.getFechaRegistro(),
                 s.getUsuarioAsignado() != null ? s.getUsuarioAsignado().getNombreUsuario() : null,
+                s.getUsuarioAsignado() != null ? s.getUsuarioAsignado().getIdUsuario() : null,
                 s.getCreador() != null ? s.getCreador().getNombreUsuario() : null,
+                s.getCreador() != null ? s.getCreador().getIdUsuario() : null,
                 s.getProveedor() != null ? s.getProveedor().getIdProveedor() : null,
                 s.getProveedor() != null ? s.getProveedor().getNombreComercial() : null);
     }
@@ -75,7 +83,8 @@ public class SeguimientoService {
     }
 
     private void ensurePrimerHito(Long idTramite) {
-        if (seguimientoRepo.countByTramite_IdTramite(idTramite) > 0) return;
+        if (seguimientoRepo.countByTramite_IdTramite(idTramite) > 0)
+            return;
 
         Tramite t = tramiteRepo.findById(idTramite)
                 .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + idTramite));
@@ -104,16 +113,17 @@ public class SeguimientoService {
     @Transactional
     public SeguimientoListResponse create(SeguimientoDTO dto) {
         Seguimiento s = new Seguimiento();
-        
+
         Tramite t = tramiteRepo.findById(dto.getIdTramite())
-            .orElseThrow(() -> new RuntimeException("Tramite no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Tramite no encontrado"));
         s.setTramite(t);
 
         s.setComentario(dto.getComentario());
         s.setFechaSeguimiento(dto.getFechaSeguimiento());
         s.setEsUrgente(Boolean.TRUE.equals(dto.getEsUrgente()));
         String estado = dto.getEstado();
-        if (estado == null || estado.isBlank()) estado = "Pendiente";
+        if (estado == null || estado.isBlank())
+            estado = "Pendiente";
         s.setEstado(estado);
 
         Usuario creador = null;
@@ -123,20 +133,20 @@ public class SeguimientoService {
         }
         if (creador == null) {
             creador = usuarioRepo.findAll().stream().findFirst()
-                .orElseThrow(() -> new RuntimeException("No hay usuarios en el sistema"));
+                    .orElseThrow(() -> new RuntimeException("No hay usuarios en el sistema"));
         }
         s.setCreador(creador);
 
         Usuario asignado;
         if (dto.getIdProveedor() != null) {
             Proveedor p = proveedorRepo.findById(dto.getIdProveedor())
-                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+                    .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
             s.setProveedor(p);
             s.setUsuarioAsignado(creador);
             asignado = creador;
         } else if (dto.getIdUsuarioAsignado() != null) {
             Usuario u = usuarioRepo.findById(dto.getIdUsuarioAsignado())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
             s.setUsuarioAsignado(u);
             asignado = u;
         } else {
@@ -154,9 +164,46 @@ public class SeguimientoService {
                 saved.getEstado(),
                 saved.getFechaRegistro(),
                 asignado != null ? asignado.getNombreUsuario() : null,
+                asignado != null ? asignado.getIdUsuario() : null,
                 creador != null ? creador.getNombreUsuario() : null,
+                creador != null ? creador.getIdUsuario() : null,
                 saved.getProveedor() != null ? saved.getProveedor().getIdProveedor() : null,
                 saved.getProveedor() != null ? saved.getProveedor().getNombreComercial() : null);
+    }
+
+    @Transactional
+    public SeguimientoListResponse update(Long id, SeguimientoDTO dto) {
+        Seguimiento s = seguimientoRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Seguimiento no encontrado: " + id));
+
+        s.setComentario(dto.getComentario());
+        s.setFechaSeguimiento(dto.getFechaSeguimiento());
+        s.setEsUrgente(Boolean.TRUE.equals(dto.getEsUrgente()));
+        if (dto.getEstado() != null && !dto.getEstado().isBlank()) {
+            s.setEstado(dto.getEstado());
+        }
+
+        // Update relations if present
+        if (dto.getIdProveedor() != null) {
+            Proveedor p = proveedorRepo.findById(dto.getIdProveedor())
+                    .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+            s.setProveedor(p);
+            // If checking logic requires changing assigned user when provider changes
+        } else {
+            s.setProveedor(null);
+        }
+
+        if (dto.getIdUsuarioAsignado() != null) {
+            Usuario u = usuarioRepo.findById(dto.getIdUsuarioAsignado())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            s.setUsuarioAsignado(u);
+        }
+        // If null in DTO, we keep the previous value because DB column is NOT NULL.
+        // If we wanted to enforce it provided: else { throw new
+        // RuntimeException("Usuario asignado obligatorio"); }
+
+        Seguimiento saved = seguimientoRepo.save(s);
+        return toListResponse(saved);
     }
 
     @Transactional

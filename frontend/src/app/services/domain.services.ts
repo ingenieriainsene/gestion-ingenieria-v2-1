@@ -137,6 +137,8 @@ export interface TramiteDetalleResponse {
     clienteDni?: string;
     localDireccion?: string;
     localNombreTitular?: string;
+    fechaInicio?: string;
+    fechaVencimiento?: string;
 }
 
 export interface Proveedor {
@@ -348,6 +350,7 @@ export class SeguimientoService {
         return this.api.get<Seguimiento[]>(this.endpoint, params);
     }
     create(data: Seguimiento): Observable<Seguimiento> { return this.api.post<Seguimiento>(this.endpoint, data); }
+    update(id: number, data: Partial<Seguimiento>): Observable<Seguimiento> { return this.api.put<Seguimiento>(`${this.endpoint}/${id}`, data); }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
 }
 

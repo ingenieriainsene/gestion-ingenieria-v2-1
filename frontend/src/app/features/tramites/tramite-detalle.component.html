@@ -1,224 +1,233 @@
 <div *ngIf="detalle" class="ficha-wrapper">
 
   <!-- Header -->
-  <div class="header-section">
-    <div class="header-main">
-      <div class="header-titles">
-        <a (click)="volverAlContrato()" class="back-link">
-          <span class="icon">←</span> Volver al contrato
-        </a>
-        <h2>Intervención: {{ detalle.tipoTramite }}</h2>
-      </div>
-    </div>
-    <app-audit-stamp [data]="detalle"></app-audit-stamp>
-  </div>
-  <p class="subtitle">
-    <span class="badge-contrato">Contrato #{{ detalle.idContrato }}</span>
-    Cliente: {{ detalle.clienteNombre }} {{ detalle.clienteApellido1 }}
-  </p>
-</div>
+  <div class="detalle-wrapper" *ngIf="detalle">
+    <!-- Cabecera y botón volver -->
+    <div class="header-section">
+      <button class="btn-back" (click)="volverAlContrato()">
+        <span class="icon">←</span> Volver al contrato
+      </button>
 
-<!-- Información General Form -->
-<div class="form-card fade-in">
-  <div class="card-header">
-    <h3>📋 Información y Estado</h3>
+      <h1>Intervención: {{ detalle.tipoTramite }}</h1>
+
+      <!-- Contract & Client Summary -->
+      <div class="contract-summary-card">
+        <div class="summary-row">
+          <div class="summary-item">
+            <label>Cliente</label>
+            <span>{{ detalle.clienteNombre }} {{ detalle.clienteApellido1 }} <small *ngIf="detalle.clienteDni">({{
+                detalle.clienteDni }})</small></span>
+          </div>
+          <div class="summary-item">
+            <label>Local / Suministro</label>
+            <span>{{ detalle.localNombreTitular }} - {{ detalle.localDireccion }}</span>
+          </div>
+        </div>
+        <div class="summary-row">
+          <div class="summary-item">
+            <label>Tipo Contrato</label>
+            <span class="badge-type">{{ detalle.tipoContrato }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Vigencia</label>
+            <span>{{ detalle.fechaInicio | date:'dd/MM/yyyy' }} - {{ detalle.fechaVencimiento | date:'dd/MM/yyyy'
+              }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Contrato #</label>
+            <a [routerLink]="['/contratos', detalle.idContrato]" class="contract-link">Ver Ficha #{{ detalle.idContrato
+              }}</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-  <div class="card-body">
-    <form [formGroup]="formInfo" (ngSubmit)="guardarInfo()" class="modern-form">
-      <div class="form-grid">
-        <!-- Estado -->
-        <div class="form-group">
-          <label class="form-label">Estado Actual</label>
-          <div class="input-wrapper">
-            <span class="input-icon">📊</span>
+
+  <!-- Información General Form -->
+  <div class="form-card fade-in">
+    <div class="card-header">
+      <h3>📋 Información y Estado</h3>
+    </div>
+    <div class="card-body compact-body">
+      <form [formGroup]="formInfo" (ngSubmit)="guardarInfo()" class="compact-form inline-form">
+
+        <!-- Row 1: Status, Date, Urgent -->
+        <div class="form-row-inline">
+          <div class="form-group mb-0 flex-grow">
+            <label class="form-label">Estado</label>
+            <div class="input-wrapper small-input">
+              <span class="input-icon">📊</span>
+              <select class="form-control" formControlName="estado">
+                <option value="Pendiente">🔴 Pendiente</option>
+                <option value="En proceso">🟠 En proceso</option>
+                <option value="Terminado">🟢 Terminado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group mb-0 flex-grow">
+            <label class="form-label">Fecha Seguimiento</label>
+            <div class="input-wrapper small-input">
+              <span class="input-icon">📅</span>
+              <input type="date" class="form-control" formControlName="fechaSeguimiento" />
+            </div>
+          </div>
+
+          <div class="form-group mb-0 checkbox-group">
+            <label class="checkbox-wrapper warning small-check">
+              <input type="checkbox" formControlName="esUrgente" />
+              <span class="checkbox-label">⚠️ URGENTE</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Row 2: Observations & Button -->
+        <div class="form-row-inline align-end mt-2">
+          <div class="form-group flex-grow mb-0">
+            <label class="form-label">Notas Técnicas</label>
+            <input type="text" class="form-control" formControlName="detalleSeguimiento"
+              placeholder="Notas específicas..." />
+          </div>
+
+          <button type="submit" class="btn-save btn-compact">💾 Guardar</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Historial de Seguimientos -->
+  <div class="form-card mt-4 fade-in">
+    <div class="card-header flex-between">
+      <h3>📜 Historial de Seguimiento</h3>
+      <button type="button" class="btn-create-small" (click)="toggleNuevoHito()">
+        + Nuevo Hito
+      </button>
+    </div>
+
+    <!-- Formulario Nuevo Hito -->
+    <div *ngIf="showNuevoHito" class="new-item-form slide-down">
+      <form [formGroup]="formHito" (ngSubmit)="guardarHito()">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label class="form-label">Comentario <span class="required">*</span></label>
+            <textarea class="form-control" formControlName="comentario" rows="2"
+              placeholder="Describe la acción..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Próximo Seg.</label>
+            <input type="date" class="form-control" formControlName="fechaSeguimiento" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asignar Técnico</label>
+            <select class="form-control" formControlName="idUsuarioAsignado">
+              <option [ngValue]="null">-- Sin asignar --</option>
+              <option *ngFor="let u of tecnicos" [ngValue]="u.idUsuario">{{ u.nombreUsuario }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Proveedor</label>
+            <select class="form-control" formControlName="idProveedor">
+              <option [ngValue]="null">-- Ninguno --</option>
+              <option *ngFor="let p of proveedores" [ngValue]="p.id">{{ p.nombre }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado Hito</label>
             <select class="form-control" formControlName="estado">
               <option value="Pendiente">🔴 Pendiente</option>
-              <option value="En proceso">🟠 En proceso</option>
               <option value="Terminado">🟢 Terminado</option>
             </select>
           </div>
         </div>
-
-        <!-- Fecha -->
-        <div class="form-group">
-          <label class="form-label">Fecha Seguimiento</label>
-          <div class="input-wrapper">
-            <span class="input-icon">📅</span>
-            <input type="date" class="form-control" formControlName="fechaSeguimiento" />
-          </div>
+        <div class="form-actions small">
+          <button type="button" class="btn-cancel" (click)="toggleNuevoHito()">Cancelar</button>
+          <button type="submit" class="btn-save" [disabled]="formHito.invalid">
+            {{ editingHitoId ? 'Guardar Cambios' : 'Añadir Hito' }}
+          </button>
         </div>
-
-        <!-- Urgente Check -->
-        <div class="form-group checkbox-group">
-          <label class="checkbox-wrapper warning">
-            <input type="checkbox" formControlName="esUrgente" />
-            <span class="checkbox-label">⚠️ MARCAR COMO URGENTE</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="form-row full-width">
-        <label class="form-label">Hitos del Contrato</label>
-        <div class="checks-grid">
-          <label class="check-pill"><input type="checkbox" formControlName="cePrevio"> CE Previo</label>
-          <label class="check-pill"><input type="checkbox" formControlName="mtd"> MTD</label>
-          <label class="check-pill"><input type="checkbox" formControlName="cePost"> CE Post</label>
-          <label class="check-pill"><input type="checkbox" formControlName="planos"> Planos</label>
-          <label class="check-pill"><input type="checkbox" formControlName="enviadoCeePost"> Enviado CEE</label>
-          <label class="check-pill"><input type="checkbox" formControlName="licenciaObras"> Lic. Obras</label>
-          <label class="check-pill"><input type="checkbox" formControlName="subvencionEstado"> Subvención</label>
-          <label class="check-pill"><input type="checkbox" formControlName="libroEdifIncluido"> Libro Edif.</label>
-        </div>
-      </div>
-
-      <div class="form-grid mt-4">
-        <div class="form-group full-width">
-          <label class="form-label">Observaciones Técnicas</label>
-          <textarea class="form-control" formControlName="detalleSeguimiento" rows="3"
-            placeholder="Notas específicas de este trámite..."></textarea>
-        </div>
-        <div class="form-group full-width">
-          <label class="form-label">Observaciones Generales del Contrato</label>
-          <textarea class="form-control" formControlName="observacionesContrato" rows="2"
-            placeholder="Notas permanentes..."></textarea>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="btn-save">💾 Guardar Cambios</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Historial de Seguimientos -->
-<div class="form-card mt-4 fade-in">
-  <div class="card-header flex-between">
-    <h3>📜 Historial de Seguimiento</h3>
-    <button type="button" class="btn-create-small" (click)="toggleNuevoHito()">
-      + Nuevo Hito
-    </button>
-  </div>
-
-  <!-- Formulario Nuevo Hito -->
-  <div *ngIf="showNuevoHito" class="new-item-form slide-down">
-    <form [formGroup]="formHito" (ngSubmit)="guardarHito()">
-      <div class="form-grid">
-        <div class="form-group full-width">
-          <label class="form-label">Comentario <span class="required">*</span></label>
-          <textarea class="form-control" formControlName="comentario" rows="2"
-            placeholder="Describe la acción..."></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Próximo Seg.</label>
-          <input type="date" class="form-control" formControlName="fechaSeguimiento" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Asignar Técnico</label>
-          <select class="form-control" formControlName="idUsuarioAsignado">
-            <option [ngValue]="null">-- Sin asignar --</option>
-            <option *ngFor="let u of tecnicos" [ngValue]="u.idUsuario">{{ u.nombreUsuario }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Proveedor</label>
-          <select class="form-control" formControlName="idProveedor">
-            <option [ngValue]="null">-- Ninguno --</option>
-            <option *ngFor="let p of proveedores" [ngValue]="p.id">{{ p.nombre }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Estado Hito</label>
-          <select class="form-control" formControlName="estado">
-            <option value="Pendiente">🔴 Pendiente</option>
-            <option value="Terminado">🟢 Terminado</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-actions small">
-        <button type="button" class="btn-cancel" (click)="toggleNuevoHito()">Cancelar</button>
-        <button type="submit" class="btn-save" [disabled]="formHito.invalid">Añadir Hito</button>
-      </div>
-    </form>
-  </div>
-
-  <div class="table-responsive">
-    <table class="modern-table">
-      <thead>
-        <tr>
-          <th style="width: 140px;">Fecha</th>
-          <th>Comentario</th>
-          <th>Asignado</th>
-          <th>Proveedor</th>
-          <th>Próx. Seg.</th>
-          <th>Estado</th>
-          <th style="width: 60px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let h of hitos; let i = index">
-          <td>
-            <div class="date-cell">
-              <strong>{{ h.fechaRegistro | date:'dd/MM/yyyy' }}</strong>
-              <small>{{ h.fechaRegistro | date:'HH:mm' }}</small>
-            </div>
-          </td>
-          <td>
-            <div class="comment-text">{{ h.comentario }}</div>
-            <div class="sub-text">Por: {{ h.nombreCreador || 'Sistema' }}</div>
-            <span *ngIf="h.esUrgente" class="badge-urgente">URGENTE</span>
-          </td>
-          <td>{{ h.nombreAsignado || '—' }}</td>
-          <td>{{ h.nombreProveedor || '—' }}</td>
-          <td>{{ h.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <span class="status-badge" [ngClass]="h.estado === 'Terminado' ? 'done' : 'pending'">
-              {{ h.estado }}
-            </span>
-          </td>
-          <td class="center">
-            <button type="button" class="btn-icon-delete" (click)="eliminarHito(h, i)" title="Eliminar">🗑️</button>
-          </td>
-        </tr>
-        <tr *ngIf="hitos.length === 0">
-          <td colspan="7" class="empty-state">No hay hitos registrados.</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Gestión de Archivos -->
-<div class="form-card mt-4 fade-in">
-  <div class="card-header">
-    <h3>📁 Documentación Adjunta</h3>
-  </div>
-  <div class="card-body">
-    <div class="upload-area">
-      <input type="text" [(ngModel)]="nombreVisibleUpload" placeholder="Nombre descriptivo para el archivo..."
-        class="form-control input-name" />
-      <div class="file-select-wrapper">
-        <input type="file" (change)="onFileChange($event)" multiple id="fileInput" class="hidden-file" />
-        <label for="fileInput" class="btn-secondary">Seleccionar Archivo</label>
-        <span class="file-count" *ngIf="filesToUpload.length">{{ filesToUpload.length }} archivo(s)</span>
-      </div>
-      <button type="button" class="btn-primary" (click)="subirArchivos()" [disabled]="!filesToUpload.length">
-        ⬆️ Subir
-      </button>
+      </form>
     </div>
 
-    <div class="files-grid">
-      <div *ngFor="let f of archivos" class="file-card">
-        <div class="file-icon">{{ getIconoArchivo(f) }}</div>
-        <div class="file-name">{{ f.nombreVisible }}</div>
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="width: 140px;">Fecha</th>
+            <th>Comentario</th>
+            <th>Asignado</th>
+            <th>Proveedor</th>
+            <th>Próx. Seg.</th>
+            <th>Estado</th>
+            <th style="width: 60px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of hitos; let i = index">
+            <td>
+              <div class="date-cell">
+                <strong>{{ h.fechaRegistro | date:'dd/MM/yyyy' }}</strong>
+                <small>{{ h.fechaRegistro | date:'HH:mm' }}</small>
+              </div>
+            </td>
+            <td>
+              <div class="comment-text">{{ h.comentario }}</div>
+              <div class="sub-text">Por: {{ h.nombreCreador || 'Sistema' }}</div>
+              <span *ngIf="h.esUrgente" class="badge-urgente">URGENTE</span>
+            </td>
+            <td>{{ h.nombreAsignado || '—' }}</td>
+            <td>{{ h.nombreProveedor || '—' }}</td>
+            <td>{{ h.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="h.estado === 'Terminado' ? 'done' : 'pending'">
+                {{ h.estado }}
+              </span>
+            </td>
+            <td class="center">
+              <button type="button" class="btn-icon-edit" (click)="editarHito(h)" title="Editar">✏️</button>
+              <button type="button" class="btn-icon-delete" (click)="eliminarHito(h, i)" title="Eliminar">🗑️</button>
+            </td>
+          </tr>
+          <tr *ngIf="hitos.length === 0">
+            <td colspan="7" class="empty-state">No hay hitos registrados.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Gestión de Archivos -->
+  <div class="form-card mt-4 fade-in">
+    <div class="card-header">
+      <h3>📁 Documentación Adjunta</h3>
+    </div>
+    <div class="card-body">
+      <div class="upload-area">
+        <input type="text" [(ngModel)]="nombreVisibleUpload" placeholder="Nombre descriptivo para el archivo..."
+          class="form-control input-name" />
+        <div class="file-select-wrapper">
+          <input type="file" (change)="onFileChange($event)" multiple id="fileInput" class="hidden-file" />
+          <label for="fileInput" class="btn-secondary">Seleccionar Archivo</label>
+          <span class="file-count" *ngIf="filesToUpload.length">{{ filesToUpload.length }} archivo(s)</span>
+        </div>
+        <button type="button" class="btn-primary" (click)="subirArchivos()" [disabled]="!filesToUpload.length">
+          ⬆️ Subir
+        </button>
       </div>
-      <div *ngIf="archivos.length === 0" class="empty-files">
-        No hay documentos adjuntos.
+
+      <div class="files-grid">
+        <div *ngFor="let f of archivos" class="file-card">
+          <div class="file-icon">{{ getIconoArchivo(f) }}</div>
+          <div class="file-name">{{ f.nombreVisible }}</div>
+        </div>
+        <div *ngIf="archivos.length === 0" class="empty-files">
+          No hay documentos adjuntos.
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<div *ngIf="loading" class="loading-state">
-  <div class="spinner"></div>
-</div>
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+  </div>

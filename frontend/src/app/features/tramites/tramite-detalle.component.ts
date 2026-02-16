@@ -63,16 +63,6 @@ export class TramiteDetalleComponent implements OnInit {
       esUrgente: [false],
       detalleSeguimiento: [''],
       fechaSeguimiento: [''],
-      observacionesContrato: [''],
-      // Checkboxes información general (legacy detalle_tramite.php)
-      cePrevio: [false],
-      cePost: [false],
-      mtd: [false],
-      planos: [false],
-      enviadoCeePost: [false],
-      licenciaObras: [false],
-      subvencionEstado: [false],
-      libroEdifIncluido: [false],
     });
     this.formHito = this.fb.group({
       comentario: ['', Validators.required],
@@ -115,15 +105,6 @@ export class TramiteDetalleComponent implements OnInit {
           esUrgente: !!d.esUrgente,
           detalleSeguimiento: d.detalleSeguimiento || '',
           fechaSeguimiento: fStr || '',
-          observacionesContrato: d.observacionesContrato || '',
-          cePrevio: d.cePrevio === 'Realizado',
-          cePost: d.cePost === 'Realizado',
-          mtd: !!d.mtd,
-          planos: !!d.planos,
-          enviadoCeePost: !!d.enviadoCeePost,
-          licenciaObras: d.licenciaObras === 'Concedida',
-          subvencionEstado: d.subvencionEstado === 'Concedida',
-          libroEdifIncluido: !!d.libroEdifIncluido,
         });
       },
       error: (err) => {
@@ -197,33 +178,7 @@ export class TramiteDetalleComponent implements OnInit {
     };
     this.tramiteService.update(this.idTramite, tramitePayload).subscribe({
       next: () => {
-        const idCon = this.detalle?.idContrato;
-        if (idCon) {
-          this.contratoService.getById(idCon).subscribe((c) => {
-            const body: Record<string, unknown> = {
-              idCliente: c.idCliente ?? c.cliente?.idCliente,
-              idLocal: c.idLocal ?? c.local?.idLocal,
-              fechaInicio: c.fechaInicio,
-              fechaVencimiento: c.fechaVencimiento,
-              tipoContrato: c.tipoContrato,
-              cePrevio: v.cePrevio ? 'Realizado' : 'Pendiente',
-              cePost: v.cePost ? 'Realizado' : 'Pendiente',
-              enviadoCeePost: !!v.enviadoCeePost,
-              licenciaObras: v.licenciaObras ? 'Concedida' : 'No requerida',
-              mtd: !!v.mtd,
-              planos: !!v.planos,
-              subvencionEstado: v.subvencionEstado ? 'Concedida' : 'No solicitada',
-              libroEdifIncluido: !!v.libroEdifIncluido,
-              observaciones: v.observacionesContrato ?? c.observaciones,
-            };
-            this.contratoService.update(idCon, body).subscribe({
-              next: () => { this.finGuardarInfo(); },
-              error: (e) => Swal.fire('Error', e?.error?.message || 'Error al guardar datos del contrato.', 'error'),
-            });
-          });
-        } else {
-          this.finGuardarInfo();
-        }
+        this.finGuardarInfo();
       },
       error: (e) =>
         Swal.fire('Error', e?.error?.message || 'No se pudieron guardar los cambios.', 'error'),
@@ -235,13 +190,15 @@ export class TramiteDetalleComponent implements OnInit {
     Swal.fire('Guardado', 'Datos técnicos y observaciones guardados correctamente.', 'success');
   }
 
+  editingHitoId: number | null = null;
+
   toggleNuevoHito() {
     this.showNuevoHito = !this.showNuevoHito;
+    this.editingHitoId = null; // Reset edit mode
     if (this.showNuevoHito) {
-      const hoy = new Date().toISOString().slice(0, 10);
-      this.formHito.patchValue({
+      this.formHito.reset({
         comentario: '',
-        fechaSeguimiento: hoy,
+        fechaSeguimiento: new Date().toISOString().slice(0, 10),
         estado: 'Pendiente',
         esUrgente: false,
         idUsuarioAsignado: this.tecnicos[0]?.idUsuario ?? null,
@@ -250,10 +207,30 @@ export class TramiteDetalleComponent implements OnInit {
     }
   }
 
+  editarHito(h: Seguimiento) {
+    this.editingHitoId = h.idSeguimiento!;
+    this.showNuevoHito = true;
+
+    // Format date for input type="date"
+    let fSeg = '';
+    if (h.fechaSeguimiento) {
+      fSeg = h.fechaSeguimiento.toString().slice(0, 10);
+    }
+
+    this.formHito.patchValue({
+      comentario: h.comentario,
+      fechaSeguimiento: fSeg,
+      estado: h.estado || 'Pendiente',
+      esUrgente: !!h.esUrgente,
+      idUsuarioAsignado: h.idUsuarioAsignado ?? null,
+      idProveedor: h.idProveedor ?? null,
+    });
+  }
+
   guardarHito() {
     if (this.formHito.invalid || !this.idTramite) return;
     const v = this.formHito.value;
-    const payload: Seguimiento = {
+    const payload: Partial<Seguimiento> = {
       idTramite: this.idTramite,
       comentario: v.comentario,
       fechaSeguimiento: v.fechaSeguimiento || new Date().toISOString().slice(0, 10),
@@ -262,18 +239,35 @@ export class TramiteDetalleComponent implements OnInit {
       idUsuarioAsignado: v.idUsuarioAsignado ?? undefined,
       idProveedor: v.idProveedor ?? undefined,
     };
-    this.seguimientoService.create(payload).subscribe({
-      next: () => {
-        this.cargarHitos();
-        this.formHito.reset({ estado: 'Pendiente' });
-        this.showNuevoHito = false;
-        Swal.fire('Registrado', 'Hito de seguimiento añadido correctamente.', 'success');
-      },
-      error: (e) => {
-        const msg = (e?.error && (e.error['message'] ?? e.error['error'])) || 'No se pudo guardar el hito.';
-        Swal.fire('Error', msg, 'error');
-      },
-    });
+
+    if (this.editingHitoId) {
+      this.seguimientoService.update(this.editingHitoId, payload).subscribe({
+        next: () => {
+          this.finalizeHitoSave('Actualizado', 'Hito actualizado correctamente.');
+        },
+        error: (e) => this.handleHitoError(e)
+      });
+    } else {
+      this.seguimientoService.create(payload as Seguimiento).subscribe({
+        next: () => {
+          this.finalizeHitoSave('Registrado', 'Hito de seguimiento añadido correctamente.');
+        },
+        error: (e) => this.handleHitoError(e)
+      });
+    }
+  }
+
+  private finalizeHitoSave(title: string, msg: string) {
+    this.cargarHitos();
+    this.formHito.reset({ estado: 'Pendiente' });
+    this.showNuevoHito = false;
+    this.editingHitoId = null;
+    Swal.fire(title, msg, 'success');
+  }
+
+  private handleHitoError(e: any) {
+    const msg = (e?.error && (e.error['message'] ?? e.error['error'])) || 'No se pudo guardar el hito.';
+    Swal.fire('Error', msg, 'error');
   }
 
   eliminarHito(s: Seguimiento, idx: number) {

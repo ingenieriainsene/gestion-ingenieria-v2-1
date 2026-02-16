@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ContratoService, TramiteService, SeguimientoService, Contrato, Tramite, Seguimiento } from '../../services/domain.services';
+import { ContratoService, TramiteService, Contrato, Tramite } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import Swal from 'sweetalert2';
 
@@ -109,26 +109,7 @@ import Swal from 'sweetalert2';
           </div>
           </div>
 
-          <div class="panel-section">
-            <h3>Proximas intervenciones</h3>
-            <div class="tramites-scroll-container">
-              <p *ngIf="proximas.length === 0" class="ventas-empty">No hay intervenciones planificadas.</p>
-              <div *ngFor="let s of proximas" class="intervencion-row">
-                <div class="map-col">
-                  <span class="map-label">Fecha</span>
-                  <span class="map-data">{{ s.fechaSeguimiento | date:'dd/MM/yyyy' }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">Tarea</span>
-                  <span class="map-data map-data-sm">{{ s.comentario || '—' }}</span>
-                </div>
-                <div class="map-col">
-                  <span class="map-label">Estado</span>
-                  <span class="status-badge pendiente">{{ s.estado || 'Pendiente' }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+
 
           <div class="panel-section panel-section-full mapa-visual-wrap">
             <h3>Mapa Visual de Intervenciones Activas / Finalizadas</h3>
@@ -374,7 +355,7 @@ export class ContratoFichaViewComponent implements OnInit {
   activas: Tramite[] = [];
   allTramites: Tramite[] = [];
   filtroTipo: 'todos' | 'mantenimiento' | 'otros' = 'todos';
-  proximas: Seguimiento[] = [];
+
 
   nuevaIntervencionForm: FormGroup;
   obsForm: FormGroup;
@@ -382,7 +363,7 @@ export class ContratoFichaViewComponent implements OnInit {
   constructor(
     private contratos: ContratoService,
     private tramites: TramiteService,
-    private seguimientos: SeguimientoService,
+
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder
@@ -418,7 +399,7 @@ export class ContratoFichaViewComponent implements OnInit {
         const all = Array.isArray(lista) ? lista : [];
         this.allTramites = all;
         this.aplicarFiltros();
-        this.cargarProximas(all);
+
       },
       error: (err) => {
         console.error('Error al cargar tramites por contrato', err?.status, err?.error);
@@ -446,31 +427,7 @@ export class ContratoFichaViewComponent implements OnInit {
     });
   }
 
-  private cargarProximas(lista: Tramite[]) {
-    const mantenimiento = lista.find(t => (t.tipoTramite || '').toLowerCase() === 'mantenimiento');
-    if (!mantenimiento?.idTramite) {
-      this.proximas = [];
-      return;
-    }
-    this.seguimientos.getByTramite(mantenimiento.idTramite).subscribe({
-      next: (segs) => {
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        this.proximas = (segs || [])
-          .filter(s => !!s.fechaSeguimiento)
-          .sort((a, b) => {
-            const da = new Date(String(a.fechaSeguimiento));
-            const db = new Date(String(b.fechaSeguimiento));
-            return da.getTime() - db.getTime();
-          })
-          .filter(s => new Date(String(s.fechaSeguimiento)) >= hoy)
-          .slice(0, 6);
-      },
-      error: () => {
-        this.proximas = [];
-      }
-    });
-  }
+
 
   guardarIntervencion() {
     if (!this.contrato || this.nuevaIntervencionForm.invalid) {

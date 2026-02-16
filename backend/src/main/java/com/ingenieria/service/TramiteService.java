@@ -42,7 +42,8 @@ public class TramiteService {
         Tramite t = tramiteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + id));
         Contrato c = t.getContrato();
-        if (c == null) throw new RuntimeException("Trámite sin contrato: " + id);
+        if (c == null)
+            throw new RuntimeException("Trámite sin contrato: " + id);
 
         return new TramiteDetalleResponse(
                 t.getIdTramite(),
@@ -69,8 +70,9 @@ public class TramiteService {
                 c.getCliente() != null ? c.getCliente().getApellido1() : null,
                 c.getCliente() != null ? c.getCliente().getDni() : null,
                 c.getLocal() != null ? c.getLocal().getDireccionCompleta() : null,
-                c.getLocal() != null ? c.getLocal().getNombreTitular() : null
-        );
+                c.getLocal() != null ? c.getLocal().getNombreTitular() : null,
+                c.getFechaInicio(),
+                c.getFechaVencimiento());
     }
 
     @Transactional(readOnly = true)
@@ -114,13 +116,15 @@ public class TramiteService {
     }
 
     /**
-     * Todos los trámites del contrato (cualquier estado). Única fuente de verdad para el frontend.
+     * Todos los trámites del contrato (cualquier estado). Única fuente de verdad
+     * para el frontend.
      * Orden: fecha_creacion DESC.
      */
     @Transactional(readOnly = true)
     public List<TramiteContratoResponse> findAllByContratoId(Long idContrato) {
         return tramiteRepository.findByContrato_IdContrato(idContrato).stream()
-                .sorted(Comparator.comparing(Tramite::getFechaCreacion, Comparator.nullsLast(Comparator.reverseOrder())))
+                .sorted(Comparator.comparing(Tramite::getFechaCreacion,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(t -> new TramiteContratoResponse(
                         t.getIdTramite(),
                         idContrato,
@@ -136,7 +140,8 @@ public class TramiteService {
 
     /**
      * Trámites activos del contrato (En proceso, Terminado) para el Mapa Visual.
-     * Replica $res_activas de gestionar_contrato.php. Orden: En proceso primero, luego fecha_creacion DESC.
+     * Replica $res_activas de gestionar_contrato.php. Orden: En proceso primero,
+     * luego fecha_creacion DESC.
      */
     @Transactional(readOnly = true)
     public List<TramiteMapaResponse> findActivosByContratoId(Long idContrato) {
@@ -177,13 +182,20 @@ public class TramiteService {
     public Tramite updateBasicFields(Long id, Tramite body) {
         Tramite t = tramiteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + id));
-        if (body.getEstado() != null) t.setEstado(body.getEstado());
-        if (body.getEsUrgente() != null) t.setEsUrgente(body.getEsUrgente());
-        if (body.getDetalleSeguimiento() != null) t.setDetalleSeguimiento(body.getDetalleSeguimiento());
-        if (body.getFechaSeguimiento() != null) t.setFechaSeguimiento(body.getFechaSeguimiento());
-        if (body.getTipoTramite() != null) t.setTipoTramite(body.getTipoTramite());
-        if (body.getTecnicoAsignado() != null) t.setTecnicoAsignado(body.getTecnicoAsignado());
-        if (body.getFechaEjecucion() != null) t.setFechaEjecucion(body.getFechaEjecucion());
+        if (body.getEstado() != null)
+            t.setEstado(body.getEstado());
+        if (body.getEsUrgente() != null)
+            t.setEsUrgente(body.getEsUrgente());
+        if (body.getDetalleSeguimiento() != null)
+            t.setDetalleSeguimiento(body.getDetalleSeguimiento());
+        if (body.getFechaSeguimiento() != null)
+            t.setFechaSeguimiento(body.getFechaSeguimiento());
+        if (body.getTipoTramite() != null)
+            t.setTipoTramite(body.getTipoTramite());
+        if (body.getTecnicoAsignado() != null)
+            t.setTecnicoAsignado(body.getTecnicoAsignado());
+        if (body.getFechaEjecucion() != null)
+            t.setFechaEjecucion(body.getFechaEjecucion());
         return tramiteRepository.save(t);
     }
 
@@ -213,9 +225,15 @@ public class TramiteService {
         String viejo = t.getEstado() != null ? t.getEstado() : "Pendiente";
         String nuevo;
         switch (viejo) {
-            case "Pendiente": nuevo = "En proceso"; break;
-            case "En proceso": nuevo = "Terminado"; break;
-            default: nuevo = viejo; break;
+            case "Pendiente":
+                nuevo = "En proceso";
+                break;
+            case "En proceso":
+                nuevo = "Terminado";
+                break;
+            default:
+                nuevo = viejo;
+                break;
         }
         if (!nuevo.equals(viejo)) {
             auditoriaService.registrarCambio("TRAMITES_CONTRATO", id, "estado", viejo, nuevo, usuarioBd);
@@ -236,7 +254,8 @@ public class TramiteService {
         Tramite t = tramiteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + id));
         if (!"Pendiente".equals(t.getEstado())) {
-            throw new IllegalArgumentException("Solo se puede generar un trámite en estado Pendiente. Estado actual: " + t.getEstado());
+            throw new IllegalArgumentException(
+                    "Solo se puede generar un trámite en estado Pendiente. Estado actual: " + t.getEstado());
         }
         auditoriaService.registrarCambio("TRAMITES_CONTRATO", id, "estado", "Pendiente", "En proceso", usuarioBd);
         t.setEstado("En proceso");
@@ -249,7 +268,6 @@ public class TramiteService {
                 saved.getEstado(),
                 saved.getDetalleSeguimiento(),
                 saved.getFechaCreacion(),
-                saved.getFechaSeguimiento()
-        );
+                saved.getFechaSeguimiento());
     }
 }
