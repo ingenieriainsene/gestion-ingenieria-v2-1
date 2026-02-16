@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PresupuestoService, PresupuestoLineaDTO } from '../../services/presupuesto.service';
-import { ClienteService, LocalService, Cliente, Local } from '../../services/domain.services';
+import { ClienteService, LocalService, Cliente, Local, TramiteService, ContratoService } from '../../services/domain.services';
 import { ProductoService } from '../../services/producto.service';
 import { Producto } from '../../models/producto.model';
 import Swal from 'sweetalert2';
@@ -15,10 +15,13 @@ import Swal from 'sweetalert2';
   template: `
     <div class="ficha-wrapper">
       <div class="header-section">
-        <a [routerLink]="idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos']" class="back-link">
-          <span class="icon">←</span> {{ idPresupuesto ? 'Volver a la ficha' : 'Volver al listado' }}
+        <a [routerLink]="tramiteId ? ['/tramites', tramiteId] : (idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos'])" class="back-link">
+          <span class="icon">←</span> {{ tramiteId ? 'Volver a la Intervención' : (idPresupuesto ? 'Volver a la ficha' : 'Volver al listado') }}
         </a>
         <h2>{{ idPresupuesto ? 'Editar Presupuesto' : 'Nuevo Presupuesto' }}</h2>
+        <div *ngIf="tramiteId" class="banner-intervention">
+          🔗 Vinculado a Intervención #{{ tramiteId }}
+        </div>
         <p class="subtitle">Gestión detallada del presupuesto, capítulos y partidas.</p>
       </div>
 
@@ -223,7 +226,7 @@ import Swal from 'sweetalert2';
           </div>
 
           <div class="form-actions">
-            <button type="button" [routerLink]="idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos']" class="btn-cancel">Cancelar</button>
+            <button type="button" [routerLink]="tramiteId ? ['/tramites', tramiteId] : (idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos'])" class="btn-cancel">Cancelar</button>
             <button type="submit" class="btn-save" [disabled]="guardando || form.invalid">
               {{ idPresupuesto ? 'Guardar Cambios' : 'Crear Presupuesto' }}
             </button>
@@ -280,6 +283,7 @@ import Swal from 'sweetalert2';
     .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: #64748b; text-decoration: none; font-weight: 500; font-size: 0.9rem; margin-bottom: 1rem; transition: color 0.2s; }
     .back-link:hover { color: #3b82f6; }
     h2 { font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0 0 0.5rem 0; }
+    .banner-intervention { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; display: inline-block; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; }
     .subtitle { color: #64748b; font-size: 1.1rem; }
     
     .form-card { background: white; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; overflow: hidden; }
@@ -418,6 +422,7 @@ export class PresupuestoFormComponent implements OnInit {
   private pendingViviendaId: number | null = null;
   collapsed: boolean[] = [];
   selectedCapituloIndex: number | null = null;
+  tramiteId: number | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -425,6 +430,8 @@ export class PresupuestoFormComponent implements OnInit {
     private clienteService: ClienteService,
     private localService: LocalService,
     private productoService: ProductoService,
+    private tramiteService: TramiteService,
+    private contratoService: ContratoService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -453,32 +460,90 @@ export class PresupuestoFormComponent implements OnInit {
       }
     });
 
-    this.clienteService.getAll().subscribe((list) => {
-      this.clientes = list || [];
-      this.clientesOptions = this.clientes
-        .filter((c) => typeof c.idCliente === 'number')
-        .map((c) => ({
-          id: c.idCliente!,
-          label: this.buildClienteLabel(c),
-        }));
-      this.refreshClienteOptions('');
-      if (this.pendingClienteId) {
-        this.setClienteLabelById(this.pendingClienteId);
-        this.pendingClienteId = null;
+    this.route.queryParams.subscribe((params) => {
+      const tid = params['tramiteId'];
+      console.log('[PresupuestoForm] tramiteId from queryParams:', tid);
+      if (tid) {
+        this.tramiteId = +tid;
+        this.tramiteService.getDetalle(this.tramiteId).subscribe((t) => {
+          console.log('[PresupuestoForm] Tramite detalle:', t);
+          if (t.idContrato) {
+            this.contratoService.getById(t.idContrato).subscribe(c => {
+              console.log('[PresupuestoForm] Contrato:', c);
+              if (c.idCliente) {
+                this.form.patchValue({ clienteId: c.idCliente });
+                console.log('[PresupuestoForm] clientesOptions.length:', this.clientesOptions.length);
+                if (this.clientesOptions.length > 0) {
+                  console.log('[PresupuestoForm] Setting cliente label immediately');
+                  this.setClienteLabelById(c.idCliente);
+                } else {
+                  console.log('[PresupuestoForm] Setting pendingClienteId:', c.idCliente);
+                  this.pendingClienteId = c.idCliente;
+                }
+              }
+              if (c.idLocal) {
+                this.form.patchValue({ viviendaId: c.idLocal });
+                console.log('[PresupuestoForm] localesOptions.length:', this.localesOptions.length);
+                if (this.localesOptions.length > 0) {
+                  console.log('[PresupuestoForm] Setting vivienda label immediately');
+                  this.setViviendaLabelById(c.idLocal);
+                } else {
+                  console.log('[PresupuestoForm] Setting pendingViviendaId:', c.idLocal);
+                  this.pendingViviendaId = c.idLocal;
+                }
+              }
+            });
+          }
+          this.form.patchValue({ tipoPresupuesto: 'Correctivo' });
+        });
       }
     });
-    this.localService.getAll().subscribe((list) => {
-      this.locales = list || [];
-      this.localesOptions = this.locales
-        .filter((l) => typeof l.idLocal === 'number')
-        .map((l) => ({
-          id: l.idLocal!,
-          label: this.buildLocalLabel(l),
-        }));
-      this.refreshViviendaOptions('');
-      if (this.pendingViviendaId) {
-        this.setViviendaLabelById(this.pendingViviendaId);
-        this.pendingViviendaId = null;
+
+
+    this.clienteService.getAll().subscribe({
+      next: (list) => {
+        this.clientes = list || [];
+        this.clientesOptions = this.clientes
+          .filter((c) => typeof c.idCliente === 'number')
+          .map((c) => ({
+            id: c.idCliente!,
+            label: this.buildClienteLabel(c),
+          }));
+        console.log('[PresupuestoForm] Clientes loaded, count:', this.clientesOptions.length);
+        this.refreshClienteOptions('');
+        if (this.pendingClienteId) {
+          console.log('[PresupuestoForm] Processing pendingClienteId:', this.pendingClienteId);
+          this.setClienteLabelById(this.pendingClienteId);
+          this.pendingClienteId = null;
+        }
+      },
+      error: (err) => {
+        console.error('[PresupuestoForm] Error loading clientes:', err);
+        this.clientes = [];
+        this.clientesOptions = [];
+      }
+    });
+    this.localService.getAll().subscribe({
+      next: (list) => {
+        this.locales = list || [];
+        this.localesOptions = this.locales
+          .filter((l) => typeof l.idLocal === 'number')
+          .map((l) => ({
+            id: l.idLocal!,
+            label: this.buildLocalLabel(l),
+          }));
+        console.log('[PresupuestoForm] Locales loaded, count:', this.localesOptions.length);
+        this.refreshViviendaOptions('');
+        if (this.pendingViviendaId) {
+          console.log('[PresupuestoForm] Processing pendingViviendaId:', this.pendingViviendaId);
+          this.setViviendaLabelById(this.pendingViviendaId);
+          this.pendingViviendaId = null;
+        }
+      },
+      error: (err) => {
+        console.error('[PresupuestoForm] Error loading locales:', err);
+        this.locales = [];
+        this.localesOptions = [];
       }
     });
     this.productoService.getAll().subscribe((list) => {
@@ -776,6 +841,7 @@ export class PresupuestoFormComponent implements OnInit {
     if (!this.idPresupuesto) return;
     this.service.getById(this.idPresupuesto).subscribe({
       next: (p) => {
+        if (p.tramiteId) this.tramiteId = p.tramiteId;
         this.form.patchValue({
           clienteId: p.clienteId,
           viviendaId: p.viviendaId,
@@ -946,6 +1012,7 @@ export class PresupuestoFormComponent implements OnInit {
       fecha: raw.fecha,
       estado: raw.estado,
       tipoPresupuesto: raw.tipoPresupuesto,
+      tramiteId: this.tramiteId ?? undefined,
       total: this.totalConIva,
       totalSinIva: this.totalSinIva,
       totalConIva: this.totalConIva,
@@ -958,7 +1025,12 @@ export class PresupuestoFormComponent implements OnInit {
       next: () => {
         this.guardando = false;
         const msg = this.idPresupuesto ? 'Presupuesto actualizado correctamente.' : 'Presupuesto creado correctamente.';
-        const route = this.idPresupuesto ? ['/presupuestos', this.idPresupuesto] : ['/presupuestos'];
+
+        // Si hay tramiteId, volver a la intervención; si no, ir a la lista de presupuestos
+        const route = this.tramiteId
+          ? ['/tramite-detalle', this.tramiteId]
+          : (this.idPresupuesto ? ['/presupuestos', this.idPresupuesto] : ['/presupuestos']);
+
         Swal.fire('Guardado', msg, 'success')
           .then(() => this.router.navigate(route));
       },

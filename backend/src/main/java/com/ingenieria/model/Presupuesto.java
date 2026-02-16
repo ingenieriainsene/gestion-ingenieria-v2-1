@@ -52,4 +52,8 @@ public class Presupuesto {
     @JsonManagedReference("presupuesto-lineas")
     private List<PresupuestoLinea> lineas = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tramite")
+    private Tramite tramite;
+
 }

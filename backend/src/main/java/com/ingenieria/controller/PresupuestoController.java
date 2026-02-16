@@ -37,6 +37,11 @@ public class PresupuestoController {
         }
     }
 
+    @GetMapping("/tramite/{idTramite}")
+    public List<PresupuestoListResponse> getByTramite(@PathVariable Long idTramite) {
+        return service.findByTramite(idTramite);
+    }
+
     @GetMapping("/{id}/pdf")
     public ResponseEntity<?> downloadPdf(@PathVariable Long id) {
         try {

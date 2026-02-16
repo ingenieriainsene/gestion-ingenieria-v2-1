@@ -10,6 +10,8 @@ import com.ingenieria.model.PresupuestoLinea;
 import com.ingenieria.repository.ClienteRepository;
 import com.ingenieria.repository.LocalRepository;
 import com.ingenieria.repository.PresupuestoRepository;
+import com.ingenieria.repository.TramiteRepository;
+import com.ingenieria.model.Tramite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,8 @@ public class PresupuestoService {
     private ClienteRepository clienteRepository;
     @Autowired
     private LocalRepository localRepository;
+    @Autowired
+    private TramiteRepository tramiteRepository;
 
     @Transactional(readOnly = true)
     public List<PresupuestoListResponse> findAll() {
@@ -80,6 +84,12 @@ public class PresupuestoService {
         p.setFecha(dto.getFecha() != null ? dto.getFecha() : LocalDate.now());
         p.setEstado(dto.getEstado() != null ? dto.getEstado() : "Borrador");
         p.setTipoPresupuesto(normalizeTipo(dto.getTipoPresupuesto()));
+
+        if (dto.getTramiteId() != null) {
+            Tramite tramite = tramiteRepository.findById(dto.getTramiteId())
+                    .orElseThrow(() -> new IllegalArgumentException("Tramite no válido"));
+            p.setTramite(tramite);
+        }
 
         Totales totales = applyLineas(p, dto.getLineas());
         p.setTotalSinIva(totales.totalSinIva);
@@ -126,6 +136,13 @@ public class PresupuestoService {
             p.setTipoPresupuesto("Obra");
         }
 
+        // Preserve or update tramiteId
+        if (dto.getTramiteId() != null) {
+            Tramite tramite = tramiteRepository.findById(dto.getTramiteId())
+                    .orElseThrow(() -> new IllegalArgumentException("Tramite no válido"));
+            p.setTramite(tramite);
+        }
+
         Totales totales = applyLineas(p, dto.getLineas());
         p.setTotalSinIva(totales.totalSinIva);
         p.setTotalConIva(totales.totalConIva);
@@ -142,6 +159,14 @@ public class PresupuestoService {
         presupuestoRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
+    public List<PresupuestoListResponse> findByTramite(Long tramiteId) {
+        log.info("[Presupuesto] Buscar por tramiteId={}", tramiteId);
+        return presupuestoRepository.findByTramiteId(tramiteId).stream()
+                .map(this::toListResponse)
+                .collect(Collectors.toList());
+    }
+
     private PresupuestoDTO toDto(Presupuesto p) {
         PresupuestoDTO dto = new PresupuestoDTO();
         dto.setIdPresupuesto(p.getIdPresupuesto());
@@ -151,6 +176,7 @@ public class PresupuestoService {
         dto.setFecha(p.getFecha());
         dto.setEstado(p.getEstado());
         dto.setTipoPresupuesto(normalizeTipo(p.getTipoPresupuesto()));
+        dto.setTramiteId(p.getTramite() != null ? p.getTramite().getIdTramite() : null);
         dto.setTotal(p.getTotal());
         dto.setTotalSinIva(p.getTotalSinIva());
         dto.setTotalConIva(p.getTotalConIva());

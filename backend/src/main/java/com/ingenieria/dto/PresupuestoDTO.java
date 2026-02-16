@@ -18,5 +18,6 @@ public class PresupuestoDTO {
     private BigDecimal totalConIva;
     private String estado;
     private String tipoPresupuesto;
+    private Long tramiteId;
     private List<PresupuestoLineaDTO> lineas;
 }

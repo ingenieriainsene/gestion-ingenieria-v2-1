@@ -35,6 +35,9 @@ public class Tramite {
     @Column(name = "es_urgente")
     private Boolean esUrgente;
 
+    @Column(name = "facturado")
+    private Boolean facturado = false;
+
     @Column(name = "detalle_seguimiento", columnDefinition = "TEXT")
     private String detalleSeguimiento;
 

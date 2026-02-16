@@ -38,6 +38,7 @@ export interface PresupuestoDTO {
   totalConIva?: number;
   estado?: string;
   tipoPresupuesto?: string;
+  tramiteId?: number;
   lineas: PresupuestoLineaDTO[];
   creadoPor?: string;
   fechaAlta?: string;
@@ -100,5 +101,9 @@ export class PresupuestoService {
     return this.api.get<ProductoItem[]>('productos').pipe(
       catchError(() => of([]))
     );
+  }
+
+  getByTramite(tramiteId: number): Observable<PresupuestoListItem[]> {
+    return this.api.get<PresupuestoListItem[]>(`${this.endpoint}/tramite/${tramiteId}`);
   }
 }

@@ -77,6 +77,7 @@ export interface Tramite {
     esUrgente?: boolean;
     detalleSeguimiento?: string;
     fechaEjecucion?: string | Date;
+    facturado?: boolean;
 }
 
 export interface Seguimiento {
@@ -139,6 +140,7 @@ export interface TramiteDetalleResponse {
     localNombreTitular?: string;
     fechaInicio?: string;
     fechaVencimiento?: string;
+    facturado?: boolean;
 }
 
 export interface Proveedor {

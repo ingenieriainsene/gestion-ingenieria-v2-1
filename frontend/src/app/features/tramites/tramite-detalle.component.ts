@@ -9,6 +9,7 @@ import {
   TramiteDetalleResponse,
   Seguimiento,
 } from '../../services/domain.services';
+import { PresupuestoService, PresupuestoListItem } from '../../services/presupuesto.service';
 import { UsuarioService as UsuarioApi, Usuario } from '../../services/usuario.service';
 import { ProveedorService, ProveedorDTO } from '../../services/proveedor.service';
 import { HttpClient } from '@angular/common/http';
@@ -40,6 +41,8 @@ export class TramiteDetalleComponent implements OnInit {
   showNuevoHito = false;
   idTramite: number | null = null;
   loading = true;
+  activeTab = 'general';
+  presupuestos: PresupuestoListItem[] = [];
 
   formInfo: FormGroup;
   formHito: FormGroup;
@@ -53,6 +56,7 @@ export class TramiteDetalleComponent implements OnInit {
     private contratoService: ContratoService,
     private usuarioService: UsuarioApi,
     private proveedorService: ProveedorService,
+    private presupuestoService: PresupuestoService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
@@ -61,6 +65,7 @@ export class TramiteDetalleComponent implements OnInit {
     this.formInfo = this.fb.group({
       estado: ['Pendiente', Validators.required],
       esUrgente: [false],
+      facturado: [false],
       detalleSeguimiento: [''],
       fechaSeguimiento: [''],
     });
@@ -87,6 +92,7 @@ export class TramiteDetalleComponent implements OnInit {
       this.cargarTecnicos();
       this.cargarProveedores();
       this.cargarArchivos();
+      this.cargarPresupuestos();
     });
   }
 
@@ -103,6 +109,7 @@ export class TramiteDetalleComponent implements OnInit {
         this.formInfo.patchValue({
           estado: d.estado || 'Pendiente',
           esUrgente: !!d.esUrgente,
+          facturado: !!d.facturado,
           detalleSeguimiento: d.detalleSeguimiento || '',
           fechaSeguimiento: fStr || '',
         });
@@ -167,12 +174,30 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
+  cargarPresupuestos() {
+    if (!this.idTramite) return;
+    this.presupuestoService.getByTramite(this.idTramite).subscribe({
+      next: (list) => (this.presupuestos = list || []),
+      error: () => { },
+    });
+  }
+
+  crearPresupuesto() {
+    if (!this.idTramite) return;
+    this.router.navigate(['/presupuestos/nuevo'], { queryParams: { tramiteId: this.idTramite } });
+  }
+
+  setTab(tab: string) {
+    this.activeTab = tab;
+  }
+
   guardarInfo() {
     if (!this.detalle || !this.idTramite) return;
     const v = this.formInfo.value;
     const tramitePayload = {
       estado: v.estado,
       esUrgente: v.esUrgente,
+      facturado: v.facturado,
       detalleSeguimiento: v.detalleSeguimiento || null,
       fechaSeguimiento: v.fechaSeguimiento || null,
     };
