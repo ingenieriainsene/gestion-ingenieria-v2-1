@@ -1,0 +1,33 @@
+# 📋 INSTRUCCIONES RÁPIDAS
+
+## 🎯 Para Crear el Paquete (PC de Desarrollo)
+
+1. Abre PowerShell en el directorio raíz del proyecto
+2. Ejecuta:
+   ```powershell
+   cd C:\Users\Usuario\Desktop\gestion-ingenieria-v2
+   docker-compose build
+   cd PruebaDespliegue
+   docker save -o backend.tar gestion-ingenieria-v2-backend:latest
+   docker save -o frontend.tar gestion-ingenieria-v2-frontend:latest
+   docker save -o postgres.tar postgres:15-alpine
+   ```
+3. Comprime la carpeta `PruebaDespliegue` completa en un ZIP
+4. Transfiere el ZIP al PC destino
+
+## 🚀 Para Desplegar (PC Destino)
+
+1. Instala Docker Desktop
+2. Descomprime el ZIP
+3. Doble clic en `INICIAR.bat`
+4. Abre http://localhost en el navegador
+5. Usuario: `jefe_admin` / Contraseña: `admin123`
+
+## 📝 Comandos Útiles
+
+- **Iniciar**: `INICIAR.bat`
+- **Detener**: `DETENER.bat`
+- **Reiniciar**: `REINICIAR.bat`
+- **Limpiar todo**: `LIMPIAR.bat`
+
+Para más detalles, consulta `README.md`
