@@ -262,10 +262,25 @@ export class ContratoService {
     }
 }
 
+export interface TramiteListResponse {
+    idTramite: number;
+    idContrato: number;
+    tipoTramite: string;
+    estado: string;
+    fechaSeguimiento?: string;
+    esUrgente?: boolean;
+    tecnicoAsignado?: string;
+    nombreCliente?: string;
+    direccionLocal?: string;
+    detalleSeguimiento?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TramiteService {
     private endpoint = 'tramites';
     constructor(private api: ApiService) { }
+
+    getList(): Observable<TramiteListResponse[]> { return this.api.get<TramiteListResponse[]>(`${this.endpoint}/list`); }
     getByContrato(idContrato: number): Observable<Tramite[]> {
         return this.api.get<any[]>(`${this.endpoint}/contrato/${idContrato}`).pipe(
             map((lista: any[]) => lista.map((t: any) => ({

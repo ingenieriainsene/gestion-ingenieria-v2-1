@@ -39,6 +39,11 @@ public class TramiteController {
         return tramiteService.findVentasPendientesResponse();
     }
 
+    @GetMapping("/list")
+    public List<com.ingenieria.dto.TramiteListResponse> getList() {
+        return tramiteService.findAllList();
+    }
+
     /**
      * Detalle completo para la página de detalle (replica detalle_tramite.php).
      * Declarado antes que /{id} para que Spring matchee /{id}/detalle

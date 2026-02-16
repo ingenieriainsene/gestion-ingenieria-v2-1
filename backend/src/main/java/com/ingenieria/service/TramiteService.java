@@ -139,6 +139,50 @@ public class TramiteService {
     }
 
     /**
+     * Listado global de intervenciones para la vista general.
+     * Incluye datos de Cliente y Local para mostrar en la tabla.
+     */
+    @Transactional(readOnly = true)
+    public List<com.ingenieria.dto.TramiteListResponse> findAllList() {
+        List<Tramite> all = tramiteRepository.findAll();
+        System.out.println("DEBUG: findAllList found " + all.size() + " tramites.");
+
+        return all.stream()
+                .sorted(Comparator.comparing(Tramite::getFechaSeguimiento,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(t -> {
+                    Contrato c = t.getContrato();
+                    String cliente = "N/A";
+                    String local = "N/A";
+
+                    try {
+                        if (c != null && c.getCliente() != null) {
+                            cliente = c.getCliente().getNombre() + " " + c.getCliente().getApellido1();
+                        }
+                        if (c != null && c.getLocal() != null) {
+                            local = c.getLocal().getDireccionCompleta();
+                        }
+                    } catch (Exception e) {
+                        System.err.println("DEBUG: Error mapping cliente/local for tramite " + t.getIdTramite() + ": "
+                                + e.getMessage());
+                    }
+
+                    return new com.ingenieria.dto.TramiteListResponse(
+                            t.getIdTramite(),
+                            c != null ? c.getIdContrato() : null,
+                            t.getTipoTramite(),
+                            t.getEstado(),
+                            t.getFechaSeguimiento(),
+                            t.getEsUrgente(),
+                            t.getTecnicoAsignado(),
+                            cliente,
+                            local,
+                            t.getDetalleSeguimiento());
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Trámites activos del contrato (En proceso, Terminado) para el Mapa Visual.
      * Replica $res_activas de gestionar_contrato.php. Orden: En proceso primero,
      * luego fecha_creacion DESC.

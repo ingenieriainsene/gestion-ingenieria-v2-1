@@ -361,6 +361,7 @@ export class SidebarComponent implements OnInit {
       icon: '⚙️',
       items: [
         { label: 'Seguimientos', route: '/seguimientos' },
+        { label: 'Intervenciones', route: '/intervenciones' },
         { label: 'Agendar citas', route: '/agendar-citas' },
         { label: 'Almacen', route: '/productos' },
         { label: 'Proveedores', route: '/proveedores' },

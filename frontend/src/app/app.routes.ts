@@ -72,6 +72,7 @@ export const routes: Routes = [
 
             { path: 'auditoria', component: AuditoriaComponent, canActivate: [adminGuard] },
             { path: 'seguimientos', component: SeguimientoListComponent },
+            { path: 'intervenciones', loadComponent: () => import('./features/tramites/intervencion-list.component').then(m => m.IntervencionListComponent) },
             { path: 'agendar-citas', loadComponent: () => import('./features/citas/agendar-citas.component').then(m => m.AgendarCitasComponent) },
             { path: 'chat', loadComponent: () => import('./features/chat/chat-general.component').then(m => m.ChatGeneralComponent) },
 

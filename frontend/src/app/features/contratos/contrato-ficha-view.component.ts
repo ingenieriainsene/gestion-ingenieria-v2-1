@@ -4,12 +4,13 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContratoService, TramiteService, Contrato, Tramite } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
+import { FileUploaderComponent } from '../../shared/file-uploader.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-contrato-ficha-view',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, AuditStampComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AuditStampComponent, FileUploaderComponent],
   template: `
     <div *ngIf="contrato" class="main-container">
       <app-audit-stamp [data]="contrato"></app-audit-stamp>
@@ -154,6 +155,14 @@ import Swal from 'sweetalert2';
               <textarea formControlName="observaciones" placeholder="Escriba notas generales..."></textarea>
               <button type="submit" class="btn-save-obs">Actualizar Notas</button>
             </form>
+          </div>
+          <div class="panel-section panel-section-full">
+            <h3>Documentación del Contrato</h3>
+            <app-file-uploader 
+                *ngIf="contrato.idContrato" 
+                [referenceId]="contrato.idContrato" 
+                entityType="CONTRATO">
+            </app-file-uploader>
           </div>
         </div>
       </div>
