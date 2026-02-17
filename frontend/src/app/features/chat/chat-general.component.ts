@@ -5,7 +5,8 @@ import { RouterLink } from '@angular/router';
 import { Client, IMessage } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 import Swal from 'sweetalert2';
-import { ChatService, ChatMessage, ChatSala } from '../../services/chat.service';
+import { ChatService } from '../../services/chat.service';
+import { ChatMessage, ChatSala } from '../../models/chat.model';
 import { UsuarioService, Usuario } from '../../services/usuario.service';
 import { environment } from '../../../environments/environments';
 
@@ -226,7 +227,7 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
 
   abrirPrivado(otroUsuario: Usuario) {
     if (!this.usuarioActualId || !otroUsuario.idUsuario) return;
-    this.chat.iniciarPrivado(this.usuarioActualId, otroUsuario.idUsuario).subscribe(s => {
+    this.chat.iniciarChatPrivado(this.usuarioActualId, otroUsuario.idUsuario).subscribe((s: ChatSala) => {
       this.seleccionarSala(s);
     });
   }
@@ -329,8 +330,8 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    this.chat.upload(file).subscribe({
-      next: (res) => this.adjuntoPendiente = res,
+    this.chat.subirAdjunto(file).subscribe({
+      next: (res: any) => this.adjuntoPendiente = res,
       error: () => Swal.fire('Error', 'Fallo subida', 'error')
     });
   }

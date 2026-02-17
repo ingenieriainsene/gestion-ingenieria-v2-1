@@ -76,6 +76,15 @@ public class AuthController {
             try {
                 Usuario usuario = usuarioRepository.findByNombreUsuario(userDetails.getUsername()).orElse(null);
                 if (usuario != null) {
+                    // Cerrar sesiones anteriores que hayan quedado abiertas ("zombis")
+                    log.info("[Auth] Cerrando sesiones previas para el usuario: {}", usuario.getNombreUsuario());
+                    auditoriaSesionRepository.findAllByIdUsuarioAndEstado(usuario.getIdUsuario(), "Conectado")
+                            .forEach(s -> {
+                                s.setEstado("Desconectado");
+                                s.setFechaFin(java.time.LocalDateTime.now());
+                                auditoriaSesionRepository.save(s);
+                            });
+
                     String ip = resolveClientIp(request);
                     AuditoriaSesion sesion = new AuditoriaSesion();
                     sesion.setIdUsuario(usuario.getIdUsuario());
@@ -111,10 +120,11 @@ public class AuthController {
         }
 
         if (username != null) {
+            log.info("[Auth] Ejecutando logout para usuario: {}", username);
             usuarioRepository.findByNombreUsuario(username).ifPresent(usuario -> {
                 auditoriaSesionRepository
-                        .findTopByIdUsuarioAndEstadoOrderByFechaInicioDesc(usuario.getIdUsuario(), "Conectado")
-                        .ifPresent(sesion -> {
+                        .findAllByIdUsuarioAndEstado(usuario.getIdUsuario(), "Conectado")
+                        .forEach(sesion -> {
                             sesion.setEstado("Desconectado");
                             sesion.setFechaFin(java.time.LocalDateTime.now());
                             auditoriaSesionRepository.save(sesion);
@@ -124,6 +134,24 @@ public class AuthController {
 
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/heartbeat")
+    public ResponseEntity<?> heartbeat() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            String username = userDetails.getUsername();
+            usuarioRepository.findByNombreUsuario(username).ifPresent(usuario -> {
+                auditoriaSesionRepository
+                        .findTopByIdUsuarioAndEstadoOrderByFechaInicioDesc(usuario.getIdUsuario(), "Conectado")
+                        .ifPresent(sesion -> {
+                            sesion.setFechaUltimaActividad(java.time.LocalDateTime.now());
+                            auditoriaSesionRepository.save(sesion);
+                        });
+            });
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     private String resolveClientIp(jakarta.servlet.http.HttpServletRequest request) {

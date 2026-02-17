@@ -227,10 +227,14 @@ CREATE TABLE IF NOT EXISTS auditoria_sesiones (
     nombre_usuario VARCHAR(50) NOT NULL,
     fecha_inicio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     fecha_fin TIMESTAMPTZ NULL,
+    fecha_ultima_actividad TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     ip_acceso VARCHAR(45),
     estado VARCHAR(20) DEFAULT 'Conectado',
     CONSTRAINT fk_sesion_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
+
+-- Asegurar columna para migraciones de bases de datos existentes
+ALTER TABLE auditoria_sesiones ADD COLUMN IF NOT EXISTS fecha_ultima_actividad TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
 
 -- 1.11 TABLA PRESUPUESTOS
 CREATE TABLE IF NOT EXISTS presupuestos (

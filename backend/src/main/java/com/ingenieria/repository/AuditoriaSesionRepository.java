@@ -12,6 +12,7 @@ public interface AuditoriaSesionRepository extends JpaRepository<AuditoriaSesion
 
     List<AuditoriaSesion> findAllByOrderByFechaInicioDesc();
 
+    List<AuditoriaSesion> findAllByIdUsuarioAndEstado(Long idUsuario, String estado);
+
     Optional<AuditoriaSesion> findTopByIdUsuarioAndEstadoOrderByFechaInicioDesc(Long idUsuario, String estado);
 }
-

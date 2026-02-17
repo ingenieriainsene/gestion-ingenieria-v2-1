@@ -8,6 +8,7 @@ interface AuditoriaSesion {
   nombreUsuario: string;
   fechaInicio: string; // ISO string
   fechaFin?: string;   // ISO string
+  fechaUltimaActividad: string; // ISO string
   ipAcceso: string;
   estado: string;
 }
@@ -33,6 +34,7 @@ interface AuditoriaSesion {
                 <th>Inicio de Sesión</th>
                 <th>Fin de Sesión</th>
                 <th>Tiempo Conectado</th>
+                <th>Última Actividad</th>
                 <th>IP de Origen</th>
               </tr>
             </thead>
@@ -57,11 +59,16 @@ interface AuditoriaSesion {
                 </td>
                 <td class="time-cell">
                   <span *ngIf="s.fechaFin">{{ s.fechaFin | date : 'dd MMM yyyy, HH:mm:ss' }}</span>
-                  <span *ngIf="!s.fechaFin" class="text-muted">Currently active</span>
+                  <span *ngIf="!s.fechaFin" class="text-muted">En uso...</span>
                 </td>
                 <td class="duration-cell">
                   <span class="duration-badge" [class.active-duration]="isActive(s)">
                     ⏱️ {{ calculateDuration(s) }}
+                  </span>
+                </td>
+                <td class="activity-cell">
+                  <span class="activity-badge" [class.active-activity]="isActive(s)">
+                    {{ formatLastActivity(s) }}
                   </span>
                 </td>
                 <td class="ip-cell">
@@ -218,15 +225,32 @@ interface AuditoriaSesion {
       padding: 4px 8px;
       background: #f1f5f9;
       border-radius: 6px;
-      color: #475569;
+      color: #334155;
       font-size: 0.85rem;
       font-variant-numeric: tabular-nums;
+      font-weight: 500;
     }
 
     .active-duration {
-      background: #ffffff;
-      color: #15803d;
+      background: #f0fdf4;
+      color: #166534;
       border: 1px solid #bbf7d0;
+    }
+
+    .activity-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #f8fafc;
+      border-radius: 6px;
+      color: #64748b;
+      font-size: 0.8rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .active-activity {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
 
@@ -299,6 +323,18 @@ export class AuditoriaComponent implements OnInit {
     parts.push(`${seconds}s`);
 
     return parts.join(' ');
+  }
+
+  formatLastActivity(s: AuditoriaSesion): string {
+    if (s.fechaFin) return 'Sesión finalizada';
+
+    const last = new Date(s.fechaUltimaActividad).getTime();
+    const diffMs = this.now.getTime() - last;
+    const diffMin = Math.floor(diffMs / 60000);
+
+    if (diffMin < 1) return 'Hace un momento';
+    if (diffMin < 60) return `Hace ${diffMin} min`;
+    return `Hace ${Math.floor(diffMin / 60)}h ${diffMin % 60}m`;
   }
 
   getAvatarColor(name: string): string {

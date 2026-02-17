@@ -11,13 +11,19 @@ export class AuthService {
     private tokenKey = 'authToken';
     private roleKey = 'authRole';
 
-    constructor(private api: ApiService, private router: Router) { }
+    constructor(private api: ApiService, private router: Router) {
+        // Iniciar pulso si ya está logueado al cargar el servicio
+        if (this.isLoggedIn()) {
+            this.startHeartbeat();
+        }
+    }
 
     login(credentials: any): Observable<any> {
         return this.api.post(`${this.endpoint}/login`, credentials).pipe(
             tap((response: any) => {
                 if (response.token) {
                     localStorage.setItem(this.tokenKey, response.token);
+                    this.startHeartbeat();
                 }
                 if (response.rol) {
                     localStorage.setItem(this.roleKey, response.rol);
@@ -26,15 +32,47 @@ export class AuthService {
         );
     }
 
+    private heartbeatInterval: any;
+    private startHeartbeat() {
+        if (this.heartbeatInterval) return;
+
+        // Enviar primer latido inmediatamente
+        this.sendHeartbeat();
+
+        // Configurar latido cada 2 minutos
+        this.heartbeatInterval = setInterval(() => {
+            if (this.isLoggedIn()) {
+                this.sendHeartbeat();
+            } else {
+                this.stopHeartbeat();
+            }
+        }, 120000); // 2 minutos
+    }
+
+    private sendHeartbeat() {
+        this.api.post(`${this.endpoint}/heartbeat`, {}).subscribe({
+            error: (err) => console.warn('[Auth] Error enviando heartbeat', err)
+        });
+    }
+
+    private stopHeartbeat() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+    }
+
     logout() {
         // Llamamos al backend para cerrar sesión y registrar auditoría
         this.api.post(`${this.endpoint}/logout`, {}).subscribe({
             next: () => {
+                this.stopHeartbeat();
                 this.clearToken();
                 this.router.navigate(['/login']);
             },
             error: () => {
                 // Incluso si falla, limpiamos el estado local
+                this.stopHeartbeat();
                 this.clearToken();
                 this.router.navigate(['/login']);
             }

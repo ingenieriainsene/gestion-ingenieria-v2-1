@@ -211,4 +211,18 @@ public class ChatService {
         dto.setAdjuntos(adjDtos);
         return dto;
     }
+
+    /**
+     * Obtener el ID del otro participante en una sala privada.
+     * Útil para enviar mensajes privados al destinatario correcto.
+     */
+    @Transactional(readOnly = true)
+    public Long getOtroParticipante(Long salaId, Long usuarioId) {
+        List<ChatParticipante> participantes = participanteRepo.findBySala_IdSala(salaId);
+        return participantes.stream()
+                .filter(p -> !p.getUsuario().getIdUsuario().equals(usuarioId))
+                .map(p -> p.getUsuario().getIdUsuario())
+                .findFirst()
+                .orElse(null);
+    }
 }

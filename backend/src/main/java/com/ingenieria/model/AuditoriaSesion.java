@@ -37,10 +37,16 @@ public class AuditoriaSesion {
     @Column(name = "estado")
     private String estado;
 
+    @Column(name = "fecha_ultima_actividad")
+    private LocalDateTime fechaUltimaActividad;
+
     @PrePersist
     protected void onCreate() {
         if (fechaInicio == null) {
             fechaInicio = LocalDateTime.now();
+        }
+        if (fechaUltimaActividad == null) {
+            fechaUltimaActividad = LocalDateTime.now();
         }
     }
 
@@ -99,5 +105,12 @@ public class AuditoriaSesion {
     public void setEstado(String estado) {
         this.estado = estado;
     }
-}
 
+    public LocalDateTime getFechaUltimaActividad() {
+        return fechaUltimaActividad;
+    }
+
+    public void setFechaUltimaActividad(LocalDateTime fechaUltimaActividad) {
+        this.fechaUltimaActividad = fechaUltimaActividad;
+    }
+}
