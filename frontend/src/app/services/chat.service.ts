@@ -1,66 +1,102 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { ChatMessage, ChatSala } from '../models/chat.model';
+import { HttpClient } from '@angular/common/http';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { BehaviorSubject, Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../environments/environments';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
 
-/**
- * Servicio para interactuar con la API REST de chat.
- * Complementa el WebSocketService para operaciones que no son en tiempo real.
- */
 @Injectable({
   providedIn: 'root'
 })
 export class ChatService {
-  private apiUrl = 'http://localhost:8082/api/chat';
+  private supabase: SupabaseClient;
+  private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
 
-  constructor(private http: HttpClient) { }
-
-  /**
-   * Obtener las salas de chat del usuario.
-   */
-  getMisChats(usuarioId: number): Observable<ChatSala[]> {
-    const params = new HttpParams().set('usuarioId', usuarioId.toString());
-    return this.http.get<ChatSala[]>(`${this.apiUrl}/mis-chats`, { params });
+  constructor(private http: HttpClient) {
+    this.supabase = createClient(environment.supabase.url, environment.supabase.key);
   }
 
   /**
-   * Iniciar un chat privado con otro usuario.
+   * Obtiene la lista de salas disponibles desde el backend (Spring Boot)
    */
-  iniciarChatPrivado(usuario1Id: number, usuario2Id: number): Observable<ChatSala> {
-    const params = new HttpParams()
-      .set('usuario1Id', usuario1Id.toString())
-      .set('usuario2Id', usuario2Id.toString());
-    return this.http.post<ChatSala>(`${this.apiUrl}/iniciar-privado`, null, { params });
+  getRooms(): Observable<ChatRoom[]> {
+    return this.http.get<ChatRoom[]>('/api/chat/rooms');
   }
 
   /**
-   * Obtener la sala general (pública).
+   * Se suscribe a los cambios en tiempo real de una sala específica
    */
-  getSalaGeneral(): Observable<ChatSala> {
-    return this.http.get<ChatSala>(`${this.apiUrl}/sala-general`);
+  subscribeToRoom(roomId: string): Observable<ChatMessage[]> {
+    this.messagesSubject.next([]);
+    this.loadInitialMessages(roomId);
+
+    // Saneamiento de canales: Cerramos todo lo anterior para evitar listeners duplicados
+    this.supabase.removeAllChannels();
+
+    const channel = this.supabase
+      .channel(`room:${roomId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `room_id=eq.${roomId}`
+      }, (payload) => {
+        const newMessage = payload.new as ChatMessage;
+        const currentMessages = this.messagesSubject.value;
+
+        // Prevención de duplicación por eco de Realtime
+        if (!currentMessages.some(m => m.id === newMessage.id)) {
+          const updatedMessages = [...currentMessages, newMessage].sort((a, b) =>
+            new Date(a.created_at!).getTime() - new Date(b.created_at!).getTime()
+          );
+          this.messagesSubject.next(updatedMessages);
+        }
+      })
+      .subscribe((status) => {
+        console.log(`[ChatService] Subscription status for room ${roomId}:`, status);
+      });
+
+    return this.messagesSubject.asObservable();
+  }
+
+  private async loadInitialMessages(roomId: string) {
+    const { data, error } = await this.supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true })
+      .limit(100);
+
+    if (!error && data) {
+      this.messagesSubject.next(data as ChatMessage[]);
+    }
   }
 
   /**
-   * Obtener el historial de mensajes de una sala.
+   * Envía un mensaje a través del backend de Spring Boot
    */
-  getMensajes(salaId: number): Observable<ChatMessage[]> {
-    const params = new HttpParams().set('salaId', salaId.toString());
-    return this.http.get<ChatMessage[]>(`${this.apiUrl}/mensajes`, { params });
+  async sendMessage(roomId: string, content: string, senderId: string): Promise<ChatMessage> {
+    const message = {
+      room_id: roomId,
+      content: content,
+      sender_id: senderId || null
+    };
+
+    return this.http.post<ChatMessage>('/api/chat/messages', message).toPromise() as Promise<ChatMessage>;
   }
 
   /**
-   * Marcar un mensaje como leído.
+   * Crea una nueva sala a través del backend (Spring Boot)
    */
-  marcarLeido(mensajeId: number, usuarioId: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/lecturas`, { mensajeId, usuarioId });
+  createRoom(name: string, isGroup: boolean): Observable<ChatRoom> {
+    return this.http.post<ChatRoom>('/api/chat/rooms', { name, is_group: isGroup });
   }
 
   /**
-   * Subir un archivo adjunto.
+   * Obtiene la identidad del chat del usuario actual desde el backend
    */
-  subirAdjunto(file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post(`${this.apiUrl}/adjuntos`, formData);
+  getMyIdentity(): Observable<{ username: string, chatId: string }> {
+    return this.http.get<{ username: string, chatId: string }>('/api/chat/me');
   }
 }

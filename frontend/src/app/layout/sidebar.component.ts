@@ -73,7 +73,7 @@ interface NavCategory {
       position: fixed;
       left: 0;
       top: 0;
-      width: 260px;
+      width: 280px;
       height: 100vh;
       background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
       color: #f8fafc;
@@ -85,7 +85,7 @@ interface NavCategory {
     }
 
     .sidebar.collapsed {
-      width: 60px;
+      width: 80px;
     }
 
     .sidebar.collapsed .sidebar-main,

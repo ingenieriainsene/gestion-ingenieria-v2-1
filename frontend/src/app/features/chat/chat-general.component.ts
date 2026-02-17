@@ -1,217 +1,185 @@
 import { Component, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { Client, IMessage } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
 import Swal from 'sweetalert2';
 import { ChatService } from '../../services/chat.service';
-import { ChatMessage, ChatSala } from '../../models/chat.model';
+import { ChatMessage, ChatRoom } from '../../models/chat.model';
 import { UsuarioService, Usuario } from '../../services/usuario.service';
-import { environment } from '../../../environments/environments';
+import { Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-chat-general',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="chat-layout">
-      <!-- SIDEBAR -->
-      <aside class="chat-sidebar">
+    <div class="chat-container">
+      <!-- SIDEBAR WHATSAPP -->
+      <aside class="chat-sidebar" role="navigation" aria-label="Lista de chats">
         <div class="sidebar-header">
-          <h2>Chats</h2>
-          <div class="user-status" *ngIf="usuarioActual">
-            <span class="dot online"></span> {{ usuarioActual.nombreUsuario }}
-          </div>
+          <h3>Chats</h3>
+          <button class="btn-create" (click)="crearSala()" title="Nuevo Chat">+</button>
         </div>
         
-        <div class="sidebar-list">
-          <div class="list-title">Sala Global</div>
-          <div class="chat-item" [class.active]="sala?.esGlobal" (click)="abrirGlobal()">
-            <div class="avatar global">#</div>
-            <div class="info">
-              <span class="name">Chat General</span>
-              <span class="last-msg">Sala pública</span>
-            </div>
-          </div>
-
-          <div class="list-title">Usuarios</div>
-          <div *ngFor="let u of usuariosList" class="chat-item" 
-               [class.active]="sala?.nombre === u.nombreUsuario" 
-               (click)="abrirPrivado(u)">
-            <div class="avatar">{{ u.nombreUsuario.charAt(0).toUpperCase() }}</div>
-            <div class="info">
-              <span class="name">{{ u.nombreUsuario }}</span>
-              <span class="last-msg">{{ u.rol }}</span>
+        <div class="sidebar-scroll">
+          <div class="section-label">Recientes</div>
+          <div *ngFor="let r of rooms" 
+               class="room-item" 
+               [class.active]="currentRoom?.id === r.id" 
+               (click)="seleccionarSala(r)"
+               tabindex="0"
+               (keydown.enter)="seleccionarSala(r)">
+            <div class="room-avatar">{{ r.name?.charAt(0) }}</div>
+            <div class="room-info">
+              <div class="room-name">{{ r.name }}</div>
+              <div class="room-status">en línea</div>
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- MAIN AREA -->
-      <main class="chat-main">
-        <div class="chat-header" *ngIf="sala; else noChat">
-          <div class="header-info">
-            <h3>{{ sala.nombre }}</h3>
-            <span class="status" *ngIf="!errorConexion && stompClient?.connected">Conectado</span>
-            <span class="status error" *ngIf="errorConexion">Sin conexión</span>
+      <!-- VENTANA DE CHAT -->
+      <main class="chat-content" role="log" aria-live="polite">
+        <div class="content-header" *ngIf="currentRoom">
+          <div class="header-main">
+            <span class="room-title">{{ currentRoom.name }}</span>
           </div>
         </div>
 
-        <ng-template #noChat>
-          <div class="no-chat-selected">
-            <p>Selecciona un usuario o sala para comenzar</p>
-          </div>
-        </ng-template>
-
-        <div class="chat-body" *ngIf="sala">
-          <div class="messages-area" #scrollBox>
-             <div *ngIf="mensajes.length === 0" class="empty-state">
-              No hay mensajes aquí. ¡Di hola!
-            </div>
-            <div *ngFor="let m of mensajes" class="msg" [class.me]="m.usuarioId === usuarioActualId">
-              <div class="msg-bubble">
-                <div class="msg-author" *ngIf="m.usuarioId !== usuarioActualId">{{ m.usuarioNombre }}</div>
-                <div class="msg-text">{{ m.contenido }}</div>
-                <div class="msg-attachments" *ngIf="m.adjuntos?.length">
-                   <a *ngFor="let a of m.adjuntos" [href]="a.url" target="_blank">📎 {{ a.nombre }}</a>
+        <div class="content-body" *ngIf="currentRoom; else selectRoom">
+          <div class="messages-viewport" #scrollBox>
+            <div *ngFor="let m of mensajes" class="message-row" [class.me]="m.sender_id === supabaseUserId">
+              <div class="message-bubble">
+                <div class="message-meta" *ngIf="m.sender_id !== supabaseUserId">
+                  {{ m.sender_id.substring(0, 8) }}
                 </div>
-                <div class="msg-time">{{ m.fechaEnvio | date:'HH:mm' }}</div>
+                <div class="message-text">{{ m.content }}</div>
+                <div class="message-time">{{ m.created_at | date:'HH:mm' }}</div>
               </div>
             </div>
           </div>
 
-          <div class="chat-input-area">
-             <div class="attachment-preview" *ngIf="adjuntoPendiente">
-               <span>📎 {{ adjuntoPendiente.nombre }}</span>
-               <button (click)="adjuntoPendiente = null">x</button>
-             </div>
-             <div class="input-row">
-               <label class="btn-attach">
-                 + <input type="file" (change)="onFile($event)" hidden />
-               </label>
-               <input type="text" [(ngModel)]="texto" (keydown.enter)="enviar()" placeholder="Escribe un mensaje..." />
-               <button class="btn-send" (click)="enviar()">➤</button>
-             </div>
+          <div class="input-container">
+            <div class="input-wrapper">
+              <input type="text" 
+                     [(ngModel)]="texto" 
+                     (keydown.enter)="enviar()" 
+                     placeholder="Escribe un mensaje aquí..." 
+                     [attr.aria-label]="currentRoom ? 'Mensaje para ' + currentRoom.name : 'Escribe un mensaje'" />
+            </div>
+            <button class="btn-send" (click)="enviar()" [disabled]="!texto.trim()">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z" />
+              </svg>
+            </button>
           </div>
         </div>
+
+        <ng-template #selectRoom>
+          <div class="no-selection-state">
+            <div class="illustration">📱</div>
+            <h3>WhatsApp para Gestión</h3>
+            <p>Selecciona un chat para ver los mensajes y coordinar con el equipo.</p>
+          </div>
+        </ng-template>
       </main>
     </div>
   `,
   styles: [`
-    .chat-layout { display: flex; height: calc(100vh - 64px); background: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+    :host { --wa-bg: #efeae2; --wa-header: #f0f2f5; --wa-chat-bg: #ffffff; --wa-bubble-me: #d9fdd3; --wa-bubble-other: #ffffff; --wa-text: #111b21; --wa-primary: #00a884; }
     
-    /* SIDEBAR */
-    .chat-sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 16px; background: #f0f2f5; border-bottom: 1px solid #ddd; display:flex; justify-content:space-between; align-items:center; }
-    .sidebar-header h2 { margin: 0; font-size: 1.2rem; }
-    .user-status { font-size: 0.85rem; color: #666; display:flex; align-items:center; gap:5px; }
-    .dot { width:8px; height:8px; border-radius:50%; background:#ccc; }
-    .dot.online { background:#25D366; }
+    .chat-container { display: flex; height: 700px; max-height: calc(100vh - 150px); background: var(--wa-bg); border-radius: 0; border: 1px solid #d1d7db; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.05); }
+    
+    /* Sidebar WhatsApp */
+    .chat-sidebar { width: 350px; background: white; border-right: 1px solid #d1d7db; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 12px 16px; background: var(--wa-header); display: flex; justify-content: space-between; align-items: center; height: 60px; }
+    .sidebar-header h3 { font-size: 1.1rem; color: var(--wa-text); }
+    .btn-create { width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent; color: #54656f; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-create:hover { background: rgba(0,0,0,0.05); }
+    
+    .sidebar-scroll { flex: 1; overflow-y: auto; background: white; }
+    .section-label { padding: 15px 16px 8px; font-size: 0.8rem; color: var(--wa-primary); font-weight: 600; text-transform: uppercase; }
+    
+    .room-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f0f2f5; transition: 0.1s; }
+    .room-item:hover { background: #f5f6f6; }
+    .room-item.active { background: #ebebeb; }
+    .room-avatar { width: 48px; height: 48px; border-radius: 50%; background: #dfe5e7; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-right: 15px; flex-shrink: 0; }
+    .room-info { flex: 1; overflow: hidden; }
+    .room-name { font-size: 1rem; color: var(--wa-text); font-weight: 500; }
+    .room-status { font-size: 0.85rem; color: #667781; }
 
-    .sidebar-list { overflow-y: auto; flex: 1; }
-    .list-title { padding: 10px 16px; font-size: 0.75rem; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Ventana de Chat al estilo WhatsApp */
+    .chat-content { flex: 1; display: flex; flex-direction: column; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #efeae2; }
+    .content-header { padding: 10px 16px; background: var(--wa-header); border-bottom: 1px solid #d1d7db; display: flex; align-items: center; height: 60px; }
+    .room-title { font-weight: 500; font-size: 1rem; color: var(--wa-text); }
     
-    .chat-item { display: flex; align-items: center; padding: 10px 16px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #f0f0f0; }
-    .chat-item:hover { background: #f5f5f5; }
-    .chat-item.active { background: #e6f2ff; border-left: 4px solid #007bff; }
+    .content-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .messages-viewport { flex: 1; padding: 20px 7%; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
     
-    .avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; margin-right: 12px; flex-shrink: 0; }
-    .avatar.global { background: #007bff; color: white; }
+    .message-row { display: flex; width: 100%; margin-bottom: 2px; }
+    .message-row.me { justify-content: flex-end; }
     
-    .info { display: flex; flex-direction: column; overflow: hidden; }
-    .name { font-weight: 600; font-size: 0.95rem; color: #333; }
-    .last-msg { font-size: 0.8rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .message-bubble { max-width: 65%; padding: 6px 10px 8px; border-radius: 8px; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); font-size: 0.9rem; }
+    .message-row:not(.me) .message-bubble { background: var(--wa-bubble-other); border-top-left-radius: 0; }
+    .me .message-bubble { background: var(--wa-bubble-me); border-top-right-radius: 0; }
+    
+    .message-meta { font-size: 0.75rem; color: #e542a3; font-weight: 600; margin-bottom: 2px; }
+    .message-text { color: var(--wa-text); line-height: 1.4; word-wrap: break-word; }
+    .message-time { font-size: 0.65rem; color: #667781; text-align: right; margin-top: 2px; }
 
-    /* MAIN */
-    .chat-main { flex: 1; display: flex; flex-direction: column; background: #efeae2; position: relative; }
+    /* Barra de entrada mejorada */
+    .input-container { padding: 10px 16px; background: var(--wa-header); display: flex; align-items: center; gap: 10px; }
+    .input-wrapper { flex: 1; background: white; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }
+    .input-wrapper input { flex: 1; border: none; outline: none; font-size: 0.95rem; background: transparent; }
+    .btn-send { background: none; border: none; color: #54656f; cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; }
+    .btn-send:hover:not(:disabled) { color: var(--wa-primary); }
     
-    .chat-header { padding: 10px 16px; background: #f0f2f5; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; height: 60px; }
-    .chat-header h3 { margin: 0; font-size: 1rem; }
-    .status { font-size: 0.75rem; color: #25D366; }
-    .status.error { color: red; }
-
-    .no-chat-selected { display: flex; align-items: center; justify-content: center; height: 100%; color: #888; font-size: 1.2rem; }
-
-    .chat-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-    .messages-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-    
-    .empty-state { text-align: center; color: #888; margin-top: 50px; background: rgba(255,255,255,0.6); padding: 10px; border-radius: 10px; width: fit-content; align-self: center; }
-
-    .msg { display: flex; flex-direction: column; max-width: 60%; }
-    .msg.me { align-self: flex-end; align-items: flex-end; }
-    
-    .msg-bubble { padding: 8px 12px; border-radius: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: relative; min-width: 100px; }
-    .msg.me .msg-bubble { background: #d9fdd3; }
-    
-    .msg-author { font-size: 0.75rem; color: #e542a3; font-weight: bold; margin-bottom: 4px; }
-    .msg-text { font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
-    .msg-time { font-size: 0.65rem; color: #999; text-align: right; margin-top: 4px; }
-    .msg-attachments a { display: block; background: #f0f0f0; padding: 5px; margin-top: 5px; border-radius: 4px; text-decoration: none; color: #333; font-size: 0.85rem; }
-
-    .chat-input-area { background: #f0f2f5; padding: 10px; border-top: 1px solid #ddd; }
-    .attachment-preview { background: #e6f7ff; padding: 5px 10px; border-radius: 4px; display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; }
-    .input-row { display: flex; gap: 10px; align-items: center; }
-    
-    .btn-attach { padding: 8px 14px; background: #e4e6eb; border-radius: 50%; cursor: pointer; font-size: 1.2rem; color: #666; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; transition:0.2s; }
-    .btn-attach:hover { background: #d8dadf; }
-    
-    input[type="text"] { flex: 1; padding: 12px; border: none; border-radius: 20px; outline: none; font-size: 0.95rem; }
-    
-    .btn-send { width: 40px; height: 40px; border: none; background: #007bff; color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition:0.2s; }
-    .btn-send:hover { background: #0056b3; }
+    .no-selection-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; text-align: center; padding: 40px; }
+    .illustration { font-size: 5rem; margin-bottom: 20px; }
   `]
 })
 export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('scrollBox') private scrollContainer!: ElementRef;
 
-  sala: ChatSala | null = null;
+  currentRoom: ChatRoom | null = null;
   mensajes: ChatMessage[] = [];
   texto = '';
-
   usuarioActual: Usuario | null = null;
-  usuarioActualId: number | null = null;
+  supabaseUserId: string = '';
+  rooms: ChatRoom[] = [];
 
-  usuariosList: Usuario[] = [];
-
-  errorConexion: string | null = null;
-  stompClient: Client | null = null;
-  adjuntoPendiente: { url: string; tipo?: string; nombre?: string } | null = null;
   private shouldScroll = false;
-  private topicSubscription: any;
+  private chatSubscription: Subscription | null = null;
 
   constructor(private chat: ChatService, private usuarioService: UsuarioService) { }
 
   ngOnInit(): void {
-    // 1. Obtener usuario actual (simulado o del servicio)
-    this.usuarioService.getAll().subscribe(users => {
-      // FILTRAR: No mostrarme a mí mismo en la lista
-      // Por ahora simulamos que soy el primero de la lista o el que tenga token (admin)
-      const admin = users.find(u => u.nombreUsuario === 'jefe_admin') || users[0];
-      this.usuarioActual = admin;
-      this.usuarioActualId = admin.idUsuario ?? null;
+    this.usuarioService.getAll().pipe(
+      map(users => users.find(u => u.nombreUsuario === 'jefe_admin') || users[0])
+    ).subscribe(user => {
+      this.usuarioActual = user;
+      this.chat.getMyIdentity().subscribe(id => {
+        this.supabaseUserId = id.chatId;
+      });
+    });
 
-      this.usuariosList = users.filter(u => u.idUsuario !== this.usuarioActualId);
-
-      // Conectar WS general al inicio
-      this.connectWs();
+    this.chat.getRooms().subscribe(rooms => {
+      this.rooms = rooms;
     });
   }
 
   ngOnDestroy(): void {
-    if (this.stompClient) {
-      this.stompClient.deactivate();
-    }
+    if (this.chatSubscription) this.chatSubscription.unsubscribe();
   }
 
   ngAfterViewChecked(): void {
     if (this.shouldScroll) {
-      this.scrollToTop();
+      this.scrollToBottom();
       this.shouldScroll = false;
     }
   }
 
-  scrollToTop(): void {
+  private scrollToBottom(): void {
     try {
       if (this.scrollContainer) {
         this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
@@ -219,120 +187,64 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
     } catch (err) { }
   }
 
-  abrirGlobal() {
-    this.chat.getSalaGeneral().subscribe(s => {
-      this.seleccionarSala(s);
-    });
-  }
+  seleccionarSala(room: ChatRoom) {
+    if (this.currentRoom?.id === room.id) return;
 
-  abrirPrivado(otroUsuario: Usuario) {
-    if (!this.usuarioActualId || !otroUsuario.idUsuario) return;
-    this.chat.iniciarChatPrivado(this.usuarioActualId, otroUsuario.idUsuario).subscribe((s: ChatSala) => {
-      this.seleccionarSala(s);
-    });
-  }
+    this.currentRoom = room;
+    if (this.chatSubscription) this.chatSubscription.unsubscribe();
 
-  seleccionarSala(s: ChatSala) {
-    if (this.sala?.idSala === s.idSala) return;
-
-    this.sala = s;
-    this.mensajes = [];
-    this.chat.getMensajes(s.idSala).subscribe(msgs => {
-      this.mensajes = (msgs || []).reverse();
+    this.chatSubscription = this.chat.subscribeToRoom(room.id).subscribe(msgs => {
+      this.mensajes = msgs;
       this.shouldScroll = true;
     });
-
-    // Suscribirse al topic de esta sala
-    this.subscribeToRoom(s.idSala);
   }
 
-  connectWs() {
+  async enviar() {
+    if (!this.texto.trim() || !this.currentRoom) return;
+
+    const textoAEnviar = this.texto.trim();
+    this.texto = ''; // Limpiamos rápido para sensación de rapidez
+
     try {
-      const SockJSClient: any = (SockJS as any).default || (SockJS as any);
-      const wsUrl = environment.apiUrl.replace('/api', '/ws');
-
-      const client = new Client({
-        webSocketFactory: () => new SockJSClient(wsUrl),
-        reconnectDelay: 5000,
-        debug: (str) => console.log(str)
-      });
-
-      client.onConnect = () => {
-        this.errorConexion = null;
-        console.log('WS Connected');
-        // Si ya hay sala seleccionada, resuscribirse
-        if (this.sala) {
-          this.subscribeToRoom(this.sala.idSala);
-        }
-      };
-
-      client.onStompError = (frame) => {
-        console.error('Broker reported error: ' + frame.headers['message']);
-        this.errorConexion = 'Error de conexión';
-      };
-
-      client.onWebSocketError = (ev) => {
-        console.error('Error WS connection', ev);
-        this.errorConexion = 'No se puede conectar';
-      };
-
-      client.activate();
-      this.stompClient = client;
-    } catch (e) {
-      console.error(e);
-      this.errorConexion = 'Error inciando WS';
+      await this.chat.sendMessage(this.currentRoom.id, textoAEnviar, this.supabaseUserId);
+      // No necesitamos añadirlo manualmente si Realtime funciona bien, 
+      // pero si queremos "WhatsApp speed", podríamos hacer un push optimista aquí.
+      // Pero primero asegurémonos que Realtime detecte el cambio del backend.
+      this.shouldScroll = true;
+    } catch (error: any) {
+      console.error('Error al enviar mensaje:', error);
+      Swal.fire('Error', `No se pudo enviar el mensaje: ${error.message || 'Error servidor'}`, 'error');
     }
   }
 
-  subscribeToRoom(salaId: number) {
-    if (!this.stompClient || !this.stompClient.connected) return;
-
-    // Unsubscribe previous
-    if (this.topicSubscription) {
-      this.topicSubscription.unsubscribe();
-    }
-
-    // NOTA: El backend sigue difundiendo a /topic/chat.general. 
-    // Idealmente el backend debería enviar a /topic/sala/{id}.
-    // Por compatibilidad inmediata, filtraré en el cliente.
-
-    this.topicSubscription = this.stompClient.subscribe('/topic/chat.general', (msg: IMessage) => {
-      const body = JSON.parse(msg.body);
-      // Solo agregar si pertenece a la sala actual
-      if (body.salaId === this.sala?.idSala) {
-        this.mensajes.push(body);
-        this.shouldScroll = true;
+  crearSala() {
+    Swal.fire({
+      title: 'Nuevo Canal',
+      input: 'text',
+      inputLabel: 'Nombre del canal',
+      inputPlaceholder: 'Ej: General, Soporte...',
+      showCancelButton: true,
+      confirmButtonText: 'Crear',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) return '¡Necesitas un nombre!';
+        return null;
       }
-    });
-  }
-
-  enviar() {
-    if (!this.texto.trim() && !this.adjuntoPendiente) return;
-    if (!this.sala || !this.usuarioActualId) return;
-
-    const payload = {
-      salaId: this.sala.idSala,
-      usuarioId: this.usuarioActualId,
-      contenido: this.texto.trim() || (this.adjuntoPendiente ? 'Archivo adjunto' : '.'),
-      adjuntos: this.adjuntoPendiente ? [this.adjuntoPendiente] : []
-    };
-
-    if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.publish({ destination: '/app/chat.send', body: JSON.stringify(payload) });
-      this.texto = '';
-      this.adjuntoPendiente = null;
-    } else {
-      Swal.fire('Error', 'No hay conexión', 'error');
-    }
-  }
-
-  onFile(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-    this.chat.subirAdjunto(file).subscribe({
-      next: (res: any) => this.adjuntoPendiente = res,
-      error: () => Swal.fire('Error', 'Fallo subida', 'error')
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.chat.createRoom(result.value, true).subscribe({
+          next: (newRoom) => {
+            this.rooms.push(newRoom);
+            this.seleccionarSala(newRoom);
+            Swal.fire('¡Creado!', `El canal "${result.value}" ha sido creado.`, 'success');
+          },
+          error: (err) => {
+            console.error('Error al crear canal:', err);
+            const msg = err.error?.message || err.error || 'Error desconocido';
+            Swal.fire('Error', `No se pudo crear el canal: ${msg}`, 'error');
+          }
+        });
+      }
     });
   }
 }

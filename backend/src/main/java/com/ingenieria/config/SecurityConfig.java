@@ -7,12 +7,17 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final AuthTokenFilter authTokenFilter; // Added field for AuthTokenFilter
+
+    public SecurityConfig(AuthTokenFilter authTokenFilter) { // Added constructor for injection
+        this.authTokenFilter = authTokenFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -20,8 +25,9 @@ public class SecurityConfig {
                 .cors(org.springframework.security.config.Customizer.withDefaults()) // Enable CORS
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable());
+                        .anyRequest().authenticated()) // Cambiado a authenticated para proteger el chat
+                .csrf(csrf -> csrf.disable())
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class); // Added AuthTokenFilter
         return http.build();
     }
 
@@ -41,10 +47,11 @@ public class SecurityConfig {
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
         configuration.setAllowedOriginPatterns(java.util.Collections.singletonList("*"));
-        configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
+        configuration
+                .setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
         configuration.setAllowedHeaders(java.util.Collections.singletonList("*"));
         configuration.setAllowCredentials(true);
-        
+
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

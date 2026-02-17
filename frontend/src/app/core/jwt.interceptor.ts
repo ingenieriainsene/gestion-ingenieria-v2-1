@@ -5,8 +5,8 @@ import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
-    const authService = inject(AuthService);
-    const token = authService.getToken();
+    // Usar localStorage directamente para el token para evitar circularidad DI con AuthService
+    const token = localStorage.getItem('authToken');
 
     if (token) {
         req = req.clone({
@@ -15,9 +15,12 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
             }
         });
     }
+
     return next(req).pipe(
         catchError((error) => {
             if (error?.status === 401 || error?.status === 403) {
+                // Si hay error de auth, inyectamos AuthService de forma diferida para forzar logout
+                const authService = inject(AuthService);
                 authService.forceLogout();
             }
             return throwError(() => error);

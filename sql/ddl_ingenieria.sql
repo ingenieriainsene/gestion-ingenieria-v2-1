@@ -980,3 +980,69 @@ BEGIN
   EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO %I', target_role);
   EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO %I', target_role);
 END $$;
+
+-- ======================================================
+-- 5. MODULO DE CHAT PROFESIONAL (STANDALONE & REALTIME)
+-- ======================================================
+
+-- Habilitar extensiones necesarias para UUIDs potentes
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Limpieza total para asegurar un estado consistente
+DROP TABLE IF EXISTS public.chat_messages CASCADE;
+DROP TABLE IF EXISTS public.chat_user_rooms CASCADE;
+DROP TABLE IF EXISTS public.chat_rooms CASCADE;
+
+-- 5.1 TABLA DE SALAS (ROOMS)
+CREATE TABLE public.chat_rooms (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  is_group BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by UUID -- Identificador determinista generado por backend
+);
+
+-- 5.2 RELACIÓN USUARIO-SALA (MEMBRESÍAS)
+CREATE TABLE public.chat_user_rooms (
+  room_id UUID REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
+  user_id UUID, -- Identificador determinista
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (room_id, user_id)
+);
+
+-- 5.3 TABLA DE MENSAJES (MESSAGES)
+CREATE TABLE public.chat_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  room_id UUID REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
+  sender_id UUID,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5.4 SEGURIDAD Y PERMISOS (Saneamiento)
+-- Desactivamos RLS para esta fase; el backend gestiona la lógica de negocio.
+ALTER TABLE public.chat_rooms DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_user_rooms DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages DISABLE ROW LEVEL SECURITY;
+
+-- Permisos para que Supabase Realtime y el Frontend operen sin bloqueos
+GRANT ALL ON TABLE public.chat_rooms TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.chat_user_rooms TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.chat_messages TO anon, authenticated, service_role;
+
+-- 5.5 CONFIGURACIÓN SUPABASE REALTIME (PANTALLA COMPLETA)
+-- Reiniciar la publicación para evitar errores de duplicados o tablas fantasmales
+DROP PUBLICATION IF EXISTS supabase_realtime;
+CREATE PUBLICATION supabase_realtime FOR ALL TABLES;
+
+-- Asegurar que las tablas tengan Replica Identity Full para actualizaciones precisas
+ALTER TABLE public.chat_rooms REPLICA IDENTITY FULL;
+ALTER TABLE public.chat_user_rooms REPLICA IDENTITY FULL;
+ALTER TABLE public.chat_messages REPLICA IDENTITY FULL;
+
+-- Permisos extra para el rol anon (necesario para suscripciones directas)
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir lectura anónima de mensajes" ON public.chat_messages FOR SELECT USING (true);
+CREATE POLICY "Permitir inserción anónima de mensajes" ON public.chat_messages FOR INSERT WITH CHECK (true);
+ALTER TABLE public.chat_messages DISABLE ROW LEVEL SECURITY;
