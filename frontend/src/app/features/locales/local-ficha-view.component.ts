@@ -5,10 +5,12 @@ import { LocalService, ContratoService } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import type { Local, Contrato, Cliente } from '../../services/domain.services';
 
+import { AreaFuncionalEditorComponent } from './area-funcional-editor.component';
+
 @Component({
   selector: 'app-local-ficha-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, AuditStampComponent],
+  imports: [CommonModule, RouterLink, AuditStampComponent, AreaFuncionalEditorComponent],
   templateUrl: './local-ficha-view.component.html',
   styleUrls: ['./local-ficha-view.component.css'],
 })

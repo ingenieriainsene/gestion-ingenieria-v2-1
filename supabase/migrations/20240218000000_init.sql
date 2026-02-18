@@ -618,91 +618,72 @@ ON CONFLICT (nombre_usuario) DO NOTHING;
 
 -- 11 Clientes (idempotente por DNI)
 INSERT INTO clientes (nombre, apellido1, apellido2, dni, direccion_fiscal_completa, codigo_postal, cuenta_bancaria, creado_por)
-SELECT v.nombre, v.apellido1, v.apellido2, v.dni, v.direccion, v.cp, v.cuenta, 'jefe_admin'
+SELECT *
 FROM (VALUES
-    ('Jose', 'Brenes', 'Oliva', '75892994D', 'Calle Mina 4, Arahal', '41600', 'ES1234567890123456789012'),
-    ('Ana', 'García', 'López', '12345678Z', 'Avda. Constitución 12, Sevilla', '41001', 'ES9876543210987654321098'),
-    ('Manuel', 'Sánchez', 'Pérez', '23456789X', 'Calle Real 45, Alcalá de Guadaíra', '41500', 'ES8765432109876543210987'),
-    ('María', 'Rodríguez', 'Ruiz', '34567890C', 'Plaza Mayor 1, Dos Hermanas', '41700', 'ES7654321098765432109876'),
-    ('David', 'Martínez', 'Jiménez', '45678901V', 'Calle Betis 8, Sevilla', '41010', 'ES6543210987654321098765'),
-    ('Lucía', 'Hernández', 'Muñoz', '56789012B', 'Calle Larga 22, Arahal', '41600', 'ES5432109876543210987654'),
-    ('Javier', 'Díaz', 'Moreno', '67890123N', 'Calle Ancha 15, Paradas', '41610', 'ES4321098765432109876543'),
-    ('Elena', 'Álvarez', 'Serrano', '78901234M', 'Calle Sierpes 3, Sevilla', '41004', 'ES3210987654321098765432'),
-    ('Pablo', 'Romero', 'Navarro', '89012345Q', 'Calle Nueva 10, Marchena', '41620', 'ES2109876543210987654321'),
-    ('Marta', 'Torres', 'Castro', '90123456W', 'Calle Feria 55, Sevilla', '41003', 'ES1098765432109876543210'),
-    ('Antonio', 'Vázquez', 'Blanco', '01234567E', 'Calle Pureza 2, Sevilla', '41011', 'ES0987654321098765432109')
-) AS v(nombre, apellido1, apellido2, dni, direccion, cp, cuenta)
-WHERE NOT EXISTS (SELECT 1 FROM clientes c WHERE c.dni = v.dni);
+    ('Jose', 'Brenes', 'Oliva', '75892994D', 'Calle Mina 4, Arahal', '41600', 'ES1234567890123456789012', 'jefe_admin'),
+    ('Ana', 'García', 'López', '12345678Z', 'Avda. Constitución 12, Sevilla', '41001', 'ES9876543210987654321098', 'jefe_admin'),
+    ('Manuel', 'Sánchez', 'Pérez', '23456789X', 'Calle Real 45, Alcalá de Guadaíra', '41500', 'ES8765432109876543210987', 'jefe_admin'),
+    ('María', 'Rodríguez', 'Ruiz', '34567890C', 'Plaza Mayor 1, Dos Hermanas', '41700', 'ES7654321098765432109876', 'jefe_admin'),
+    ('David', 'Martínez', 'Jiménez', '45678901V', 'Calle Betis 8, Sevilla', '41010', 'ES6543210987654321098765', 'jefe_admin'),
+    ('Lucía', 'Hernández', 'Muñoz', '56789012B', 'Calle Larga 22, Arahal', '41600', 'ES5432109876543210987654', 'jefe_admin'),
+    ('Javier', 'Díaz', 'Moreno', '67890123N', 'Calle Ancha 15, Paradas', '41610', 'ES4321098765432109876543', 'jefe_admin'),
+    ('Elena', 'Álvarez', 'Serrano', '78901234M', 'Calle Sierpes 3, Sevilla', '41004', 'ES3210987654321098765432', 'jefe_admin'),
+    ('Pablo', 'Romero', 'Navarro', '89012345Q', 'Calle Nueva 10, Marchena', '41620', 'ES2109876543210987654321', 'jefe_admin'),
+    ('Marta', 'Torres', 'Castro', '90123456W', 'Calle Feria 55, Sevilla', '41003', 'ES1098765432109876543210', 'jefe_admin'),
+    ('Antonio', 'Vázquez', 'Blanco', '01234567E', 'Calle Pureza 2, Sevilla', '41011', 'ES0987654321098765432109', 'jefe_admin')
+) AS v(nombre, apellido1, apellido2, dni, direccion_fiscal_completa, codigo_postal, cuenta_bancaria, creado_por)
+WHERE NOT EXISTS (
+    SELECT 1 FROM clientes c WHERE c.dni = v.dni
+);
 
--- 11 Locales (vinculados por DNI del cliente)
+-- 11 Locales (idempotente por cliente+dirección+cups+ref)
 INSERT INTO locales (id_cliente, nombre_titular, apellido1_titular, dni_titular, cups, referencia_catastral, direccion_completa, latitud, longitud, creado_por)
-SELECT c.id_cliente, v.nombre, v.apellido1, v.dni, v.cups, v.ref_cat, v.direccion, v.lat, v.lon, 'jefe_admin'
+SELECT *
 FROM (VALUES
-    ('75892994D', 'Jose', 'Brenes', '75892994D', 'ES0021000012345678AB1F', '1234567TG8901S0001FF', 'Calle Mina 4, Arahal', 37.2628, -5.4772),
-    ('12345678Z', 'Ana', 'García', '12345678Z', 'ES0021000087654321AB2G', '0869501QA5406N0003HI', 'Calle Diputación 250, Barcelona', 41.3887, 2.1645),
-    ('23456789X', 'Manuel', 'Sánchez', '23456789X', 'ES0021000076543210AB3H', '6029215TF7760G0001AK', 'Avda. Los Majuelos 30, S.C. Tenerife', 28.4550, -16.2941),
-    ('34567890C', 'María', 'Rodríguez', '34567890C', 'ES0021000065432109AB4I', '4961312UG1846S0002FU', 'Calle Real 1, Sevilla', 37.3828, -5.9731),
-    ('45678901V', 'David', 'Martínez', '45678901V', 'ES0021000054321098AB5J', '6197808TG5369N0002BX', 'Calle Alcalá 45, Madrid', 40.4189, -3.6995),
-    ('56789012B', 'Lucía', 'Hernández', '56789012B', 'ES0021000043210987AB6K', '1584301QB6318S0001LT', 'Calle Mayor 10, Valencia', 39.4699, -0.3763),
-    ('67890123N', 'Javier', 'Díaz', '67890123N', 'ES0021000032109876AB7L', '0872229TG4107S0001HK', 'Calle Urquinaona 4, Barcelona', 41.3891, 2.1722),
-    ('78901234M', 'Elena', 'Álvarez', '78901234M', 'ES0021000021098765AB8M', '4733421UG0643S0001GW', 'Avda. Palmera 15, Sevilla', 37.3592, -5.9864),
-    ('89012345Q', 'Pablo', 'Romero', '89012345Q', 'ES0021000010987654AB9N', '8073358TG4387S0001TF', 'Calle Pureza 80, Sevilla', 37.3822, -6.0003),
-    ('90123456W', 'Marta', 'Torres', '90123456W', 'ES0021000009876543AB0O', '0165203TG4106N0001PH', 'Calle Feria 12, Sevilla', 37.3977, -5.9922),
-    ('01234567E', 'Antonio', 'Vázquez', '01234567E', 'ES0021000098765432AB1P', '08020A0QB6300S0001PE', 'Polígono Industrial 5, Córdoba', 37.8882, -4.7794)
-) AS v(dni_lookup, nombre, apellido1, dni, cups, ref_cat, direccion, lat, lon)
-JOIN clientes c ON c.dni = v.dni_lookup
-WHERE NOT EXISTS (SELECT 1 FROM locales l WHERE l.cups = v.cups);
+    (1, 'Jose', 'Brenes', '75892994D', 'ES0021000012345678AB1F', '1234567TG8901S0001FF', 'Calle Mina 4, Arahal', 37.2628, -5.4772, 'jefe_admin'),
+    (2, 'Ana', 'García', '12345678Z', 'ES0021000087654321AB2G', '0869501QA5406N0003HI', 'Calle Diputación 250, Barcelona', 41.3887, 2.1645, 'jefe_admin'),
+    (3, 'Manuel', 'Sánchez', '23456789X', 'ES0021000076543210AB3H', '6029215TF7760G0001AK', 'Avda. Los Majuelos 30, S.C. Tenerife', 28.4550, -16.2941, 'jefe_admin'),
+    (4, 'María', 'Rodríguez', '34567890C', 'ES0021000065432109AB4I', '4961312UG1846S0002FU', 'Calle Real 1, Sevilla', 37.3828, -5.9731, 'jefe_admin'),
+    (5, 'David', 'Martínez', '45678901V', 'ES0021000054321098AB5J', '6197808TG5369N0002BX', 'Calle Alcalá 45, Madrid', 40.4189, -3.6995, 'jefe_admin'),
+    (6, 'Lucía', 'Hernández', '56789012B', 'ES0021000043210987AB6K', '1584301QB6318S0001LT', 'Calle Mayor 10, Valencia', 39.4699, -0.3763, 'jefe_admin'),
+    (7, 'Javier', 'Díaz', '67890123N', 'ES0021000032109876AB7L', '0872229TG4107S0001HK', 'Calle Urquinaona 4, Barcelona', 41.3891, 2.1722, 'jefe_admin'),
+    (8, 'Elena', 'Álvarez', '78901234M', 'ES0021000021098765AB8M', '4733421UG0643S0001GW', 'Avda. Palmera 15, Sevilla', 37.3592, -5.9864, 'jefe_admin'),
+    (9, 'Pablo', 'Romero', '89012345Q', 'ES0021000010987654AB9N', '8073358TG4387S0001TF', 'Calle Pureza 80, Sevilla', 37.3822, -6.0003, 'jefe_admin'),
+    (10, 'Marta', 'Torres', '90123456W', 'ES0021000009876543AB0O', '0165203TG4106N0001PH', 'Calle Feria 12, Sevilla', 37.3977, -5.9922, 'jefe_admin'),
+    (11, 'Antonio', 'Vázquez', '01234567E', 'ES0021000098765432AB1P', '08020A0QB6300S0001PE', 'Polígono Industrial 5, Córdoba', 37.8882, -4.7794, 'jefe_admin')
+) AS v(id_cliente, nombre_titular, apellido1_titular, dni_titular, cups, referencia_catastral, direccion_completa, latitud, longitud, creado_por)
+WHERE NOT EXISTS (
+    SELECT 1 FROM locales l
+    WHERE l.id_cliente = v.id_cliente
+      AND l.direccion_completa = v.direccion_completa
+      AND COALESCE(l.cups, '') = COALESCE(v.cups, '')
+      AND COALESCE(l.referencia_catastral, '') = COALESCE(v.referencia_catastral, '')
+);
 
--- 11 Contratos (vinculados por CUPS del local)
+-- 11 Contratos (idempotente por claves naturales)
 INSERT INTO contratos (id_cliente, id_local, fecha_inicio, fecha_vencimiento, tipo_contrato, creado_por)
-SELECT l.id_cliente, l.id_local, v.f_ini::date, v.f_fin::date, v.tipo, 'jefe_admin'
+SELECT *
 FROM (VALUES
-    ('ES0021000012345678AB1F', '2025-01-01', '2026-01-01', 'Instalacion'),
-    ('ES0021000087654321AB2G', '2025-02-01', '2026-02-01', 'Instalacion'),
-    ('ES0021000076543210AB3H', '2025-02-15', '2026-02-15', 'Preventivo'),
-    ('ES0021000065432109AB4I', '2025-03-01', '2026-03-01', 'Ampliacion'),
-    ('ES0021000054321098AB5J', '2025-03-10', '2026-03-10', 'Instalacion'),
-    ('ES0021000043210987AB6K', '2025-04-01', '2026-04-01', 'Preventivo'),
-    ('ES0021000032109876AB7L', '2025-04-20', '2026-04-20', 'Ampliacion'),
-    ('ES0021000021098765AB8M', '2025-05-01', '2026-05-01', 'Instalacion'),
-    ('ES0021000010987654AB9N', '2025-05-15', '2026-05-15', 'Preventivo'),
-    ('ES0021000009876543AB0O', '2025-06-01', '2026-06-01', 'Ampliacion'),
-    ('ES0021000098765432AB1P', '2025-06-10', '2026-06-10', 'Instalacion')
-) AS v(cups_lookup, f_ini, f_fin, tipo)
-JOIN locales l ON l.cups = v.cups_lookup
+    (1, 1, '2025-01-01'::date, '2026-01-01'::date, 'Instalacion', 'jefe_admin'),
+    (2, 2, '2025-02-01'::date, '2026-02-01'::date, 'Instalacion', 'jefe_admin'),
+    (3, 3, '2025-02-15'::date, '2026-02-15'::date, 'Preventivo', 'jefe_admin'),
+    (4, 4, '2025-03-01'::date, '2026-03-01'::date, 'Ampliacion', 'jefe_admin'),
+    (5, 5, '2025-03-10'::date, '2026-03-10'::date, 'Instalacion', 'jefe_admin'),
+    (6, 6, '2025-04-01'::date, '2026-04-01'::date, 'Preventivo', 'jefe_admin'),
+    (7, 7, '2025-04-20'::date, '2026-04-20'::date, 'Ampliacion', 'jefe_admin'),
+    (8, 8, '2025-05-01'::date, '2026-05-01'::date, 'Instalacion', 'jefe_admin'),
+    (9, 9, '2025-05-15'::date, '2026-05-15'::date, 'Preventivo', 'jefe_admin'),
+    (10, 10, '2025-06-01'::date, '2026-06-01'::date, 'Ampliacion', 'jefe_admin'),
+    (11, 11, '2025-06-10'::date, '2026-06-10'::date, 'Instalacion', 'jefe_admin')
+) AS v(id_cliente, id_local, fecha_inicio, fecha_vencimiento, tipo_contrato, creado_por)
 WHERE NOT EXISTS (
-    SELECT 1 FROM contratos c 
-    WHERE c.id_local = l.id_local AND c.fecha_inicio = v.f_ini::date
+    SELECT 1 FROM contratos c
+    WHERE c.id_cliente = v.id_cliente
+      AND c.id_local = v.id_local
+      AND c.fecha_inicio = v.fecha_inicio
+      AND c.fecha_vencimiento = v.fecha_vencimiento
+      AND c.tipo_contrato = v.tipo_contrato
 );
-
--- Trámites / Intervenciones (Asociados a Contratos por CUPS)
-INSERT INTO tramites_contrato (id_contrato, tipo_tramite, estado, tecnico_asignado, fecha_seguimiento, es_urgente, facturado, detalle_seguimiento)
-SELECT c.id_contrato, v.tipo, v.estado, 'carlos_tec', CURRENT_DATE + 5, v.urgente, false, v.detalle
-FROM (VALUES
-    ('ES0021000012345678AB1F', 'Legalización', 'Pendiente', false, 'Solicitud inicial de legalización'),
-    ('ES0021000087654321AB2G', 'Instalación', 'En Progreso', true, 'Coordinar con técnico de zona'),
-    ('ES0021000076543210AB3H', 'Mantenimiento', 'Pendiente', false, 'Revisión anual programada'),
-    ('ES0021000065432109AB4I', 'Ampliación', 'Completado', false, 'Instalación de 3 módulos extra')
-) AS v(cups_lookup, tipo, estado, urgente, detalle)
-JOIN locales l ON l.cups = v.cups_lookup
-JOIN contratos c ON c.id_local = l.id_local
-WHERE NOT EXISTS (
-    SELECT 1 FROM tramites_contrato tc 
-    WHERE tc.id_contrato = c.id_contrato AND tc.tipo_tramite = v.tipo
-);
-
--- Seguimientos de Trámites
-INSERT INTO seguimiento_tramites (id_tramite, id_usuario, id_creador, comentario, estado)
-SELECT t.id_tramite, u.id_usuario, u.id_usuario, 'Inicio del trámite confirmado. Documentación recibida.', 'En Progreso'
-FROM tramites_contrato t
-JOIN contratos c ON t.id_contrato = c.id_contrato
-JOIN locales l ON c.id_local = l.id_local
-JOIN usuarios u ON u.nombre_usuario = 'carlos_tec'
-WHERE l.cups IN ('ES0021000012345678AB1F', 'ES0021000087654321AB2G')
-AND NOT EXISTS (
-    SELECT 1 FROM seguimiento_tramites st WHERE st.id_tramite = t.id_tramite
-);
-
 
 -- 10 Proveedores (idempotente por CIF)
 INSERT INTO proveedores (nombre_comercial, razon_social, es_autonomo, cif, direccion_fiscal, creado_por)
@@ -1065,24 +1046,3 @@ ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Permitir lectura anónima de mensajes" ON public.chat_messages FOR SELECT USING (true);
 CREATE POLICY "Permitir inserción anónima de mensajes" ON public.chat_messages FOR INSERT WITH CHECK (true);
 ALTER TABLE public.chat_messages DISABLE ROW LEVEL SECURITY;
-
--- TABLAS PARA AREAS FUNCIONALES (Ficha Tecnica Local) --
-CREATE TABLE IF NOT EXISTS AREAS_FUNCIONALES (
-    id_area BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    id_local BIGINT NOT NULL REFERENCES LOCALES(id_local),
-    nombre VARCHAR(100) NOT NULL,
-    descripcion VARCHAR(255),
-    orden INTEGER
-);
-
-CREATE TABLE IF NOT EXISTS AREA_FUNCIONAL_LINEAS (
-    id_linea BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    id_area BIGINT NOT NULL REFERENCES AREAS_FUNCIONALES(id_area),
-    producto_id BIGINT,
-    producto_texto VARCHAR(255),
-    concepto VARCHAR(255),
-    cantidad DECIMAL(12,2),
-    accion_requerida VARCHAR(255),
-    orden INTEGER
-);
-

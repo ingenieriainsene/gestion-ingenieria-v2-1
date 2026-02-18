@@ -83,6 +83,8 @@
       </table>
     </div>
   </section>
+
+  <app-area-funcional-editor *ngIf="idLocal" [idLocal]="idLocal"></app-area-funcional-editor>
 </div>
 
 <div *ngIf="!loading && !local" class="ficha-missing">

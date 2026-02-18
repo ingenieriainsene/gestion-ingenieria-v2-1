@@ -63,6 +63,10 @@ public class Local {
             fechaModificacion = LocalDateTime.now();
     }
 
+    @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonManagedReference
+    private java.util.List<AreaFuncional> areasFuncionales = new java.util.ArrayList<>();
+
     @PreUpdate
     protected void onUpdate() {
         fechaModificacion = LocalDateTime.now();
