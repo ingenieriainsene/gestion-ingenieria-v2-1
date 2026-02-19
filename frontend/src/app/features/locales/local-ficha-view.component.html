@@ -43,6 +43,18 @@
       <p *ngIf="local.latitud != null && local.longitud != null">{{ local.latitud }}, {{ local.longitud }}</p>
       <p *ngIf="local.latitud == null || local.longitud == null" class="muted">No fijadas</p>
     </div>
+    <div class="info-card action-card" (click)="toggleAreasFuncionales()">
+      <h3>Gestión Técnica</h3>
+      <div class="action-card-content">
+        <span class="action-icon">{{ areasFuncionalesVisible ? '📂' : '📁' }}</span>
+        <span class="action-text">Áreas Funcionales</span>
+        <span class="toggle-arrow">{{ areasFuncionalesVisible ? '▲' : '▼' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="areasFuncionalesVisible && idLocal" class="areas-container">
+    <app-area-funcional-editor [idLocal]="idLocal"></app-area-funcional-editor>
   </div>
 
   <section class="ficha-section">
@@ -84,7 +96,6 @@
     </div>
   </section>
 
-  <app-area-funcional-editor *ngIf="idLocal" [idLocal]="idLocal"></app-area-funcional-editor>
 </div>
 
 <div *ngIf="!loading && !local" class="ficha-missing">

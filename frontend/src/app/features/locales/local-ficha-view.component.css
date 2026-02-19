@@ -252,3 +252,63 @@
   background: #fee2e2;
   color: #b91c1c;
 }
+
+/* Action Card for Areas Funcionales */
+.info-card.action-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.info-card.action-card:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateY(-2px);
+}
+
+.info-card.action-card h3 {
+  margin-bottom: 0.5rem;
+}
+
+.action-card-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.action-icon {
+  font-size: 1.5rem;
+}
+
+.toggle-arrow {
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+/* Areas Container Animation */
+.areas-container {
+  margin: 0 35px 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -19,6 +19,7 @@ export class LocalFichaViewComponent implements OnInit {
   contratos: Contrato[] = [];
   loading = true;
   idLocal: number | null = null;
+  areasFuncionalesVisible = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -95,5 +96,9 @@ export class LocalFichaViewComponent implements OnInit {
   idCliente(): number | null {
     const l = this.local as any;
     return l?.cliente?.idCliente ?? l?.idCliente ?? null;
+  }
+
+  toggleAreasFuncionales(): void {
+    this.areasFuncionalesVisible = !this.areasFuncionalesVisible;
   }
 }
