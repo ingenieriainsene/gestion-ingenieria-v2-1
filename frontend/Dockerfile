@@ -15,7 +15,10 @@ RUN npx ng build --configuration=production
 # ETAPA 2: Servidor Web
 FROM nginx:alpine
 
-# Copiamos los archivos compilados a Nginx (Ruta corregida)
+# Copiamos la nueva configuración de Nginx que acabamos de crear
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copiamos los archivos compilados a Nginx
 COPY --from=build /app/dist/gestion-frontend /usr/share/nginx/html/
 
 EXPOSE 80
