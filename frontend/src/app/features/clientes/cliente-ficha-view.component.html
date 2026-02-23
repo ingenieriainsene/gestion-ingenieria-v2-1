@@ -15,7 +15,7 @@
   </div>
 
   <div class="info-card-grid">
-    <div class="info-card info-card-wide">
+    <div class="info-card info-card-md">
       <h3>Nombre / Razón Social</h3>
       <p>{{ nombreCompleto(cliente) }}</p>
     </div>
@@ -31,7 +31,7 @@
       <h3>Estado Registro</h3>
       <p class="estado-activo">ACTIVO</p>
     </div>
-    <div class="info-card info-card-wide">
+    <div class="info-card info-card-lg">
       <h3>Dirección Fiscal Completa</h3>
       <p>{{ cliente.direccionFiscalCompleta || '—' }}<span *ngIf="cliente.codigoPostal"> ({{ cliente.codigoPostal
           }})</span></p>
@@ -43,134 +43,151 @@
   </div>
   <app-audit-stamp [data]="cliente"></app-audit-stamp>
 
+  <div class="tabs-header">
+    <button class="tab-btn" [class.active]="activeTab === 'locales'" (click)="setTab('locales')">
+      🏢 Locales
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'contratos'" (click)="setTab('contratos')">
+      📋 Contratos
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'presupuestos'" (click)="setTab('presupuestos')">
+      💰 Presupuestos
+    </button>
+  </div>
 
-  <section class="ficha-section">
-    <div class="section-header">
-      <h2>🏢 Locales y Suministros</h2>
-    </div>
-    <div class="table-wrap">
-      <table class="ficha-table">
-        <thead>
-          <tr>
-            <th>DIRECCIÓN</th>
-            <th>TITULAR REGISTRADO</th>
-            <th>CONTRATOS</th>
-            <th>ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let l of locales">
-            <td>{{ l.direccionCompleta || '—' }}</td>
-            <td>{{ l.nombreTitular }} {{ l.apellido1Titular }}{{ l.apellido2Titular ? ' ' + l.apellido2Titular : '' }}
-            </td>
-            <td>
-              <div *ngFor="let c of getContratosPorLocal(l.idLocal!)" class="mini-badge">
-                <a [routerLink]="['/contratos', c.idContrato]">#{{ c.idContrato }} ({{ c.tipoContrato }})</a>
-              </div>
-              <span *ngIf="getContratosPorLocal(l.idLocal!).length === 0" class="empty-text">Sin contratos</span>
-            </td>
-            <td>
-              <a [routerLink]="['/locales', l.idLocal]" class="badge-ver" title="Ver detalle">👁️ Ver Detalle</a>
-            </td>
-          </tr>
-          <tr *ngIf="locales.length === 0">
-            <td colspan="4" class="empty-cell">No hay locales registrados para este titular.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <div *ngIf="activeTab === 'locales'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <h2>🏢 Locales y Suministros</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="ficha-table">
+          <thead>
+            <tr>
+              <th>DIRECCIÓN</th>
+              <th>TITULAR REGISTRADO</th>
+              <th>CONTRATOS</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let l of locales">
+              <td>{{ l.direccionCompleta || '—' }}</td>
+              <td>{{ l.nombreTitular }} {{ l.apellido1Titular }}{{ l.apellido2Titular ? ' ' + l.apellido2Titular : '' }}
+              </td>
+              <td>
+                <div *ngFor="let c of getContratosPorLocal(l.idLocal!)" class="mini-badge">
+                  <a [routerLink]="['/contratos', c.idContrato]">#{{ c.idContrato }} ({{ c.tipoContrato }})</a>
+                </div>
+                <span *ngIf="getContratosPorLocal(l.idLocal!).length === 0" class="empty-text">Sin contratos</span>
+              </td>
+              <td>
+                <a [routerLink]="['/locales', l.idLocal]" class="badge-ver" title="Ver detalle">👁️ Ver Detalle</a>
+              </td>
+            </tr>
+            <tr *ngIf="locales.length === 0">
+              <td colspan="4" class="empty-cell">No hay locales registrados para este titular.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 
-  <section class="ficha-section">
-    <div class="section-header">
-      <h2>📋 Historial de Contratos</h2>
-    </div>
-    <div class="table-wrap">
-      <table class="ficha-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>TIPO</th>
-            <th>DIRECCIÓN DEL LOCAL</th>
-            <th>TITULAR</th>
-            <th>VENCIMIENTO</th>
-            <th>ESTADO</th>
-            <th>GESTIÓN</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let c of contratos">
-            <td><strong>#{{ c.idContrato }}</strong></td>
-            <td>{{ c.tipoContrato || '—' }}</td>
-            <td>
-              <a *ngIf="c.idLocal" [routerLink]="['/locales', c.idLocal]" class="direct-link">
-                {{ direccionLocalContrato(c) }}
-              </a>
-              <span *ngIf="!c.idLocal" class="error-text">⚠️ Sin local vinculado</span>
-            </td>
-            <td>{{ titularContrato(c) }}</td>
-            <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">
-                {{ vigente(c) ? 'Vigente' : 'Vencido' }}
-              </span>
-            </td>
-            <td>
-              <a [routerLink]="['/contratos', c.idContrato]" class="badge-ver" title="Ver gestion del contrato">👁️
-                Ver</a>
-            </td>
-          </tr>
-          <tr *ngIf="contratos.length === 0">
-            <td colspan="7" class="empty-cell">No se han encontrado contratos para este cliente.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <div *ngIf="activeTab === 'contratos'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <h2>📋 Historial de Contratos</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="ficha-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>TIPO</th>
+              <th>DIRECCIÓN DEL LOCAL</th>
+              <th>TITULAR</th>
+              <th>VENCIMIENTO</th>
+              <th>ESTADO</th>
+              <th>GESTIÓN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of contratos">
+              <td><strong>#{{ c.idContrato }}</strong></td>
+              <td>{{ c.tipoContrato || '—' }}</td>
+              <td>
+                <a *ngIf="c.idLocal" [routerLink]="['/locales', c.idLocal]" class="direct-link">
+                  {{ direccionLocalContrato(c) }}
+                </a>
+                <span *ngIf="!c.idLocal" class="error-text">⚠️ Sin local vinculado</span>
+              </td>
+              <td>{{ titularContrato(c) }}</td>
+              <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">
+                  {{ vigente(c) ? 'Vigente' : 'Vencido' }}
+                </span>
+              </td>
+              <td>
+                <a [routerLink]="['/contratos', c.idContrato]" class="badge-ver" title="Ver gestion del contrato">👁️
+                  Ver</a>
+              </td>
+            </tr>
+            <tr *ngIf="contratos.length === 0">
+              <td colspan="7" class="empty-cell">No se han encontrado contratos para este cliente.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 
-  <section class="ficha-section">
-    <div class="section-header">
-      <h2>💰 Presupuestos del Cliente</h2>
-    </div>
-    <div class="table-wrap">
-      <table class="ficha-table">
-        <thead>
-          <tr>
-            <th>ID / REF</th>
-            <th>FECHA</th>
-            <th>ESTADO</th>
-            <th>TIPO</th>
-            <th>TOTAL</th>
-            <th>GESTIÓN</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of presupuestos">
-            <td>
-              <strong>#{{ p.idPresupuesto }}</strong>
-              <div *ngIf="p.codigoReferencia" class="sub-text">{{ p.codigoReferencia }}</div>
-            </td>
-            <td>{{ p.fecha | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <span class="badge" [class.badge-ok]="p.estado === 'Aceptado'"
-                [class.badge-pend]="p.estado === 'Pendiente'" [class.badge-warn]="p.estado === 'Borrador'">
-                {{ p.estado || 'Enviado' }}
-              </span>
-            </td>
-            <td>{{ p.tipoPresupuesto || '—' }}</td>
-            <td><strong>{{ p.total | number:'1.2-2' }} €</strong></td>
-            <td>
-              <a [routerLink]="['/presupuestos', p.idPresupuesto]" class="badge-ver"
-                title="Ver detalle del presupuesto">👁️ Ver</a>
-            </td>
-          </tr>
-          <tr *ngIf="presupuestos.length === 0">
-            <td colspan="6" class="empty-cell">No se han encontrado presupuestos para este cliente.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <div *ngIf="activeTab === 'presupuestos'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <h2>💰 Presupuestos del Cliente</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="ficha-table">
+          <thead>
+            <tr>
+              <th>ID / REF</th>
+              <th>FECHA</th>
+              <th>ESTADO</th>
+              <th>TIPO</th>
+              <th>TOTAL</th>
+              <th>GESTIÓN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of presupuestos">
+              <td>
+                <strong>#{{ p.idPresupuesto }}</strong>
+                <div *ngIf="p.codigoReferencia" class="sub-text">{{ p.codigoReferencia }}</div>
+              </td>
+              <td>{{ p.fecha | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge" [class.badge-ok]="p.estado === 'Aceptado'"
+                  [class.badge-pend]="p.estado === 'Pendiente'" [class.badge-warn]="p.estado === 'Borrador'">
+                  {{ p.estado || 'Enviado' }}
+                </span>
+              </td>
+              <td>{{ p.tipoPresupuesto || '—' }}</td>
+              <td><strong>{{ p.total | number:'1.2-2' }} €</strong></td>
+              <td>
+                <a [routerLink]="['/presupuestos', p.idPresupuesto]" class="badge-ver"
+                  title="Ver detalle del presupuesto">👁️ Ver</a>
+              </td>
+            </tr>
+            <tr *ngIf="presupuestos.length === 0">
+              <td colspan="6" class="empty-cell">No se han encontrado presupuestos para este cliente.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </div>
 
 <div *ngIf="!loading && !cliente" class="ficha-missing">

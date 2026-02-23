@@ -20,6 +20,7 @@ export class ClienteFichaViewComponent implements OnInit {
   presupuestos: PresupuestoListItem[] = [];
   loading = true;
   idCliente: number | null = null;
+  activeTab: 'locales' | 'contratos' | 'presupuestos' = 'locales';
 
   constructor(
     private route: ActivatedRoute,
@@ -103,5 +104,9 @@ export class ClienteFichaViewComponent implements OnInit {
 
   getContratosPorLocal(idLocal: number): Contrato[] {
     return this.contratos.filter(c => (c.idLocal ?? (c as any).local?.idLocal) === idLocal);
+  }
+
+  setTab(tab: 'locales' | 'contratos' | 'presupuestos'): void {
+    this.activeTab = tab;
   }
 }
