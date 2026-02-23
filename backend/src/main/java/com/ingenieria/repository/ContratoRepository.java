@@ -7,6 +7,5 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.List;
 
 public interface ContratoRepository extends JpaRepository<Contrato, Long> {
-    @EntityGraph(attributePaths = { "cliente", "local" })
     List<Contrato> findAll();
 }

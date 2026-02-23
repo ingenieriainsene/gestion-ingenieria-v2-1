@@ -7,6 +7,5 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.List;
 
 public interface LocalRepository extends JpaRepository<Local, Long> {
-    @EntityGraph(attributePaths = { "cliente" })
     List<Local> findAll();
 }

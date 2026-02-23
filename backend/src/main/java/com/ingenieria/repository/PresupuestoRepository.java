@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> {
-       @EntityGraph(attributePaths = { "cliente", "vivienda", "tramite" })
        List<Presupuesto> findAll();
 
        @Query("SELECT p FROM Presupuesto p " +

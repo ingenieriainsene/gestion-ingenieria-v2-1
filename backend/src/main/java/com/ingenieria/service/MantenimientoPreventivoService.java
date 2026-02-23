@@ -209,7 +209,7 @@ public class MantenimientoPreventivoService {
 
     @Transactional(readOnly = true)
     public ContratoMantenimientoDTO getContractByBudget(Long budgetId) {
-        return contratoRepo.findByPresupuestoPreventivoWithTareas(budgetId)
+        return contratoRepo.findByPresupuestoPreventivo_IdPresupuestoPrev(budgetId)
                 .map(this::toContractDto)
                 .orElse(null);
     }
@@ -217,7 +217,7 @@ public class MantenimientoPreventivoService {
     @Transactional
     public GenerarAvisosResponse generateNoticesForContract(Long contractId, LocalDate hasta,
             GenerarAvisosRequest req) {
-        ContratoMantenimiento contrato = contratoRepo.findByIdWithTareas(contractId)
+        ContratoMantenimiento contrato = contratoRepo.findById(contractId)
                 .orElseThrow(() -> new IllegalArgumentException("Contrato de mantenimiento no encontrado"));
         LocalDate inicio = contrato.getFechaInicio() != null ? contrato.getFechaInicio() : LocalDate.now();
         LocalDate fin = (hasta != null) ? hasta : inicio.plusMonths(12);
@@ -301,7 +301,7 @@ public class MantenimientoPreventivoService {
 
     @Transactional(readOnly = true)
     public ContratoMantenimientoDTO getContractById(Long id) {
-        ContratoMantenimiento c = contratoRepo.findByIdWithTareas(id)
+        ContratoMantenimiento c = contratoRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Contrato de mantenimiento no encontrado"));
         return toContractDto(c);
     }
