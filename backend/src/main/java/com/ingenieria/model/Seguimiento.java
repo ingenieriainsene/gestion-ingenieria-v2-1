@@ -1,6 +1,7 @@
 package com.ingenieria.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -17,7 +18,7 @@ public class Seguimiento {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tramite", nullable = false)
-    @JsonIgnore
+    @JsonIgnoreProperties({ "seguimientos", "contrato" })
     private Tramite tramite;
 
     /** Técnico asignado. No serializar (LAZY); usar DTO. */

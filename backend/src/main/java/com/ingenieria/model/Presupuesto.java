@@ -20,12 +20,12 @@ public class Presupuesto {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", nullable = false)
-    @JsonIgnoreProperties("locales") // Cliente doesn't have presupuestos list yet, but locales can loop
+    @JsonIgnoreProperties({ "locales", "presupuestos", "seguimientos" })
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vivienda_id", nullable = false)
-    @JsonIgnoreProperties({ "areas", "areasFuncionales" })
+    @JsonIgnoreProperties({ "areas", "areasFuncionales", "cliente" })
     private Local vivienda;
 
     @Column(name = "codigo_referencia", nullable = false, length = 50)

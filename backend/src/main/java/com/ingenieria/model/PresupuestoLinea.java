@@ -5,8 +5,8 @@ import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -29,7 +29,7 @@ public class PresupuestoLinea {
 
     @OneToMany(mappedBy = "padre", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("linea-hijos")
-    private List<PresupuestoLinea> hijos = new ArrayList<>();
+    private Set<PresupuestoLinea> hijos = new HashSet<>();
 
     private Integer orden;
 

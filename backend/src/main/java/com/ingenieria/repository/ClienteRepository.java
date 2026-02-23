@@ -2,7 +2,6 @@ package com.ingenieria.repository;
 
 import com.ingenieria.model.Cliente;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.List;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {

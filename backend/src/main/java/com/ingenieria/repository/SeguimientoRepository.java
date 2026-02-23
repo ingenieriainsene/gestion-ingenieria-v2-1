@@ -13,5 +13,6 @@ public interface SeguimientoRepository extends JpaRepository<Seguimiento, Long> 
 
     List<Seguimiento> findByEstadoIgnoreCaseOrderByFechaRegistroDesc(String estado);
 
-    boolean existsByTramite_IdTramiteAndComentarioAndFechaSeguimiento(Long idTramite, String comentario, java.time.LocalDate fechaSeguimiento);
+    boolean existsByTramite_IdTramiteAndComentarioAndFechaSeguimiento(Long idTramite, String comentario,
+            java.time.LocalDate fechaSeguimiento);
 }

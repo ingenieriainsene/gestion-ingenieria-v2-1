@@ -3,7 +3,6 @@ package com.ingenieria.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.BatchSize;
 import java.time.LocalDateTime;
 import java.util.HashSet;
