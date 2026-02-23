@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "TRAMITES_CONTRATO")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Tramite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

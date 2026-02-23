@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "SEGUIMIENTO_TRAMITES")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Seguimiento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -3,6 +3,7 @@ package com.ingenieria.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 
 import lombok.Getter;
@@ -20,6 +21,7 @@ import lombok.AllArgsConstructor;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "AREA_FUNCIONAL_LINEAS")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class AreaFuncionalLinea {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +31,7 @@ public class AreaFuncionalLinea {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_area", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("area-lineas")
     private AreaFuncional areaFuncional;
 
     @Column(name = "producto_id")

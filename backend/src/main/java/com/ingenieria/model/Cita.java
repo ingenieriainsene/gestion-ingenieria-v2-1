@@ -2,7 +2,6 @@ package com.ingenieria.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
@@ -17,10 +16,11 @@ import lombok.AllArgsConstructor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "cliente", "vendedor" })
+@ToString(exclude = { "cliente", "usuario" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "CITAS")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Cita {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "PRESUPUESTOS_PREVENTIVOS")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class PresupuestoPreventivo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

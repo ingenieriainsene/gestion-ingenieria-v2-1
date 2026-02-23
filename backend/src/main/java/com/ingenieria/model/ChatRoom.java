@@ -1,6 +1,7 @@
 package com.ingenieria.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ChatRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

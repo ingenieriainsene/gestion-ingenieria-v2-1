@@ -1,6 +1,7 @@
 package com.ingenieria.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,7 @@ import lombok.AllArgsConstructor;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "ARCHIVOS_CLIENTE")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ArchivoCliente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +28,7 @@ public class ArchivoCliente {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_cliente", nullable = false)
+    @JsonIgnoreProperties("archivos")
     private Cliente cliente;
 
     @Column(name = "nombre_visible", nullable = false)

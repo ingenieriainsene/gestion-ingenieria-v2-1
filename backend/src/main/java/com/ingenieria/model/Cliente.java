@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "CLIENTES")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Cliente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
