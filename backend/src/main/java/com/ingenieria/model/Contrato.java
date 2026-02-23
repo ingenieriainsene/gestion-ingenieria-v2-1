@@ -18,16 +18,15 @@ public class Contrato {
     @Column(name = "id_contrato")
     private Long idContrato;
 
-    // EAGER para relaciones simples, BatchSize no aplica aquí pero
-    // JsonIgnoreProperties sí
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_cliente", nullable = false)
-    @JsonIgnoreProperties("locales")
+    @JsonIgnoreProperties({ "locales", "contratos", "presupuestos", "seguimientos" })
     private Cliente cliente;
 
     // EAGER para evitar problemas de LazyInitialization al serializar a JSON
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_local", nullable = false)
+    @JsonIgnoreProperties({ "areas", "areasFuncionales", "cliente" })
     private Local local;
 
     @Column(name = "fecha_inicio", nullable = false)

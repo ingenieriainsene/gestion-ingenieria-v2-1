@@ -23,7 +23,7 @@ public class Presupuesto {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", nullable = false)
-    @JsonIgnoreProperties({ "locales", "presupuestos", "seguimientos" })
+    @JsonIgnoreProperties({ "locales", "presupuestos", "seguimientos", "contratos" })
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.EAGER)
