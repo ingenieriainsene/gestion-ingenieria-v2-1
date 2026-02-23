@@ -38,6 +38,8 @@ export interface PresupuestoDTO {
   totalConIva?: number;
   estado?: string;
   tipoPresupuesto?: string;
+  fechaAceptacion?: string;
+  diasValidez?: number;
   tramiteId?: number;
   lineas: PresupuestoLineaDTO[];
   creadoPor?: string;

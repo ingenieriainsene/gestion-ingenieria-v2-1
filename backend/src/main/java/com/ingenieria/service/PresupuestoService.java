@@ -84,6 +84,8 @@ public class PresupuestoService {
         p.setFecha(dto.getFecha() != null ? dto.getFecha() : LocalDate.now());
         p.setEstado(dto.getEstado() != null ? dto.getEstado() : "Borrador");
         p.setTipoPresupuesto(normalizeTipo(dto.getTipoPresupuesto()));
+        p.setFechaAceptacion(dto.getFechaAceptacion());
+        p.setDiasValidez(dto.getDiasValidez());
 
         if (dto.getTramiteId() != null) {
             Tramite tramite = tramiteRepository.findById(dto.getTramiteId())
@@ -136,6 +138,9 @@ public class PresupuestoService {
             p.setTipoPresupuesto("Obra");
         }
 
+        p.setFechaAceptacion(dto.getFechaAceptacion());
+        p.setDiasValidez(dto.getDiasValidez());
+
         // Preserve or update tramiteId
         if (dto.getTramiteId() != null) {
             Tramite tramite = tramiteRepository.findById(dto.getTramiteId())
@@ -176,6 +181,8 @@ public class PresupuestoService {
         dto.setFecha(p.getFecha());
         dto.setEstado(p.getEstado());
         dto.setTipoPresupuesto(normalizeTipo(p.getTipoPresupuesto()));
+        dto.setFechaAceptacion(p.getFechaAceptacion());
+        dto.setDiasValidez(p.getDiasValidez());
         dto.setTramiteId(p.getTramite() != null ? p.getTramite().getIdTramite() : null);
         dto.setTotal(p.getTotal());
         dto.setTotalSinIva(p.getTotalSinIva());

@@ -68,6 +68,14 @@ import Swal from 'sweetalert2';
           <h3>TOTAL con IVA</h3>
           <p>{{ totalConIva | number:'1.2-2' }} €</p>
         </div>
+        <div class="info-card" *ngIf="presupuesto.estado === 'Aceptado'">
+          <h3>Fecha Aceptación</h3>
+          <p>{{ presupuesto.fechaAceptacion ? (presupuesto.fechaAceptacion | date:'dd/MM/yyyy') : 'Pendiente' }}</p>
+        </div>
+        <div class="info-card" *ngIf="presupuesto.estado === 'Aceptado'">
+          <h3>Validez</h3>
+          <p>{{ presupuesto.diasValidez ? (presupuesto.diasValidez + ' días') : 'No def.' }}</p>
+        </div>
       </div>
 
       <div class="info-card-grid" *ngIf="presupuesto.estado === 'Aceptado'">

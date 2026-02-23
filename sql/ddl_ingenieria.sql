@@ -263,6 +263,8 @@ CREATE TABLE IF NOT EXISTS presupuestos (
     estado VARCHAR(30) DEFAULT 'Borrador',
     tipo_presupuesto VARCHAR(20) DEFAULT 'Obra',
     id_tramite BIGINT NULL,
+    fecha_aceptacion DATE NULL,
+    dias_validez INT NULL,
     CONSTRAINT fk_presupuesto_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
     CONSTRAINT fk_presupuesto_vivienda FOREIGN KEY (vivienda_id) REFERENCES locales(id_local) ON DELETE RESTRICT,
     CONSTRAINT fk_presupuesto_tramite FOREIGN KEY (id_tramite) REFERENCES tramites_contrato(id_tramite) ON DELETE SET NULL
@@ -273,6 +275,12 @@ ALTER TABLE presupuestos
 
 ALTER TABLE presupuestos
     ADD COLUMN IF NOT EXISTS id_tramite BIGINT NULL;
+
+ALTER TABLE presupuestos
+    ADD COLUMN IF NOT EXISTS fecha_aceptacion DATE NULL;
+
+ALTER TABLE presupuestos
+    ADD COLUMN IF NOT EXISTS dias_validez INT NULL;
 
 ALTER TABLE presupuestos
     DROP CONSTRAINT IF EXISTS fk_presupuesto_tramite;

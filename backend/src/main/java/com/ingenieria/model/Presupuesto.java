@@ -65,6 +65,12 @@ public class Presupuesto {
     @Column(name = "tipo_presupuesto", length = 255)
     private String tipoPresupuesto;
 
+    @Column(name = "fecha_aceptacion")
+    private LocalDate fechaAceptacion;
+
+    @Column(name = "dias_validez")
+    private Integer diasValidez;
+
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orden ASC")
     @JsonManagedReference("presupuesto-lineas")

@@ -106,6 +106,22 @@ import Swal from 'sweetalert2';
                  <input type="text" class="form-control" formControlName="codigoReferencia" placeholder="Automático si vacío" />
               </div>
             </div>
+
+            <div class="form-group" *ngIf="form.get('estado')?.value === 'Aceptado'">
+              <label class="form-label">Fecha Aceptación <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">✅</span>
+                <input type="date" class="form-control" formControlName="fechaAceptacion" />
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="form.get('estado')?.value === 'Aceptado'">
+              <label class="form-label">Validez (días) <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">⏳</span>
+                <input type="number" class="form-control" formControlName="diasValidez" placeholder="Ej: 20" />
+              </div>
+            </div>
           </div>
 
           <!-- Líneas del Presupuesto -->
@@ -444,6 +460,8 @@ export class PresupuestoFormComponent implements OnInit {
       fecha: [new Date().toISOString().slice(0, 10), Validators.required],
       estado: ['Borrador'],
       tipoPresupuesto: ['Obra'],
+      fechaAceptacion: [null],
+      diasValidez: [null],
       capitulos: this.fb.array([])
     });
   }
@@ -559,6 +577,19 @@ export class PresupuestoFormComponent implements OnInit {
         }));
       this.filtrarProductos();
     });
+
+    this.form.get('estado')?.valueChanges.subscribe((nuevoEstado) => {
+      if (nuevoEstado === 'Aceptado') {
+        const fechaActual = this.form.get('fechaAceptacion')?.value;
+        if (!fechaActual) {
+          this.form.patchValue({
+            fechaAceptacion: new Date().toISOString().slice(0, 10),
+            diasValidez: 20 // Default suggested validez
+          });
+        }
+      }
+    });
+
     this.capitulos.valueChanges.subscribe(() => this.recalcularTotales());
   }
 
@@ -849,6 +880,8 @@ export class PresupuestoFormComponent implements OnInit {
           fecha: p.fecha,
           estado: p.estado || 'Borrador',
           tipoPresupuesto: p.tipoPresupuesto || 'Obra',
+          fechaAceptacion: p.fechaAceptacion,
+          diasValidez: p.diasValidez
         });
         this.setClienteLabelById(p.clienteId);
         this.setViviendaLabelById(p.viviendaId);
@@ -1012,6 +1045,8 @@ export class PresupuestoFormComponent implements OnInit {
       fecha: raw.fecha,
       estado: raw.estado,
       tipoPresupuesto: raw.tipoPresupuesto,
+      fechaAceptacion: raw.fechaAceptacion,
+      diasValidez: raw.diasValidez,
       tramiteId: this.tramiteId ?? undefined,
       total: this.totalConIva,
       totalSinIva: this.totalSinIva,
