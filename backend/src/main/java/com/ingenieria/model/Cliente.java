@@ -3,6 +3,7 @@ package com.ingenieria.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hibernate.annotations.BatchSize;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,6 +52,7 @@ public class Cliente {
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("cliente")
+    @BatchSize(size = 50)
     private Set<Local> locales = new HashSet<>();
 
     @PrePersist

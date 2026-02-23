@@ -31,5 +31,6 @@ public class AreaFuncional {
 
     @OneToMany(mappedBy = "areaFuncional", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<AreaFuncionalLinea> lineas = new HashSet<>();
 }

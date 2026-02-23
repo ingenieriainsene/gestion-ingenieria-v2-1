@@ -13,25 +13,20 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
        @EntityGraph(attributePaths = { "cliente", "vivienda", "tramite" })
        List<Presupuesto> findAll();
 
-       @Query("SELECT DISTINCT p FROM Presupuesto p " +
-                     "LEFT JOIN FETCH p.lineas l " +
-                     "LEFT JOIN FETCH l.padre " +
+       @Query("SELECT p FROM Presupuesto p " +
                      "LEFT JOIN FETCH p.cliente " +
                      "LEFT JOIN FETCH p.vivienda " +
                      "LEFT JOIN FETCH p.tramite")
        List<Presupuesto> findAllWithLineas();
 
-       @Query("SELECT DISTINCT p FROM Presupuesto p " +
-                     "LEFT JOIN FETCH p.lineas l " +
-                     "LEFT JOIN FETCH l.padre " +
+       @Query("SELECT p FROM Presupuesto p " +
                      "LEFT JOIN FETCH p.cliente " +
                      "LEFT JOIN FETCH p.vivienda " +
+                     "LEFT JOIN FETCH p.tramite " +
                      "WHERE p.idPresupuesto = :id")
        Optional<Presupuesto> findByIdWithLineas(@Param("id") Long id);
 
-       @Query("SELECT DISTINCT p FROM Presupuesto p " +
-                     "LEFT JOIN FETCH p.lineas l " +
-                     "LEFT JOIN FETCH l.padre " +
+       @Query("SELECT p FROM Presupuesto p " +
                      "LEFT JOIN FETCH p.cliente " +
                      "LEFT JOIN FETCH p.vivienda " +
                      "WHERE p.tramite.idTramite = :idTramite")

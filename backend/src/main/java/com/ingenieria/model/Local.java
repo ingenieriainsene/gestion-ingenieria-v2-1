@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hibernate.annotations.BatchSize;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ public class Local {
 
     @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("local-areas")
+    @BatchSize(size = 50)
     private Set<LocalArea> areas = new HashSet<>();
 
     @Column(name = "nombre_titular", nullable = false, length = 50)
@@ -74,7 +76,8 @@ public class Local {
     }
 
     @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)
-    @com.fasterxml.jackson.annotation.JsonManagedReference
+    @JsonManagedReference("local-areas-funcionales")
+    @BatchSize(size = 50)
     private Set<AreaFuncional> areasFuncionales = new HashSet<>();
 
     @PreUpdate

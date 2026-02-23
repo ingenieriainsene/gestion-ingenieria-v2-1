@@ -1,10 +1,13 @@
 package com.ingenieria.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hibernate.annotations.BatchSize;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -15,7 +18,8 @@ public class Contrato {
     @Column(name = "id_contrato")
     private Long idContrato;
 
-    // EAGER para evitar problemas de LazyInitialization al serializar a JSON
+    // EAGER para relaciones simples, BatchSize no aplica aquí pero
+    // JsonIgnoreProperties sí
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_cliente", nullable = false)
     @JsonIgnoreProperties("locales")
@@ -83,4 +87,9 @@ public class Contrato {
     protected void onUpdate() {
         fechaModificacion = LocalDateTime.now();
     }
+
+    @OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("contrato")
+    @BatchSize(size = 50)
+    private Set<Tramite> tramites = new HashSet<>();
 }

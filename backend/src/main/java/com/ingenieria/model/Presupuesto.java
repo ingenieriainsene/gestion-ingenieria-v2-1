@@ -50,6 +50,7 @@ public class Presupuesto {
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orden ASC")
     @JsonManagedReference("presupuesto-lineas")
+    @BatchSize(size = 50)
     private Set<PresupuestoLinea> lineas = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

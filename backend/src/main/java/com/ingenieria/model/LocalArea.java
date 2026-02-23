@@ -34,5 +34,6 @@ public class LocalArea {
 
     @OneToMany(mappedBy = "area", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("area-ubicaciones")
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<LocalUbicacion> ubicaciones = new HashSet<>();
 }

@@ -18,7 +18,6 @@ public class Tramite {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_contrato", nullable = false)
-    @JsonIgnoreProperties("tramites") // Correct if Contrato has a tramites list
     @JsonIgnore
     private Contrato contrato;
 
