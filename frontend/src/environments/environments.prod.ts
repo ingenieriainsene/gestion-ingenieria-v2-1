@@ -1,8 +1,15 @@
 export const environment = {
     production: true,
-    apiUrl: 'http://localhost:8082/api', // Backend en Docker
+
+    // URL de tu backend en Railway
+    apiUrl: 'https://gestion-ingenieria-v2-production.up.railway.app/api',
+
     supabase: {
-        url: 'http://127.0.0.1:54321',
-        key: 'sb_publishable_ACJWlz...'
+        // URL de tu proyecto de Supabase en la nube
+        url: 'https://ftgrjkmkqrzcpggpnnry.supabase.co',
+
+        // REEMPLAZA ESTO: Pon aquí tu "Clave anónima" larga que copiaste de Supabase.
+        // (Asegúrate de NO usar la clave local que tenías antes).
+        key: 'TU_CLAVE_ANONIMA_AQUI'
     }
 };

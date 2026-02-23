@@ -9,15 +9,14 @@ RUN npm install --legacy-peer-deps
 
 COPY . .
 
-# CORRECCIÓN 1: Usamos 'npx' y la sintaxis explícita con '=' para que no se confunda
+# Compilamos para producción
 RUN npx ng build --configuration=production
 
 # ETAPA 2: Servidor Web
 FROM nginx:alpine
 
-# CORRECCIÓN 2: Usamos el nombre real de tu proyecto (gestion-frontend) que vimos en los logs
-# NOTA: En Angular 17+ la ruta incluye '/browser'. Si falla, borra '/browser' de la ruta.
-COPY --from=build /app/dist/gestion-frontend/browser /usr/share/nginx/html/
+# Copiamos los archivos compilados a Nginx (Ruta corregida)
+COPY --from=build /app/dist/gestion-frontend /usr/share/nginx/html/
 
 EXPOSE 80
 
