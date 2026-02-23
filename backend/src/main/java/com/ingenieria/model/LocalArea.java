@@ -7,8 +7,8 @@ import lombok.AllArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -34,5 +34,5 @@ public class LocalArea {
 
     @OneToMany(mappedBy = "area", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("area-ubicaciones")
-    private List<LocalUbicacion> ubicaciones = new ArrayList<>();
+    private Set<LocalUbicacion> ubicaciones = new HashSet<>();
 }

@@ -181,7 +181,7 @@ public class PresupuestoService {
         dto.setTotalSinIva(p.getTotalSinIva());
         dto.setTotalConIva(p.getTotalConIva());
         if (p.getLineas() != null) {
-            dto.setLineas(buildTree(p.getLineas()));
+            dto.setLineas(buildTree(new java.util.ArrayList<>(p.getLineas())));
         }
         return dto;
     }
@@ -223,8 +223,9 @@ public class PresupuestoService {
             clienteNombre = clienteNombre.trim();
         }
         String viviendaDir = p.getVivienda() != null ? p.getVivienda().getDireccionCompleta() : null;
-        String tipoLinea = joinLineField(p.getLineas(), PresupuestoLinea::getConcepto);
-        String productoNombre = joinLineField(p.getLineas(), PresupuestoLinea::getProductoTexto);
+        String tipoLinea = joinLineField(new java.util.ArrayList<>(p.getLineas()), PresupuestoLinea::getConcepto);
+        String productoNombre = joinLineField(new java.util.ArrayList<>(p.getLineas()),
+                PresupuestoLinea::getProductoTexto);
         return new PresupuestoListResponse(
                 p.getIdPresupuesto(),
                 p.getCodigoReferencia(),
@@ -270,9 +271,9 @@ public class PresupuestoService {
     }
 
     private Totales applyLineas(Presupuesto p, List<PresupuestoLineaDTO> lineasDto) {
-        List<PresupuestoLinea> lineas = p.getLineas();
+        java.util.Set<PresupuestoLinea> lineas = p.getLineas();
         if (lineas == null) {
-            lineas = new ArrayList<>();
+            lineas = new java.util.HashSet<>();
             p.setLineas(lineas);
         } else {
             lineas.clear();
@@ -478,7 +479,7 @@ public class PresupuestoService {
         return round2(total);
     }
 
-    private List<PresupuestoLineaDTO> buildTree(List<PresupuestoLinea> lineas) {
+    private List<PresupuestoLineaDTO> buildTree(java.util.Collection<PresupuestoLinea> lineas) {
         Map<Long, PresupuestoLineaDTO> map = new HashMap<>();
         List<PresupuestoLineaDTO> roots = new ArrayList<>();
 
@@ -543,7 +544,8 @@ public class PresupuestoService {
         }
     }
 
-    private String joinLineField(List<PresupuestoLinea> lineas, Function<PresupuestoLinea, String> mapper) {
+    private String joinLineField(java.util.Collection<PresupuestoLinea> lineas,
+            Function<PresupuestoLinea, String> mapper) {
         if (lineas == null || lineas.isEmpty())
             return null;
         Set<String> values = new LinkedHashSet<>();

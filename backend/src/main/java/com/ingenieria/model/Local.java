@@ -3,10 +3,12 @@ package com.ingenieria.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -20,11 +22,12 @@ public class Local {
     // EAGER para evitar problemas de LazyInitialization al serializar a JSON
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_cliente", nullable = false)
+    @JsonIgnoreProperties("locales")
     private Cliente cliente;
 
     @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("local-areas")
-    private List<LocalArea> areas = new ArrayList<>();
+    private Set<LocalArea> areas = new HashSet<>();
 
     @Column(name = "nombre_titular", nullable = false, length = 50)
     private String nombreTitular;
@@ -72,7 +75,7 @@ public class Local {
 
     @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)
     @com.fasterxml.jackson.annotation.JsonManagedReference
-    private java.util.List<AreaFuncional> areasFuncionales = new java.util.ArrayList<>();
+    private Set<AreaFuncional> areasFuncionales = new HashSet<>();
 
     @PreUpdate
     protected void onUpdate() {

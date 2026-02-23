@@ -134,7 +134,7 @@ public class PdfService {
         addHeaderCell(table, "PVP UNIT.");
         addHeaderCell(table, "TOTAL");
 
-        List<PresupuestoLinea> lineas = p.getLineas();
+        java.util.List<PresupuestoLinea> lineas = new java.util.ArrayList<>(p.getLineas());
         List<PresupuestoLinea> roots = buildTree(lineas);
         for (PresupuestoLinea l : roots) {
             if ("CAPITULO".equals(l.getTipoJerarquia())) {
@@ -162,7 +162,7 @@ public class PdfService {
         BigDecimal totalIva = BigDecimal.ZERO;
         BigDecimal totalConIva = BigDecimal.ZERO;
 
-        List<PresupuestoLinea> lineas = p.getLineas();
+        java.util.Collection<PresupuestoLinea> lineas = p.getLineas();
         if (lineas != null) {
             for (PresupuestoLinea l : lineas) {
                 if ("CAPITULO".equals(l.getTipoJerarquia())) {

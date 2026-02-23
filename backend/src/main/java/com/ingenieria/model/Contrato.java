@@ -1,5 +1,6 @@
 package com.ingenieria.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ public class Contrato {
     // EAGER para evitar problemas de LazyInitialization al serializar a JSON
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_cliente", nullable = false)
+    @JsonIgnoreProperties("locales")
     private Cliente cliente;
 
     // EAGER para evitar problemas de LazyInitialization al serializar a JSON

@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -31,5 +31,5 @@ public class AreaFuncional {
 
     @OneToMany(mappedBy = "areaFuncional", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<AreaFuncionalLinea> lineas = new ArrayList<>();
+    private Set<AreaFuncionalLinea> lineas = new HashSet<>();
 }
