@@ -1,5 +1,6 @@
 package com.ingenieria.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class Cita {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", nullable = false)
+    @JsonIgnoreProperties({ "locales", "presupuestos", "contratos", "seguimientos", "archivos", "citas" })
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.EAGER)

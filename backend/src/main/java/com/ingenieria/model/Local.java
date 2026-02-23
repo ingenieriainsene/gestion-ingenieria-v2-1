@@ -23,7 +23,7 @@ public class Local {
     // EAGER para evitar problemas de LazyInitialization al serializar a JSON
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_cliente", nullable = false)
-    @JsonIgnoreProperties("locales")
+    @JsonIgnoreProperties({ "locales", "presupuestos", "contratos", "seguimientos", "archivos", "citas" })
     private Cliente cliente;
 
     @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)

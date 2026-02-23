@@ -55,6 +55,26 @@ public class Cliente {
     @BatchSize(size = 50)
     private Set<Local> locales = new HashSet<>();
 
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("cliente")
+    @BatchSize(size = 50)
+    private Set<Presupuesto> presupuestos = new HashSet<>();
+
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("cliente")
+    @BatchSize(size = 50)
+    private Set<Contrato> contratos = new HashSet<>();
+
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("cliente")
+    @BatchSize(size = 50)
+    private Set<ArchivoCliente> archivos = new HashSet<>();
+
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("cliente")
+    @BatchSize(size = 50)
+    private Set<Cita> citas = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         if (fechaAlta == null)

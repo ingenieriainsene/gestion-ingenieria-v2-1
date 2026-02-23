@@ -19,18 +19,22 @@ public class ContratoMantenimiento {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "presupuesto_prev_id", nullable = false)
+    @JsonIgnoreProperties("tareas")
     private PresupuestoPreventivo presupuestoPreventivo;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", nullable = false)
+    @JsonIgnoreProperties({ "locales", "presupuestos", "contratos", "seguimientos", "archivos" })
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vivienda_id", nullable = false)
+    @JsonIgnoreProperties({ "areas", "areasFuncionales", "cliente" })
     private Local vivienda;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "contrato_id")
+    @JsonIgnoreProperties("tramites")
     private Contrato contrato;
 
     @Column(name = "fecha_inicio", nullable = false)
@@ -47,5 +51,7 @@ public class ContratoMantenimiento {
 
     @OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orden ASC")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("contrato")
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<ContratoMantenimientoTarea> tareas = new ArrayList<>();
 }
