@@ -8,20 +8,32 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "chat_user_rooms", schema = "public")
-@Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "chat_user_rooms", schema = "public")
 public class ChatUserRoom {
 
     @EmbeddedId
+    @EqualsAndHashCode.Include
     private ChatUserRoomId id;
 
     @Column(name = "joined_at")
     private LocalDateTime joinedAt = LocalDateTime.now();
 
-    @Data
+    @Getter
+    @Setter
+    @ToString
+    @EqualsAndHashCode
     @NoArgsConstructor
     @AllArgsConstructor
     @Embeddable

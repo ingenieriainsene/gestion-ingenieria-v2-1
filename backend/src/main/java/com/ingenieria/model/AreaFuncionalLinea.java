@@ -5,13 +5,26 @@ import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.math.BigDecimal;
 
-@Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = "areaFuncional")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "AREA_FUNCIONAL_LINEAS")
 public class AreaFuncionalLinea {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_linea")
+    @EqualsAndHashCode.Include
     private Long idLinea;
 
     @ManyToOne(fetch = FetchType.LAZY)

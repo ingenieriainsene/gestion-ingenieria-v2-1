@@ -1,7 +1,6 @@
 package com.ingenieria.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.BatchSize;
@@ -11,13 +10,26 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = { "areas", "areasFuncionales", "cliente" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "LOCALES")
 public class Local {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_local")
+    @EqualsAndHashCode.Include
     private Long idLocal;
 
     // EAGER para evitar problemas de LazyInitialization al serializar a JSON

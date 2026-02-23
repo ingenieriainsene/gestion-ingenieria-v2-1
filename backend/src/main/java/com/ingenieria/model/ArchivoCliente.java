@@ -1,16 +1,27 @@
 package com.ingenieria.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = "cliente")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "ARCHIVOS_CLIENTE")
 public class ArchivoCliente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_archivo")
+    @EqualsAndHashCode.Include
     private Long idArchivo;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -36,6 +47,7 @@ public class ArchivoCliente {
 
     @PrePersist
     protected void onCreate() {
-        if (fechaSubida == null) fechaSubida = LocalDateTime.now();
+        if (fechaSubida == null)
+            fechaSubida = LocalDateTime.now();
     }
 }

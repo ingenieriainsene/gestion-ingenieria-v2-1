@@ -2,15 +2,26 @@ package com.ingenieria.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = "contrato")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "CONTRATOS_MANTENIMIENTO_TAREAS")
 public class ContratoMantenimientoTarea {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_tarea_contrato")
+    @EqualsAndHashCode.Include
     private Long idTareaContrato;
 
     @ManyToOne(fetch = FetchType.LAZY)

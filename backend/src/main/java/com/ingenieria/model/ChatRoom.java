@@ -2,17 +2,28 @@ package com.ingenieria.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "chat_rooms", schema = "public")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ChatRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @org.hibernate.annotations.UuidGenerator
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @Column(name = "name")

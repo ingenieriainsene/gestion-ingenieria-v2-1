@@ -1,16 +1,27 @@
 package com.ingenieria.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = "tramite")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "ARCHIVOS_TRAMITE")
 public class ArchivoTramite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_archivo_t")
+    @EqualsAndHashCode.Include
     private Long idArchivoT;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,6 +45,7 @@ public class ArchivoTramite {
 
     @PrePersist
     protected void onCreate() {
-        if (fechaSubida == null) fechaSubida = LocalDateTime.now();
+        if (fechaSubida == null)
+            fechaSubida = LocalDateTime.now();
     }
 }

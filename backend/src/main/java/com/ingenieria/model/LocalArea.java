@@ -10,9 +10,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = { "local", "ubicaciones" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "local_areas")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -20,6 +28,7 @@ public class LocalArea {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_area")
+    @EqualsAndHashCode.Include
     private Long idArea;
 
     @ManyToOne(fetch = FetchType.LAZY)

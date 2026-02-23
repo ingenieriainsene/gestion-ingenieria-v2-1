@@ -1,20 +1,31 @@
 package com.ingenieria.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = { "presupuestoPreventivo", "cliente", "vivienda", "contrato", "tareas" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "CONTRATOS_MANTENIMIENTO")
 public class ContratoMantenimiento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_contrato_mant")
+    @EqualsAndHashCode.Include
     private Long idContratoMant;
 
     @ManyToOne(fetch = FetchType.EAGER)
