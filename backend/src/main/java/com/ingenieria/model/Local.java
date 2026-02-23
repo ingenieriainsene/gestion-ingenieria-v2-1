@@ -2,8 +2,11 @@ package com.ingenieria.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -18,6 +21,10 @@ public class Local {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_cliente", nullable = false)
     private Cliente cliente;
+
+    @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("local-areas")
+    private List<LocalArea> areas = new ArrayList<>();
 
     @Column(name = "nombre_titular", nullable = false, length = 50)
     private String nombreTitular;

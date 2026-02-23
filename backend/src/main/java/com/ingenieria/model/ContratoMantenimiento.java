@@ -36,7 +36,7 @@ public class ContratoMantenimiento {
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDate fechaInicio;
 
-    @Column(length = 30)
+    @Column(length = 255)
     private String estado;
 
     @Column(name = "creado_por", length = 100)

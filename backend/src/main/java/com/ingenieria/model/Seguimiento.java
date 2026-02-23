@@ -50,6 +50,7 @@ public class Seguimiento {
     @Column(name = "es_urgente")
     private Boolean esUrgente;
 
+    @Column(length = 255)
     private String estado;
 
     @PrePersist

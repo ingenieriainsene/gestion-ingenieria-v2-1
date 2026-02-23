@@ -18,6 +18,6 @@ public class ProveedorOficio {
     @JsonIgnore
     private Proveedor proveedor;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String oficio;
 }

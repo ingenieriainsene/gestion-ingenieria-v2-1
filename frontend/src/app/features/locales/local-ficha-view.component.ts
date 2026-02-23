@@ -1,16 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { LocalService, ContratoService } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import type { Local, Contrato, Cliente } from '../../services/domain.services';
+import Swal from 'sweetalert2';
 
 import { AreaFuncionalEditorComponent } from './area-funcional-editor.component';
 
 @Component({
   selector: 'app-local-ficha-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, AuditStampComponent, AreaFuncionalEditorComponent],
+  imports: [CommonModule, RouterLink, AuditStampComponent, AreaFuncionalEditorComponent, FormsModule],
   templateUrl: './local-ficha-view.component.html',
   styleUrls: ['./local-ficha-view.component.css'],
 })
@@ -20,6 +22,7 @@ export class LocalFichaViewComponent implements OnInit {
   loading = true;
   idLocal: number | null = null;
   areasFuncionalesVisible = false;
+
 
   constructor(
     private route: ActivatedRoute,
@@ -101,4 +104,5 @@ export class LocalFichaViewComponent implements OnInit {
   toggleAreasFuncionales(): void {
     this.areasFuncionalesVisible = !this.areasFuncionalesVisible;
   }
+
 }

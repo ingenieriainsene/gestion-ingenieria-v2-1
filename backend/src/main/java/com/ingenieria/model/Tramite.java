@@ -20,13 +20,13 @@ public class Tramite {
     @JsonIgnore
     private Contrato contrato;
 
-    @Column(name = "tipo_tramite", nullable = false)
+    @Column(name = "tipo_tramite", nullable = false, length = 255)
     private String tipoTramite;
 
-    @Column(name = "estado", length = 50)
+    @Column(name = "estado", length = 255)
     private String estado;
 
-    @Column(name = "tecnico_asignado")
+    @Column(name = "tecnico_asignado", length = 255)
     private String tecnicoAsignado; // Legacy field, might be replaced by relations but kept for DDL compliance
 
     @Column(name = "fecha_seguimiento")

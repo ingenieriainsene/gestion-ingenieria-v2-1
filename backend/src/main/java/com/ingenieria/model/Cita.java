@@ -25,7 +25,7 @@ public class Cita {
     @Column(length = 150, nullable = false)
     private String titulo;
 
-    @Column(length = 30)
+    @Column(length = 255)
     private String estado;
 
     @Column(name = "enlace_remoto", columnDefinition = "TEXT")

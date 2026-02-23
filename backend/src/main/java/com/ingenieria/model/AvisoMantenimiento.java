@@ -11,10 +11,8 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(
-        name = "AVISOS_MANTENIMIENTO",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"contrato_mant_id", "fecha_programada"})
-)
+@Table(name = "AVISOS_MANTENIMIENTO", uniqueConstraints = @UniqueConstraint(columnNames = { "contrato_mant_id",
+        "fecha_programada" }))
 public class AvisoMantenimiento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +27,7 @@ public class AvisoMantenimiento {
     @Column(name = "fecha_programada", nullable = false)
     private LocalDate fechaProgramada;
 
-    @Column(length = 30)
+    @Column(length = 255)
     private String estado;
 
     @Column(name = "fecha_creacion", insertable = false, updatable = false)

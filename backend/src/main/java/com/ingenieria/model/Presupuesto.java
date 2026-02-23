@@ -41,10 +41,10 @@ public class Presupuesto {
     @Column(name = "total_con_iva", precision = 12, scale = 2)
     private BigDecimal totalConIva;
 
-    @Column(length = 30)
+    @Column(length = 255)
     private String estado;
 
-    @Column(name = "tipo_presupuesto", length = 20)
+    @Column(name = "tipo_presupuesto", length = 255)
     private String tipoPresupuesto;
 
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL, orphanRemoval = true)

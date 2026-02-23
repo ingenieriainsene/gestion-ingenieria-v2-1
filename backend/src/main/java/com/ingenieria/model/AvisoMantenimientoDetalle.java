@@ -23,7 +23,7 @@ public class AvisoMantenimientoDetalle {
     @JsonIgnore
     private ContratoMantenimientoTarea tarea;
 
-    @Column(length = 30)
+    @Column(length = 255)
     private String estado;
 
     @Column(columnDefinition = "TEXT")

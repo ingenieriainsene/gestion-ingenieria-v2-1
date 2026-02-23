@@ -18,6 +18,20 @@ export interface Cliente {
     fechaModificacion?: string;
 }
 
+export interface LocalUbicacion {
+    idUbicacion?: number;
+    nombre: string;
+    descripcion?: string;
+    orden?: number;
+}
+
+export interface LocalArea {
+    idArea?: number;
+    nombre: string;
+    orden?: number;
+    ubicaciones?: LocalUbicacion[];
+}
+
 export interface Local {
     idLocal?: number;
     idCliente?: number;
@@ -36,6 +50,7 @@ export interface Local {
     fechaModificacion?: string;
     /** Cuando el backend devuelve el local con cliente anidado (GET por id). */
     cliente?: Cliente;
+    areas?: LocalArea[];
 }
 
 export interface Contrato {
@@ -381,4 +396,25 @@ export class CitaService {
     create(data: Cita): Observable<Cita> { return this.api.post<Cita>(this.endpoint, data); }
     update(id: number, data: Cita): Observable<Cita> { return this.api.put<Cita>(`${this.endpoint}/${id}`, data); }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
+}
+@Injectable({ providedIn: 'root' })
+export class LocalAreaService {
+    private endpoint = 'local-areas';
+    constructor(private api: ApiService) { }
+
+    addArea(localId: number, area: LocalArea): Observable<LocalArea> {
+        return this.api.post<LocalArea>(`${this.endpoint}/${localId}`, area);
+    }
+
+    deleteArea(id: number): Observable<void> {
+        return this.api.delete<void>(`${this.endpoint}/${id}`);
+    }
+
+    addUbicacion(areaId: number, ubi: LocalUbicacion): Observable<LocalUbicacion> {
+        return this.api.post<LocalUbicacion>(`${this.endpoint}/${areaId}/ubicaciones`, ubi);
+    }
+
+    deleteUbicacion(id: number): Observable<void> {
+        return this.api.delete<void>(`${this.endpoint}/ubicaciones/${id}`);
+    }
 }
