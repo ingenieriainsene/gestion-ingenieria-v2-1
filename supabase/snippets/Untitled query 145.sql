@@ -1157,3 +1157,8 @@ CREATE TABLE IF NOT EXISTS local_ubicaciones (
 -- Asegurar que aparezcan en Realtime
 ALTER TABLE public.local_areas REPLICA IDENTITY FULL;
 ALTER TABLE public.local_ubicaciones REPLICA IDENTITY FULL;
+
+--------------------------------------------------------------------------------------------------------------------------------------
+-- FIX PARA SUPABASE: Actualizar tipo de columna fecha_aceptacion de DATE a TIMESTAMPTZ para coincidir con backend Java (OffsetDateTime)
+--------------------------------------------------------------------------------------------------------------------------------------
+ALTER TABLE presupuestos ALTER COLUMN fecha_aceptacion TYPE TIMESTAMPTZ USING fecha_aceptacion::TIMESTAMPTZ;
