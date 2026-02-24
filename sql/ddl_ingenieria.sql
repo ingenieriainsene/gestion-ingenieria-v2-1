@@ -1173,3 +1173,15 @@ ALTER TABLE productos ADD COLUMN IF NOT EXISTS margen NUMERIC(5, 2) DEFAULT 0;
 ALTER TABLE productos ADD COLUMN IF NOT EXISTS iva NUMERIC(5, 2) DEFAULT 21;
 ALTER TABLE productos ADD COLUMN IF NOT EXISTS precio_venta NUMERIC(12, 2) DEFAULT 0;
 
+-- -------------------------------------------------------------------------
+-- FIX PARA SEGUIMIENTO: Añadir es_urgente e id_proveedor si no existen
+-- -------------------------------------------------------------------------
+ALTER TABLE SEGUIMIENTO_TRAMITES ADD COLUMN IF NOT EXISTS es_urgente BOOLEAN DEFAULT FALSE;
+ALTER TABLE SEGUIMIENTO_TRAMITES ADD COLUMN IF NOT EXISTS id_proveedor BIGINT;
+ALTER TABLE SEGUIMIENTO_TRAMITES ADD COLUMN IF NOT EXISTS id_creador BIGINT; -- Añadido por si acaso
+
+-- -------------------------------------------------------------------------
+-- FIX PARA TRAMITES: Asegurar que es_urgente existe
+-- -------------------------------------------------------------------------
+ALTER TABLE TRAMITES_CONTRATO ADD COLUMN IF NOT EXISTS es_urgente BOOLEAN DEFAULT FALSE;
+
