@@ -57,6 +57,7 @@ export interface PresupuestoListItem {
   tipoPresupuesto?: string;
   fechaAceptacion?: string;
   diasValidez?: number;
+  tramiteId?: number;
   clienteId: number;
   clienteNombre: string;
   viviendaId: number;

@@ -26,6 +26,7 @@ public class PresupuestoListResponse {
     private String clienteNombre;
     private Long viviendaId;
     private String viviendaDireccion;
+    private Long tramiteId;
     private String tipoLinea;
     private String productoNombre;
 }

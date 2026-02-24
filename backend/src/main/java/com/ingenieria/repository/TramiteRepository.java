@@ -12,7 +12,7 @@ public interface TramiteRepository extends JpaRepository<Tramite, Long> {
     List<Tramite> findByContrato_IdContrato(Long idContrato);
 
     @EntityGraph(attributePaths = { "contrato", "contrato.cliente", "contrato.local" })
-    List<Tramite> findByEstado(String estado);
+    List<Tramite> findByEstadoOrderByFechaCreacionDesc(String estado);
 
     @EntityGraph(attributePaths = { "contrato", "contrato.cliente", "contrato.local" })
     List<Tramite> findByContrato_IdContratoAndEstadoOrderByFechaCreacionDesc(Long idContrato, String estado);

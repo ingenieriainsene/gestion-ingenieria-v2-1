@@ -352,7 +352,8 @@ export class SidebarComponent implements OnInit {
       items: [
         { label: 'Clientes', route: '/clientes' },
         { label: 'Presupuestos', route: '/presupuestos' },
-        { label: 'Contratos', route: '/contratos' }
+        { label: 'Contratos', route: '/contratos' },
+        { label: 'Locales', route: '/locales' }
       ]
     },
     {
@@ -364,8 +365,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Intervenciones', route: '/intervenciones' },
         { label: 'Agendar citas', route: '/agendar-citas' },
         { label: 'Almacen', route: '/productos' },
-        { label: 'Proveedores', route: '/proveedores' },
-        { label: 'Locales', route: '/locales' }
+        { label: 'Proveedores', route: '/proveedores' }
       ]
     },
     {

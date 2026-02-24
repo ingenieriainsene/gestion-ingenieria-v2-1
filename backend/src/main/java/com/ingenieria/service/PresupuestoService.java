@@ -346,6 +346,7 @@ public class PresupuestoService {
                 clienteNombre,
                 p.getVivienda() != null ? p.getVivienda().getIdLocal() : null,
                 viviendaDir,
+                p.getTramite() != null ? p.getTramite().getIdTramite() : null,
                 tipoLinea,
                 productoNombre);
     }

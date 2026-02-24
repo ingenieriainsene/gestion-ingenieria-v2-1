@@ -82,12 +82,12 @@ public class TramiteService {
 
     @Transactional(readOnly = true)
     public List<Tramite> findVentasPendientes() {
-        return tramiteRepository.findByEstado("Pendiente");
+        return tramiteRepository.findByEstadoOrderByFechaCreacionDesc("Pendiente");
     }
 
     @Transactional(readOnly = true)
     public List<TramiteVentaResponse> findVentasPendientesResponse() {
-        return tramiteRepository.findByEstado("Pendiente").stream()
+        return tramiteRepository.findByEstadoOrderByFechaCreacionDesc("Pendiente").stream()
                 .map(t -> new TramiteVentaResponse(
                         t.getIdTramite(),
                         t.getContrato() != null ? t.getContrato().getIdContrato() : null,
@@ -148,7 +148,8 @@ public class TramiteService {
         System.out.println("DEBUG: findAllList found " + all.size() + " tramites.");
 
         return all.stream()
-                .sorted(Comparator.comparing(Tramite::getFechaSeguimiento,
+                .sorted(Comparator.comparing(
+                        Tramite::getFechaCreacion,
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(t -> {
                     Contrato c = t.getContrato();
@@ -226,8 +227,11 @@ public class TramiteService {
     public Tramite updateBasicFields(Long id, Tramite body) {
         Tramite t = tramiteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + id));
-        if (body.getEstado() != null)
-            t.setEstado(body.getEstado());
+        if (body.getEstado() != null && !body.getEstado().trim().isEmpty()) {
+            t.setEstado(body.getEstado().trim());
+        } else if (t.getEstado() == null || t.getEstado().trim().isEmpty()) {
+            t.setEstado("Pendiente");
+        }
         if (body.getEsUrgente() != null)
             t.setEsUrgente(body.getEsUrgente());
         if (body.getDetalleSeguimiento() != null)

@@ -64,6 +64,9 @@ public class Tramite {
     protected void onCreate() {
         if (fechaCreacion == null)
             fechaCreacion = LocalDateTime.now();
+        if (estado == null || estado.trim().isEmpty()) {
+            estado = "Pendiente";
+        }
     }
 
     // El concepto de "Venta Pendiente" se gestiona ahora a través del estado:

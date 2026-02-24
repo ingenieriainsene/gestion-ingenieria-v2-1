@@ -32,8 +32,15 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
           <div class="form-grid">
             <!-- Cliente -->
             <div class="form-group">
-              <label class="form-label">Cliente <span class="required">*</span></label>
-              <div class="select-wrapper">
+              <div class="label-with-action">
+                <label class="form-label">Cliente <span class="required">*</span></label>
+                <button type="button" class="btn-link-action" (click)="toggleNuevoCliente()" *ngIf="!idContrato">
+                  {{ showNuevoCliente ? 'Cancelar Nuevo' : '+ Nuevo Cliente' }}
+                </button>
+              </div>
+              
+              <!-- Selector existente -->
+              <div class="select-wrapper" *ngIf="!showNuevoCliente">
                 <app-autocomplete
                     formControlName="idCliente"
                     [data]="clientes"
@@ -44,13 +51,33 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
                     (ngModelChange)="onClienteChange()"
                 ></app-autocomplete>
               </div>
+
+              <!-- Formulario Rápido Cliente Nuevo -->
+              <div class="inline-create-box" *ngIf="showNuevoCliente" [formGroup]="formNuevoCliente">
+                 <div class="inline-grid">
+                    <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre *" />
+                    <input type="text" class="form-control" formControlName="apellido1" placeholder="Primer Apellido *" />
+                    <input type="text" class="form-control" formControlName="dni" placeholder="DNI/CIF *" />
+                 </div>
+                 <div class="inline-actions">
+                    <button type="button" class="btn-inline-save" (click)="guardarNuevoCliente()" [disabled]="formNuevoCliente.invalid || guardandoCliente">
+                      {{ guardandoCliente ? 'Guardando...' : 'Guardar Cliente' }}
+                    </button>
+                 </div>
+              </div>
             </div>
 
             <!-- Local -->
-            <!-- Local -->
             <div class="form-group">
-              <label class="form-label">Local / Suministro <span class="required">*</span></label>
-              <div class="select-wrapper">
+              <div class="label-with-action">
+                <label class="form-label">Local / Suministro <span class="required">*</span></label>
+                <button type="button" class="btn-link-action" (click)="toggleNuevoLocal()" *ngIf="!idContrato">
+                  {{ showNuevoLocal ? 'Cancelar Nuevo' : '+ Nuevo Local' }}
+                </button>
+              </div>
+
+              <!-- Selector existente -->
+              <div class="select-wrapper" *ngIf="!showNuevoLocal">
                 <app-autocomplete
                     formControlName="idLocal"
                     [data]="localesFiltrados"
@@ -61,7 +88,24 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
                     (ngModelChange)="onLocalChange()"
                 ></app-autocomplete>
               </div>
-              <small class="form-help" *ngIf="!form.get('idCliente')?.value">Puede buscar un local directamente para auto-seleccionar el cliente.</small>
+
+              <!-- Formulario Rápido Local Nuevo -->
+              <div class="inline-create-box" *ngIf="showNuevoLocal" [formGroup]="formNuevoLocal">
+                 <div class="inline-message" *ngIf="!form.get('idCliente')?.value">
+                    <span class="warning-icon">⚠️</span> Selecciona o crea un Cliente primero.
+                 </div>
+                 <div class="inline-grid" *ngIf="form.get('idCliente')?.value">
+                    <input type="text" class="form-control" formControlName="nombreTitular" placeholder="Titular *" />
+                    <input type="text" class="form-control" formControlName="apellido1Titular" placeholder="1er Apellido Titular *" />
+                    <input type="text" class="form-control full-col" formControlName="direccionCompleta" placeholder="Dirección Completa *" />
+                 </div>
+                 <div class="inline-actions" *ngIf="form.get('idCliente')?.value">
+                    <button type="button" class="btn-inline-save" (click)="guardarNuevoLocal()" [disabled]="formNuevoLocal.invalid || guardandoLocal">
+                      {{ guardandoLocal ? 'Guardando...' : 'Guardar Local' }}
+                    </button>
+                 </div>
+              </div>
+              <small class="form-help" *ngIf="!form.get('idCliente')?.value && !showNuevoLocal">Puede buscar un local directamente para auto-seleccionar el cliente.</small>
             </div>
 
             <!-- Tipo de Contrato -->
@@ -357,6 +401,70 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
     }
     .quick-link-card .icon { font-size: 1.5rem; }
 
+    /* Inline Form Styles */
+    .label-with-action {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .btn-link-action {
+      background: none;
+      border: none;
+      color: #3b82f6;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+    .btn-link-action:hover { text-decoration: underline; }
+
+    .inline-create-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .inline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .full-col { grid-column: 1 / -1; }
+    
+    .inline-message {
+      font-size: 0.85rem;
+      color: #b45309;
+      background: #fef3c7;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .inline-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-inline-save {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-inline-save:hover:not(:disabled) { background: #059669; }
+    .btn-inline-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -370,11 +478,18 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
 })
 export class ContratoFichaComponent implements OnInit {
   form: FormGroup;
+  formNuevoCliente: FormGroup;
+  formNuevoLocal: FormGroup;
   idContrato: number | null = null;
   loading = false;
   clientes: Cliente[] = [];
   locales: Local[] = [];
   localesFiltrados: Local[] = [];
+
+  showNuevoCliente = false;
+  guardandoCliente = false;
+  showNuevoLocal = false;
+  guardandoLocal = false;
 
   constructor(
     private fb: FormBuilder,
@@ -384,6 +499,18 @@ export class ContratoFichaComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
+    this.formNuevoCliente = this.fb.group({
+      nombre: ['', Validators.required],
+      apellido1: ['', Validators.required],
+      dni: ['', Validators.required]
+    });
+
+    this.formNuevoLocal = this.fb.group({
+      nombreTitular: ['', Validators.required],
+      apellido1Titular: ['', Validators.required],
+      direccionCompleta: ['', Validators.required]
+    });
+
     this.form = this.fb.group({
       idCliente: [null, Validators.required],
       idLocal: [null, Validators.required],
@@ -604,6 +731,85 @@ export class ContratoFichaComponent implements OnInit {
     if (!dateStr) return '';
     // Handle ISO strings with time
     return dateStr.split('T')[0];
+  }
+
+  // --- COMPONENTES INLINE ---
+
+  toggleNuevoCliente() {
+    this.showNuevoCliente = !this.showNuevoCliente;
+    if (this.showNuevoCliente) {
+      this.formNuevoCliente.reset();
+      this.form.get('idCliente')?.setValue(null);
+    }
+  }
+
+  guardarNuevoCliente() {
+    if (this.formNuevoCliente.invalid) return;
+    this.guardandoCliente = true;
+    const val = this.formNuevoCliente.value;
+    const nuevo: Cliente = {
+      nombre: val.nombre,
+      apellido1: val.apellido1,
+      dni: val.dni
+    };
+
+    this.clienteService.create(nuevo).subscribe({
+      next: (creado) => {
+        this.guardandoCliente = false;
+        this.showNuevoCliente = false;
+        // Update client list and auto-select
+        this.clientes = [...this.clientes, creado];
+        this.form.get('idCliente')?.setValue(creado.idCliente);
+        this.onClienteChange(); // Propagate filters
+        Swal.fire('Éxito', 'Cliente creado y seleccionado con éxito.', 'success');
+      },
+      error: () => {
+        this.guardandoCliente = false;
+        Swal.fire('Error', 'No se pudo crear el cliente.', 'error');
+      }
+    });
+  }
+
+  toggleNuevoLocal() {
+    this.showNuevoLocal = !this.showNuevoLocal;
+    if (this.showNuevoLocal) {
+      this.formNuevoLocal.reset();
+      this.form.get('idLocal')?.setValue(null);
+    }
+  }
+
+  guardarNuevoLocal() {
+    if (this.formNuevoLocal.invalid) return;
+    const clientId = this.form.get('idCliente')?.value;
+    if (!clientId) {
+      Swal.fire('Aviso', 'Debe seleccionar un cliente antes de crear un local.', 'warning');
+      return;
+    }
+
+    this.guardandoLocal = true;
+    const val = this.formNuevoLocal.value;
+    const nuevo: Partial<Local> & { idCliente: number } = {
+      idCliente: clientId,
+      nombreTitular: val.nombreTitular,
+      apellido1Titular: val.apellido1Titular,
+      direccionCompleta: val.direccionCompleta
+    };
+
+    this.localService.create(nuevo).subscribe({
+      next: (creado) => {
+        this.guardandoLocal = false;
+        this.showNuevoLocal = false;
+        // Update local list
+        this.locales = [...this.locales, creado];
+        this.filterLocales(clientId); // Re-filter
+        this.form.get('idLocal')?.setValue(creado.idLocal);
+        Swal.fire('Éxito', 'Local creado y seleccionado con éxito.', 'success');
+      },
+      error: () => {
+        this.guardandoLocal = false;
+        Swal.fire('Error', 'No se pudo crear el local.', 'error');
+      }
+    });
   }
 
   // Display functions for Autocomplete
