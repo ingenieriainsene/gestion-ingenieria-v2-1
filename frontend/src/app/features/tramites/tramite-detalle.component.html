@@ -68,7 +68,7 @@
         <h3>📋 Información y Estado</h3>
       </div>
       <div class="card-body compact-body">
-        <form [formGroup]="formInfo" (ngSubmit)="guardarInfo()" class="compact-form inline-form">
+        <form [formGroup]="formInfo" class="compact-form inline-form">
 
           <!-- Row 1: Status, Date, Urgent, Facturado -->
           <div class="form-row-inline">
@@ -114,9 +114,6 @@
               <input type="text" class="form-control" formControlName="detalleSeguimiento"
                 placeholder="Notas específicas..." />
             </div>
-
-            <button type="submit" class="btn-save btn-compact">💾 Guardar</button>
-          </div>
 
         </form>
       </div>

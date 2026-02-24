@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
   TramiteService,
   SeguimientoService,
@@ -49,6 +50,7 @@ export class TramiteDetalleComponent implements OnInit {
   filesToUpload: File[] = [];
   nombreVisibleUpload = '';
   private archivosBaseUrl = `${environment.apiUrl}/archivos`;
+  private isPatchingForm = false;
 
   constructor(
     private tramiteService: TramiteService,
@@ -94,6 +96,16 @@ export class TramiteDetalleComponent implements OnInit {
       this.cargarArchivos();
       this.cargarPresupuestos();
     });
+
+    // Configurar autoguardado para Información y Estado
+    this.formInfo.valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+    ).subscribe(() => {
+      if (!this.isPatchingForm && this.formInfo.valid) {
+        this.guardarInfo(true);
+      }
+    });
   }
 
   cargarDetalle() {
@@ -106,13 +118,16 @@ export class TramiteDetalleComponent implements OnInit {
         let fStr = '';
         const fs = d.fechaSeguimiento;
         if (typeof fs === 'string') fStr = fs.slice(0, 10);
+
+        this.isPatchingForm = true;
         this.formInfo.patchValue({
           estado: d.estado || 'Pendiente',
           esUrgente: !!d.esUrgente,
           facturado: !!d.facturado,
           detalleSeguimiento: d.detalleSeguimiento || '',
           fechaSeguimiento: fStr || '',
-        });
+        }, { emitEvent: false });
+        this.isPatchingForm = false;
       },
       error: (err) => {
         this.loading = false;
@@ -191,7 +206,7 @@ export class TramiteDetalleComponent implements OnInit {
     this.activeTab = tab;
   }
 
-  guardarInfo() {
+  guardarInfo(silent = false) {
     if (!this.detalle || !this.idTramite) return;
     const v = this.formInfo.value;
     const tramitePayload = {
@@ -203,10 +218,22 @@ export class TramiteDetalleComponent implements OnInit {
     };
     this.tramiteService.update(this.idTramite, tramitePayload).subscribe({
       next: () => {
-        this.finGuardarInfo();
+        if (!silent) {
+          this.finGuardarInfo();
+        }
       },
-      error: (e) =>
-        Swal.fire('Error', e?.error?.message || 'No se pudieron guardar los cambios.', 'error'),
+      error: (e) => {
+        console.error('Error autoguardando:', e);
+        Swal.fire({
+          title: 'Error de Autoguardado',
+          text: e?.error?.message || 'No se pudieron guardar los cambios automáticamente. Comprueba tu conexión.',
+          icon: 'error',
+          toast: true,
+          position: 'top-end',
+          timer: 3000,
+          showConfirmButton: false
+        });
+      }
     });
   }
 
