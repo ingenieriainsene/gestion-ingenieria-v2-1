@@ -101,6 +101,10 @@ export class PresupuestoService {
     return this.api.patch<PresupuestoDTO>(`${this.endpoint}/${id}/estado`, estado);
   }
 
+  convertirAContrato(id: number): Observable<number> {
+    return this.api.post<number>(`${this.endpoint}/${id}/convertir-a-contrato`, {});
+  }
+
   downloadPdf(id: number): Observable<Blob> {
     return this.api.getBlob(`${this.endpoint}/${id}/pdf`);
   }

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -79,6 +81,18 @@ public class PresupuestoController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/convertir-a-contrato")
+    public ResponseEntity<?> convertirAContrato(@PathVariable Long id) {
+        System.out.println("[DEBUG] Recibida petición convertirAContrato para ID: " + id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String usuarioBd = auth != null ? auth.getName() : "sistema";
+        try {
+            return ResponseEntity.ok(service.convertirAContrato(id, usuarioBd));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PatchMapping("/{id}/estado")

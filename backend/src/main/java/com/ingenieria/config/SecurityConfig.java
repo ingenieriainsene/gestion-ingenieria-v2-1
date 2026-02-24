@@ -7,27 +7,19 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final AuthTokenFilter authTokenFilter; // Added field for AuthTokenFilter
-
-    public SecurityConfig(AuthTokenFilter authTokenFilter) { // Added constructor for injection
-        this.authTokenFilter = authTokenFilter;
-    }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(org.springframework.security.config.Customizer.withDefaults()) // Enable CORS
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated()) // Cambiado a authenticated para proteger el chat
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .csrf(csrf -> csrf.disable())
-                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class); // Added AuthTokenFilter
+                .cors(cors -> cors.disable());
         return http.build();
     }
 
@@ -46,16 +38,15 @@ public class SecurityConfig {
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.setAllowedOrigins(java.util.Arrays.asList(
+        configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost",
                 "http://localhost:80",
                 "http://localhost:4200",
                 "http://127.0.0.1",
                 "https://pacific-mercy-production-9a82.up.railway.app"));
-        configuration
-                .setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
-        configuration.setAllowedHeaders(java.util.Collections.singletonList("*"));
-        configuration.setExposedHeaders(java.util.Arrays.asList("Authorization", "Content-Disposition"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
+        configuration.setAllowedHeaders(Collections.singletonList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

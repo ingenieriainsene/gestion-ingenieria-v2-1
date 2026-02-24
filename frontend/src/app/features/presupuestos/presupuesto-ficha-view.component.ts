@@ -262,7 +262,6 @@ export class PresupuestoFichaViewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: PresupuestoService,
-    private mantenimientoService: MantenimientoPreventivoService,
     private clienteService: ClienteService,
     private localService: LocalService
   ) { }
@@ -334,9 +333,12 @@ export class PresupuestoFichaViewComponent implements OnInit {
           timer: 3000
         });
       },
-      error: () => {
+      error: (e) => {
         this.actualizandoEstado = false;
-        Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+        let msg = 'No se pudo actualizar el estado.';
+        if (typeof e?.error === 'string') msg = e.error;
+        else if (e?.error?.message) msg = e.error.message;
+        Swal.fire('Error', msg, 'error');
       }
     });
   }
@@ -365,47 +367,44 @@ export class PresupuestoFichaViewComponent implements OnInit {
   }
 
   generarContrato(): void {
-    if (!this.presupuesto) return;
-    if (this.presupuesto.tipoPresupuesto === 'Preventivo') {
-      this.mantenimientoService.crearContratoDesdePresupuesto(this.presupuesto.idPresupuesto!).subscribe({
-        next: (c) => {
-          if (c?.idContratoMant) {
-            this.router.navigate(['/contratos', c.idContratoMant, 'planificacion']);
-          }
+    if (!this.presupuesto?.idPresupuesto) return;
+
+    Swal.fire({
+      title: '¿Generar contrato automático?',
+      text: `Se creará el contrato y la venta pendiente (${this.presupuesto.tipoPresupuesto || 'Obra'}) automáticamente.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, generar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1e293b',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+
+      this.loading = true;
+      this.service.convertirAContrato(this.presupuesto!.idPresupuesto!).subscribe({
+        next: (contratoId) => {
+          this.loading = false;
+          Swal.fire({
+            title: '¡Contrato y Venta generados!',
+            text: 'El contrato se ha creado correctamente y la intervención ya está disponible en "Ventas Pendientes".',
+            icon: 'success',
+            confirmButtonText: 'Ir al Contrato',
+            confirmButtonColor: '#1e293b',
+          }).then(() => {
+            this.router.navigate(['/contratos', contratoId]);
+          });
         },
         error: (e) => {
-          let msg = 'No se pudo generar el contrato preventivo.';
-          if (typeof e?.error === 'string') {
-            msg = e.error;
-          } else if (e?.error?.message) {
-            msg = e.error.message;
-          } else if (e?.status === 404) {
-            msg = 'El endpoint no está disponible en el backend.';
-          }
+          this.loading = false;
+          let msg = 'No se pudo generar el contrato automático.';
+          if (typeof e?.error === 'string') msg = e.error;
+          else if (e?.error?.message) msg = e.error.message;
           Swal.fire('Error', msg, 'error');
         },
       });
-      return;
-    }
-    const tipoContrato = this.mapTipoContrato(this.presupuesto.tipoPresupuesto);
-    this.router.navigate(['/contratos'], {
-      queryParams: {
-        openModal: 1,
-        clienteId: this.presupuesto.clienteId,
-        localId: this.presupuesto.viviendaId,
-        ...(tipoContrato ? { tipoContrato } : {}),
-        ...(this.presupuesto.fecha ? { fechaInicio: this.presupuesto.fecha } : {}),
-      },
     });
   }
 
-  private mapTipoContrato(tipoPresupuesto?: string): string | null {
-    if (!tipoPresupuesto) return null;
-    const t = tipoPresupuesto.toLowerCase();
-    if (t === 'preventivo') return 'Preventivo';
-    if (t === 'obra') return 'Instalación';
-    return null;
-  }
 
   toggleCapitulo(index: number): void {
     this.collapsed[index] = !this.collapsed[index];

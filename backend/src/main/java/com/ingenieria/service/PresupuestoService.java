@@ -3,15 +3,18 @@ package com.ingenieria.service;
 import com.ingenieria.dto.PresupuestoDTO;
 import com.ingenieria.dto.PresupuestoLineaDTO;
 import com.ingenieria.dto.PresupuestoListResponse;
+import com.ingenieria.dto.ContratoMantenimientoDTO;
 import com.ingenieria.model.Cliente;
 import com.ingenieria.model.Local;
 import com.ingenieria.model.Presupuesto;
 import com.ingenieria.model.PresupuestoLinea;
+import com.ingenieria.model.Tramite;
+import com.ingenieria.model.Contrato;
 import com.ingenieria.repository.ClienteRepository;
 import com.ingenieria.repository.LocalRepository;
 import com.ingenieria.repository.PresupuestoRepository;
 import com.ingenieria.repository.TramiteRepository;
-import com.ingenieria.model.Tramite;
+import com.ingenieria.repository.ContratoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +49,13 @@ public class PresupuestoService {
     private LocalRepository localRepository;
     @Autowired
     private TramiteRepository tramiteRepository;
+    @Autowired
+    private ContratoRepository contratoRepository;
+    @Autowired
+    private AuditoriaService auditoriaService;
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private MantenimientoPreventivoService mantenimientoService;
 
     @Transactional(readOnly = true)
     public List<PresupuestoListResponse> findAll() {
@@ -175,7 +185,7 @@ public class PresupuestoService {
 
     @Transactional
     public PresupuestoDTO patchEstado(Long id, String nuevoEstado) {
-        Presupuesto p = presupuestoRepository.findById(id)
+        Presupuesto p = presupuestoRepository.findByIdWithLineas(id)
                 .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
 
         p.setEstado(nuevoEstado);
@@ -193,6 +203,57 @@ public class PresupuestoService {
         Presupuesto saved = presupuestoRepository.save(p);
         log.info("[Presupuesto] Estado actualizado id={} nuevoEstado={}", id, nuevoEstado);
         return toDto(saved);
+    }
+
+    @Transactional
+    public Long convertirAContrato(Long id, String usuarioBd) {
+        Presupuesto p = presupuestoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
+
+        if (!"Aceptado".equalsIgnoreCase(p.getEstado())) {
+            throw new IllegalArgumentException("Solo se pueden convertir presupuestos aceptados.");
+        }
+
+        // Si es preventivo, delegar al servicio especializado que ya sabe crear
+        // Contrato + Trámite
+        if ("Preventivo".equalsIgnoreCase(p.getTipoPresupuesto())) {
+            ContratoMantenimientoDTO cm = mantenimientoService.createContractFromPresupuesto(id);
+            if (cm == null || cm.getContratoId() == null) {
+                throw new RuntimeException("Error interno al generar el contrato de mantenimiento.");
+            }
+            return cm.getContratoId();
+        }
+
+        // 1. Crear Contrato
+        Contrato c = new Contrato();
+        c.setCliente(p.getCliente());
+        c.setLocal(p.getVivienda());
+        c.setFechaInicio(LocalDate.now());
+        // Default 1 año o según validez
+        int dias = p.getDiasValidez() != null ? p.getDiasValidez() : 365;
+        c.setFechaVencimiento(LocalDate.now().plusDays(dias));
+        c.setTipoContrato(p.getTipoPresupuesto() != null ? p.getTipoPresupuesto() : "Instalación");
+        c.setObservaciones("Generado automáticamente desde presupuesto #" + p.getIdPresupuesto());
+        c.setCreadoPor(usuarioBd);
+
+        Contrato savedContrato = contratoRepository.save(c);
+
+        // 2. Crear Trámite (Venta Pendiente)
+        Tramite t = new Tramite();
+        t.setContrato(savedContrato);
+        t.setTipoTramite(savedContrato.getTipoContrato());
+        t.setEstado("Pendiente");
+        t.setEsUrgente(false);
+        // t.setFechaCreacion se maneja en @PrePersist de Tramite (si existe) o lo
+        // ponemos manual
+        t.setFechaCreacion(java.time.LocalDateTime.now(java.time.ZoneId.of("Europe/Madrid")));
+        t.setDetalleSeguimiento("Nueva venta generada desde presupuesto #" + p.getIdPresupuesto());
+
+        tramiteRepository.save(t);
+
+        log.info("[Presupuesto] Convertido a contrato id={} -> contratoId={}", id, savedContrato.getIdContrato());
+
+        return savedContrato.getIdContrato();
     }
 
     @Transactional

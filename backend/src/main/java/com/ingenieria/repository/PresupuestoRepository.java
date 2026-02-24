@@ -1,7 +1,6 @@
 package com.ingenieria.repository;
 
 import com.ingenieria.model.Presupuesto;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,16 +11,18 @@ import java.util.Optional;
 public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> {
        List<Presupuesto> findAll();
 
-       @Query("SELECT p FROM Presupuesto p " +
+       @Query("SELECT DISTINCT p FROM Presupuesto p " +
                      "LEFT JOIN FETCH p.cliente " +
                      "LEFT JOIN FETCH p.vivienda " +
-                     "LEFT JOIN FETCH p.tramite")
+                     "LEFT JOIN FETCH p.tramite " +
+                     "LEFT JOIN FETCH p.lineas")
        List<Presupuesto> findAllWithLineas();
 
        @Query("SELECT p FROM Presupuesto p " +
                      "LEFT JOIN FETCH p.cliente " +
                      "LEFT JOIN FETCH p.vivienda " +
                      "LEFT JOIN FETCH p.tramite " +
+                     "LEFT JOIN FETCH p.lineas " +
                      "WHERE p.idPresupuesto = :id")
        Optional<Presupuesto> findByIdWithLineas(@Param("id") Long id);
 
