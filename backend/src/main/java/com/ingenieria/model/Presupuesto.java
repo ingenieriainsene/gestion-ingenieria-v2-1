@@ -67,7 +67,7 @@ public class Presupuesto {
     private String tipoPresupuesto;
 
     @Column(name = "fecha_aceptacion")
-    private OffsetDateTime fechaAceptacion;
+    private LocalDate fechaAceptacion;
 
     @Column(name = "dias_validez")
     private Integer diasValidez;
