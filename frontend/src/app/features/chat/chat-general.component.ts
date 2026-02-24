@@ -29,7 +29,7 @@ import { map } from 'rxjs/operators';
                (click)="seleccionarSala(r)"
                tabindex="0"
                (keydown.enter)="seleccionarSala(r)">
-            <div class="room-avatar">{{ r.name?.charAt(0) }}</div>
+            <div class="room-avatar">{{ r.name.charAt(0) }}</div>
             <div class="room-info">
               <div class="room-name">{{ r.name }}</div>
               <div class="room-status">en línea</div>

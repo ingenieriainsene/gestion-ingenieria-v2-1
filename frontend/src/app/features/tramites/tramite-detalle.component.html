@@ -107,13 +107,14 @@
             </div>
           </div>
 
-          <!-- Row 2: Observations & Button -->
+          <!-- Row 2: Observations -->
           <div class="form-row-inline align-end mt-2">
             <div class="form-group flex-grow mb-0">
               <label class="form-label">Notas Técnicas</label>
               <input type="text" class="form-control" formControlName="detalleSeguimiento"
                 placeholder="Notas específicas..." />
             </div>
+          </div>
 
         </form>
       </div>
@@ -150,10 +151,19 @@
             </div>
             <div class="form-group">
               <label class="form-label">Proveedor</label>
-              <select class="form-control" formControlName="idProveedor">
-                <option [ngValue]="null">-- Ninguno --</option>
-                <option *ngFor="let p of proveedores" [ngValue]="p.id">{{ p.nombre }}</option>
-              </select>
+              <div class="input-wrapper">
+                <input type="text" class="form-control" formControlName="proveedorLabel" list="proveedores-list"
+                  placeholder="Busca proveedor..." (input)="onProveedorInput()" />
+                <datalist id="proveedores-list">
+                  <option *ngFor="let p of proveedores" [value]="p.nombre"></option>
+                </datalist>
+              </div>
+            </div>
+            <div class="form-group checkbox-group" style="align-self: flex-end; padding-bottom: 10px;">
+              <label class="checkbox-wrapper warning small-check">
+                <input type="checkbox" formControlName="esUrgente" />
+                <span class="checkbox-label">⚠️ URGENTE</span>
+              </label>
             </div>
             <div class="form-group">
               <label class="form-label">Estado Hito</label>

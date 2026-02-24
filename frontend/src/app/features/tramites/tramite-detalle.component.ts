@@ -78,6 +78,7 @@ export class TramiteDetalleComponent implements OnInit {
       esUrgente: [false],
       idUsuarioAsignado: [null as number | null],
       idProveedor: [null as number | null],
+      proveedorLabel: [''],
     });
   }
 
@@ -242,6 +243,16 @@ export class TramiteDetalleComponent implements OnInit {
     Swal.fire('Guardado', 'Datos técnicos y observaciones guardados correctamente.', 'success');
   }
 
+  onProveedorInput() {
+    const label = this.formHito.get('proveedorLabel')?.value;
+    const found = this.proveedores.find(p => p.nombre === label);
+    if (found) {
+      this.formHito.patchValue({ idProveedor: found.id });
+    } else {
+      this.formHito.patchValue({ idProveedor: null });
+    }
+  }
+
   editingHitoId: number | null = null;
 
   toggleNuevoHito() {
@@ -255,6 +266,7 @@ export class TramiteDetalleComponent implements OnInit {
         esUrgente: false,
         idUsuarioAsignado: this.tecnicos[0]?.idUsuario ?? null,
         idProveedor: null,
+        proveedorLabel: '',
       });
     }
   }
@@ -276,12 +288,19 @@ export class TramiteDetalleComponent implements OnInit {
       esUrgente: !!h.esUrgente,
       idUsuarioAsignado: h.idUsuarioAsignado ?? null,
       idProveedor: h.idProveedor ?? null,
+      proveedorLabel: h.nombreProveedor || '',
     });
   }
 
   guardarHito() {
     if (this.formHito.invalid || !this.idTramite) return;
     const v = this.formHito.value;
+    let finalIdProveedor = v.idProveedor;
+    if (!finalIdProveedor && v.proveedorLabel) {
+      const found = this.proveedores.find(p => p.nombre === v.proveedorLabel);
+      if (found) finalIdProveedor = found.id;
+    }
+
     const payload: Partial<Seguimiento> = {
       idTramite: this.idTramite,
       comentario: v.comentario,
@@ -289,7 +308,7 @@ export class TramiteDetalleComponent implements OnInit {
       estado: v.estado || 'Pendiente',
       esUrgente: !!v.esUrgente,
       idUsuarioAsignado: v.idUsuarioAsignado ?? undefined,
-      idProveedor: v.idProveedor ?? undefined,
+      idProveedor: finalIdProveedor ?? undefined,
     };
 
     if (this.editingHitoId) {
