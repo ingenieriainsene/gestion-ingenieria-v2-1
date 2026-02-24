@@ -43,7 +43,8 @@ public class SecurityConfig {
                 "http://localhost:*",
                 "http://127.0.0.1",
                 "http://127.0.0.1:*",
-                "https://*.railway.app"));
+                "https://*.railway.app",
+                "https://*.up.railway.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition"));
