@@ -15,6 +15,7 @@ export class ProveedorFichaViewComponent implements OnInit {
     id: number | null = null;
     detail: ProveedorDetailDTO | null = null;
     loading = true;
+    activeTab = 'general';
 
     constructor(
         private route: ActivatedRoute,
@@ -27,7 +28,11 @@ export class ProveedorFichaViewComponent implements OnInit {
             const idParam = m.get('id');
             if (idParam && idParam !== 'nuevo') {
                 this.id = +idParam;
-                this.cargar();
+                if (isNaN(this.id)) {
+                    this.router.navigate(['/proveedores']);
+                } else {
+                    this.cargar();
+                }
             } else {
                 this.router.navigate(['/proveedores']);
             }

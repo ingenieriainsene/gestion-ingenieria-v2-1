@@ -69,7 +69,7 @@ interface ProveedorRow {
             <ng-template #sinContactos>—</ng-template>
           </td>
           <td style="text-align: right; white-space: nowrap;">
-            <a [routerLink]="['/proveedores', p.id]" class="action-badge" style="background:#3498db;" title="Ver ficha">👁️</a>
+            <a [routerLink]="['/proveedores', p.id]" class="action-badge" style="background:#3498db; cursor: pointer;" title="Ver ficha">👁️</a>
             <a [routerLink]="['/proveedores', p.id, 'editar']" class="action-badge badge-edit" title="Editar">✏️</a>
             <button class="action-badge badge-delete" style="border:none; cursor:pointer;" title="Eliminar" (click)="eliminar(p)">🗑️</button>
           </td>
@@ -138,6 +138,25 @@ interface ProveedorRow {
     `.contacto-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }`,
     `.modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; }`,
     `.btn-secondary { background: #94a3b8; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }`,
+    `.action-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      margin-left: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-size: 1.1rem;
+      color: white;
+    }`,
+    `.badge-edit { background: #f1c40f; }`,
+    `.badge-delete { background: #e74c3c; cursor: pointer; }`,
+    `.action-badge:hover { transform: scale(1.1); filter: brightness(1.1); }`,
+    `table { width: 100%; border-collapse: collapse; margin-top: 10px; }`,
+    `th { background: #f8fafc; padding: 12px; text-align: left; font-size: 0.75rem; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }`,
+    `td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }`,
   ],
 })
 export class ProveedorListComponent implements OnInit {
@@ -172,7 +191,7 @@ export class ProveedorListComponent implements OnInit {
       next: (data) => {
         const list = Array.isArray(data) ? data : (data as { data?: unknown[] })?.data ?? (data as { content?: unknown[] })?.content ?? [];
         this.proveedores = (list as ProveedorRow[]).map((x) => ({
-          id: x.id,
+          id: x.id ?? (x as any).idProveedor,
           nombreComercial: x.nombreComercial ?? '',
           cif: x.cif ?? '',
           tipo: x.tipo ?? 'EMPRESA',

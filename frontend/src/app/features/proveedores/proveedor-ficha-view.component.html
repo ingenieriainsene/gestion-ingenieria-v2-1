@@ -14,75 +14,216 @@
         </div>
     </div>
 
-    <div class="info-card-grid">
-        <div class="info-card info-card-wide">
-            <h3>Nombre Comercial</h3>
-            <p>{{ detail.nombreComercial || '—' }}</p>
+    <!-- Pestañas de Navegación -->
+    <nav class="tabs-navigation">
+        <button class="tab-btn" [class.active]="activeTab === 'general'"
+            (click)="activeTab = 'general'">General</button>
+        <button class="tab-btn" [class.active]="activeTab === 'trabajos'" (click)="activeTab = 'trabajos'">Trabajos
+            Asociados</button>
+        <button class="tab-btn" [class.active]="activeTab === 'albaranes'"
+            (click)="activeTab = 'albaranes'">Albaranes</button>
+        <button class="tab-btn" [class.active]="activeTab === 'facturas'"
+            (click)="activeTab = 'facturas'">Facturas</button>
+    </nav>
+
+    <!-- Contenido: General -->
+    <div *ngIf="activeTab === 'general'" class="tab-content">
+        <div class="info-card-grid">
+            <div class="info-card info-card-wide">
+                <h3>Nombre Comercial</h3>
+                <p>{{ detail.nombreComercial || '—' }}</p>
+            </div>
+            <div class="info-card info-card-wide">
+                <h3>Razón Social</h3>
+                <p>{{ detail.razonSocial || '—' }}</p>
+            </div>
+            <div class="info-card">
+                <h3>CIF / NIF</h3>
+                <p>{{ detail.cif || '—' }}</p>
+            </div>
+            <div class="info-card">
+                <h3>Tipo</h3>
+                <p>{{ detail.esAutonomo ? 'Profesional Autónomo' : 'Empresa / Sociedad' }}</p>
+            </div>
+            <div class="info-card info-card-wide">
+                <h3>Dirección Fiscal</h3>
+                <p>{{ detail.direccionFiscal || '—' }}</p>
+            </div>
+            <div class="info-card">
+                <h3>Fecha de alta</h3>
+                <p>{{ fechaAltaFormatted() }}</p>
+            </div>
         </div>
-        <div class="info-card info-card-wide">
-            <h3>Razón Social</h3>
-            <p>{{ detail.razonSocial || '—' }}</p>
-        </div>
-        <div class="info-card">
-            <h3>CIF / NIF</h3>
-            <p>{{ detail.cif || '—' }}</p>
-        </div>
-        <div class="info-card">
-            <h3>Tipo</h3>
-            <p>{{ detail.esAutonomo ? 'Profesional Autónomo' : 'Empresa / Sociedad' }}</p>
-        </div>
-        <div class="info-card info-card-wide">
-            <h3>Dirección Fiscal</h3>
-            <p>{{ detail.direccionFiscal || '—' }}</p>
-        </div>
-        <div class="info-card">
-            <h3>Fecha de alta</h3>
-            <p>{{ fechaAltaFormatted() }}</p>
-        </div>
+
+        <section class="ficha-section">
+            <div class="section-header">
+                <h2>🛠️ Especialidades / Oficios</h2>
+            </div>
+            <div class="oficios-grid">
+                <div *ngFor="let o of detail.listaOficios" class="oficio-badge">
+                    {{ o.oficio }}
+                </div>
+                <div *ngIf="!detail.listaOficios?.length" class="empty-msg">
+                    No hay oficios registrados.
+                </div>
+            </div>
+        </section>
+
+        <section class="ficha-section">
+            <div class="section-header">
+                <h2>📞 Contactos del Proveedor</h2>
+            </div>
+            <div class="table-wrap">
+                <table class="ficha-table">
+                    <thead>
+                        <tr>
+                            <th>NOMBRE</th>
+                            <th>CARGO</th>
+                            <th>TELÉFONO</th>
+                            <th>EMAIL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let c of detail.listaContactos">
+                            <td><strong>{{ c.nombre }}</strong></td>
+                            <td>{{ c.cargo || '—' }}</td>
+                            <td>{{ c.telefono || '—' }}</td>
+                            <td>{{ c.email || '—' }}</td>
+                        </tr>
+                        <tr *ngIf="!detail.listaContactos?.length">
+                            <td colspan="4" class="empty-cell">No hay contactos registrados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
-    <section class="ficha-section">
-        <div class="section-header">
-            <h2>🛠️ Especialidades / Oficios</h2>
-        </div>
-        <div class="oficios-grid">
-            <div *ngFor="let o of detail.listaOficios" class="oficio-badge">
-                {{ o.oficio }}
+    <!-- Contenido: Trabajos Asociados -->
+    <div *ngIf="activeTab === 'trabajos'" class="tab-content">
+        <section class="ficha-section no-mt">
+            <div class="section-header">
+                <h2>📋 Intervenciones en las que participa</h2>
             </div>
-            <div *ngIf="!detail.listaOficios?.length" class="empty-msg">
-                No hay oficios registrados.
+            <div class="table-wrap">
+                <table class="ficha-table">
+                    <thead>
+                        <tr>
+                            <th>TRAMITE</th>
+                            <th>TIPO</th>
+                            <th>CLIENTE</th>
+                            <th>DIRECCIÓN</th>
+                            <th>FECHA</th>
+                            <th>ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let t of detail.listaTrabajos">
+                            <td>
+                                <a [routerLink]="['/tramite-detalle', t.idTramite]" class="link-tramite">
+                                    #{{ t.idTramite }}
+                                </a>
+                            </td>
+                            <td>{{ t.tipoTramite }}</td>
+                            <td>{{ t.clienteNombre }}</td>
+                            <td><small>{{ t.viviendaDireccion }}</small></td>
+                            <td>{{ t.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
+                            <td>{{ t.estado }}</td>
+                        </tr>
+                        <tr *ngIf="!detail.listaTrabajos?.length">
+                            <td colspan="6" class="empty-cell">No se encontraron trabajos asociados.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
-    <section class="ficha-section">
-        <div class="section-header">
-            <h2>📞 Contactos del Proveedor</h2>
-        </div>
-        <div class="table-wrap">
-            <table class="ficha-table">
-                <thead>
-                    <tr>
-                        <th>NOMBRE</th>
-                        <th>CARGO</th>
-                        <th>TELÉFONO</th>
-                        <th>EMAIL</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let c of detail.listaContactos">
-                        <td><strong>{{ c.nombre }}</strong></td>
-                        <td>{{ c.cargo || '—' }}</td>
-                        <td>{{ c.telefono || '—' }}</td>
-                        <td>{{ c.email || '—' }}</td>
-                    </tr>
-                    <tr *ngIf="!detail.listaContactos?.length">
-                        <td colspan="4" class="empty-cell">No hay contactos registrados.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+    <!-- Contenido: Albaranes -->
+    <div *ngIf="activeTab === 'albaranes'" class="tab-content">
+        <section class="ficha-section no-mt">
+            <div class="section-header">
+                <h2>📦 Albaranes de Proveedor</h2>
+            </div>
+            <div class="table-wrap">
+                <table class="ficha-table">
+                    <thead>
+                        <tr>
+                            <th>Nº ALBARÁN</th>
+                            <th>FECHA</th>
+                            <th>IMPORTE</th>
+                            <th>TRAMITE ASOC.</th>
+                            <th>NOTAS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let a of detail.listaAlbaranes">
+                            <td><strong>{{ a.numeroAlbaran }}</strong></td>
+                            <td>{{ a.fecha | date:'dd/MM/yyyy' }}</td>
+                            <td class="text-amount">{{ a.importe | currency:'EUR' }}</td>
+                            <td>
+                                <a *ngIf="a.idTramite" [routerLink]="['/tramite-detalle', a.idTramite]"
+                                    class="link-tramite">
+                                    #{{ a.idTramite }} ({{ a.numeroTramite }})
+                                </a>
+                                <span *ngIf="!a.idTramite">—</span>
+                            </td>
+                            <td>{{ a.notas || '—' }}</td>
+                        </tr>
+                        <tr *ngIf="!detail.listaAlbaranes?.length">
+                            <td colspan="5" class="empty-cell">No hay albaranes registrados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Contenido: Facturas -->
+    <div *ngIf="activeTab === 'facturas'" class="tab-content">
+        <section class="ficha-section no-mt">
+            <div class="section-header">
+                <h2>📄 Facturas de Proveedor</h2>
+            </div>
+            <div class="table-wrap">
+                <table class="ficha-table">
+                    <thead>
+                        <tr>
+                            <th>Nº FACTURA</th>
+                            <th>FECHA</th>
+                            <th>IMPORTE</th>
+                            <th>ESTADO</th>
+                            <th>TRAMITE ASOC.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let f of detail.listaFacturas">
+                            <td><strong>{{ f.numeroFactura }}</strong></td>
+                            <td>{{ f.fecha | date:'dd/MM/yyyy' }}</td>
+                            <td class="text-amount">{{ f.importe | currency:'EUR' }}</td>
+                            <td>
+                                <span class="badge" [ngClass]="{
+                                    'badge-pending': f.estado === 'Pendiente',
+                                    'badge-paid': f.estado === 'Pagada',
+                                    'badge-overdue': f.estado === 'Vencida'
+                                }">{{ f.estado }}</span>
+                            </td>
+                            <td>
+                                <a *ngIf="f.idTramite" [routerLink]="['/tramite-detalle', f.idTramite]"
+                                    class="link-tramite">
+                                    #{{ f.idTramite }} ({{ f.numeroTramite }})
+                                </a>
+                                <span *ngIf="!f.idTramite">—</span>
+                            </td>
+                        </tr>
+                        <tr *ngIf="!detail.listaFacturas?.length">
+                            <td colspan="5" class="empty-cell">No hay facturas registradas.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 </div>
 
 <div *ngIf="!loading && !detail" class="ficha-missing">

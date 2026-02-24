@@ -436,26 +436,44 @@ export class ProveedorFichaComponent implements OnInit {
   }
 
   guardarGeneral(): void {
-    if (!this.id || this.form.invalid || this.guardando) return;
+    if (this.form.invalid || this.guardando) return;
     this.guardando = true;
+    const v = this.form.value;
     const payload: ProveedorDTO = {
-      nombreComercial: this.form.get('nombreComercial')!.value,
-      cif: this.form.get('cif')!.value,
-      razonSocial: this.form.get('razonSocial')!.value || undefined,
-      direccionFiscal: this.form.get('direccionFiscal')!.value || undefined,
-      esAutonomo: !!this.form.get('esAutonomo')!.value,
+      nombreComercial: v.nombreComercial.trim(),
+      cif: v.cif.trim(),
+      razonSocial: (v.razonSocial || '').trim() || undefined,
+      direccionFiscal: (v.direccionFiscal || '').trim() || undefined,
+      esAutonomo: !!v.esAutonomo,
     };
-    this.service.update(this.id, payload).subscribe({
-      next: () => {
-        this.guardando = false;
-        this.cargar();
-        Swal.fire('Guardado', 'Datos generales actualizados.', 'success');
-      },
-      error: () => {
-        this.guardando = false;
-        Swal.fire('Error', 'No se pudieron guardar los datos.', 'error');
-      },
-    });
+
+    if (this.id) {
+      this.service.update(this.id, payload).subscribe({
+        next: () => {
+          this.guardando = false;
+          this.cargar();
+          Swal.fire('Guardado', 'Datos generales actualizados.', 'success');
+        },
+        error: (err) => {
+          this.guardando = false;
+          const msg = err?.error?.message ?? 'No se pudieron guardar los cambios.';
+          Swal.fire('Error', String(msg), 'error');
+        },
+      });
+    } else {
+      this.service.create(payload as any).subscribe({
+        next: (resp) => {
+          this.guardando = false;
+          Swal.fire('Creado', 'Proveedor creado correctamente.', 'success');
+          this.router.navigate(['/proveedores', resp.idProveedor]);
+        },
+        error: (err) => {
+          this.guardando = false;
+          const msg = err?.error?.message ?? 'No se pudo crear el proveedor.';
+          Swal.fire('Error', String(msg), 'error');
+        },
+      });
+    }
   }
 
   agregarOficio(): void {

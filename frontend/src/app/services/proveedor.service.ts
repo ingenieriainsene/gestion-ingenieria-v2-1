@@ -37,6 +37,36 @@ export interface ContactoDTO {
     email?: string;
 }
 
+export interface AlbaranProveedorDTO {
+    idAlbaran: number;
+    numeroAlbaran: string;
+    fecha: string;
+    importe: number;
+    idTramite?: number;
+    numeroTramite?: string;
+    notas?: string;
+}
+
+export interface FacturaProveedorDTO {
+    idFactura: number;
+    numeroFactura: string;
+    fecha: string;
+    importe: number;
+    estado: string;
+    idTramite?: number;
+    numeroTramite?: string;
+    notas?: string;
+}
+
+export interface TrabajoAsociadoDTO {
+    idTramite: number;
+    tipoTramite: string;
+    clienteNombre: string;
+    viviendaDireccion: string;
+    fechaSeguimiento: string;
+    estado: string;
+}
+
 export interface ProveedorDetailDTO {
     id: number;
     nombreComercial: string;
@@ -47,6 +77,9 @@ export interface ProveedorDetailDTO {
     fechaAlta?: string;
     listaOficios: OficioDTO[];
     listaContactos: ContactoDTO[];
+    listaAlbaranes: AlbaranProveedorDTO[];
+    listaFacturas: FacturaProveedorDTO[];
+    listaTrabajos: TrabajoAsociadoDTO[];
 }
 
 @Injectable({

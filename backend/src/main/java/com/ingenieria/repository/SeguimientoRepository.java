@@ -15,4 +15,6 @@ public interface SeguimientoRepository extends JpaRepository<Seguimiento, Long> 
 
     boolean existsByTramite_IdTramiteAndComentarioAndFechaSeguimiento(Long idTramite, String comentario,
             java.time.LocalDate fechaSeguimiento);
+
+    List<Seguimiento> findByProveedor_IdProveedor(Long idProveedor);
 }

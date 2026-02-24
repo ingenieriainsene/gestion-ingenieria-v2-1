@@ -20,4 +20,7 @@ public class ProveedorDetailDTO {
     private LocalDateTime fechaAlta;
     private List<OficioDTO> listaOficios;
     private List<ContactoDTO> listaContactos;
+    private List<AlbaranProveedorDTO> listaAlbaranes;
+    private List<FacturaProveedorDTO> listaFacturas;
+    private List<TrabajoAsociadoDTO> listaTrabajos;
 }
