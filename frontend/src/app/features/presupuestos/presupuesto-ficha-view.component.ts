@@ -7,10 +7,12 @@ import { MantenimientoPreventivoService } from '../../services/mantenimiento-pre
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import Swal from 'sweetalert2';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-presupuesto-ficha-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, AuditStampComponent],
+  imports: [CommonModule, RouterLink, AuditStampComponent, FormsModule],
   template: `
     <div class="ficha-top">
       <a routerLink="/presupuestos" class="direct-link">&larr; Volver al listado</a>
@@ -42,19 +44,37 @@ import Swal from 'sweetalert2';
       <div class="info-card-grid">
         <div class="info-card">
           <h3>Cliente</h3>
-          <p>{{ clienteNombre || ('ID ' + presupuesto.clienteId) }}</p>
+          <p>
+            <a [routerLink]="['/clientes', presupuesto.clienteId]" class="ficha-link">
+              {{ clienteNombre || ('ID ' + presupuesto.clienteId) }}
+            </a>
+          </p>
         </div>
         <div class="info-card">
           <h3>Vivienda</h3>
-          <p>{{ viviendaDireccion || ('ID ' + presupuesto.viviendaId) }}</p>
+          <p>
+            <a [routerLink]="['/locales', presupuesto.viviendaId]" class="ficha-link">
+              {{ viviendaDireccion || ('ID ' + presupuesto.viviendaId) }}
+            </a>
+          </p>
         </div>
         <div class="info-card">
           <h3>Fecha</h3>
           <p>{{ presupuesto.fecha | date:'dd/MM/yyyy' }}</p>
         </div>
-        <div class="info-card">
-          <h3>Estado</h3>
-          <p>{{ presupuesto.estado || '—' }}</p>
+        <div class="info-card status-card" [class.loading]="actualizandoEstado">
+          <div class="status-header">
+            <h3>Estado</h3>
+            <span *ngIf="actualizandoEstado" class="spinner-mini"></span>
+          </div>
+          <select 
+            [ngModel]="presupuesto.estado" 
+            (ngModelChange)="cambiarEstado($event)"
+            class="status-select"
+            [disabled]="actualizandoEstado"
+          >
+            <option *ngFor="let st of estados" [value]="st">{{ st }}</option>
+          </select>
         </div>
         <div class="info-card">
           <h3>Total sin IVA</h3>
@@ -68,13 +88,13 @@ import Swal from 'sweetalert2';
           <h3>TOTAL con IVA</h3>
           <p>{{ totalConIva | number:'1.2-2' }} €</p>
         </div>
-        <div class="info-card" *ngIf="presupuesto.estado === 'Aceptado'">
+        <div class="info-card" *ngIf="presupuesto?.estado === 'Aceptado'">
           <h3>Fecha Aceptación</h3>
-          <p>{{ presupuesto.fechaAceptacion ? (presupuesto.fechaAceptacion | date:'dd/MM/yyyy') : 'Pendiente' }}</p>
+          <p>{{ (presupuesto?.fechaAceptacion) ? (presupuesto?.fechaAceptacion | date:'dd/MM/yyyy HH:mm:ss') : 'Pendiente' }}</p>
         </div>
-        <div class="info-card" *ngIf="presupuesto.estado === 'Aceptado'">
+        <div class="info-card" *ngIf="presupuesto?.estado === 'Aceptado'">
           <h3>Validez</h3>
-          <p>{{ presupuesto.diasValidez ? (presupuesto.diasValidez + ' días') : 'No def.' }}</p>
+          <p>{{ presupuesto?.diasValidez ? (presupuesto?.diasValidez + ' días') : 'No def.' }}</p>
         </div>
       </div>
 
@@ -162,7 +182,69 @@ import Swal from 'sweetalert2';
       <a routerLink="/presupuestos" class="direct-link">Volver al listado</a>
     </div>
   `,
-  styleUrls: ['../clientes/cliente-ficha-view.component.css']
+  styleUrls: ['../clientes/cliente-ficha-view.component.css'],
+  styles: [`
+    .status-card {
+      position: relative;
+    }
+    .status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .status-select {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='C19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px;
+    }
+    .status-select:hover:not(:disabled) {
+      border-color: #3498db;
+      background-color: #f0f9ff;
+    }
+    .status-select:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    .spinner-mini {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #3498db;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .status-card.loading {
+      opacity: 0.8;
+    }
+    .ficha-link {
+      color: #2563eb;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .ficha-link:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+  `]
 })
 export class PresupuestoFichaViewComponent implements OnInit {
   presupuesto: PresupuestoDTO | null = null;
@@ -173,6 +255,8 @@ export class PresupuestoFichaViewComponent implements OnInit {
   totalIva = 0;
   totalConIva = 0;
   collapsed: boolean[] = [];
+  estados = ['Borrador', 'Estudio', 'Enviado', 'Aceptado', 'Rechazado', 'Pagado'];
+  actualizandoEstado = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -198,7 +282,10 @@ export class PresupuestoFichaViewComponent implements OnInit {
     this.loading = true;
     this.service.getById(id).subscribe({
       next: (p) => {
-        this.presupuesto = { ...p, lineas: p.lineas || [] };
+        this.presupuesto = p;
+        if (this.presupuesto && !this.presupuesto.lineas) {
+          this.presupuesto.lineas = [];
+        }
         this.collapsed = (p.lineas || []).map(() => false);
         this.recalcularTotales();
         this.loading = false;
@@ -224,6 +311,33 @@ export class PresupuestoFichaViewComponent implements OnInit {
         this.viviendaDireccion = l.direccionCompleta || null;
       },
       error: () => { }
+    });
+  }
+
+  cambiarEstado(nuevoEstado: string): void {
+    if (!this.presupuesto?.idPresupuesto || this.actualizandoEstado) return;
+    if (this.presupuesto.estado === nuevoEstado) return;
+
+    this.actualizandoEstado = true;
+    this.service.patchEstado(this.presupuesto.idPresupuesto, nuevoEstado).subscribe({
+      next: (p) => {
+        this.presupuesto = p;
+        this.recalcularTotales();
+        this.actualizandoEstado = false;
+        Swal.fire({
+          title: 'Estado actualizado',
+          text: `El presupuesto ha pasado a estado: ${nuevoEstado}`,
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      },
+      error: () => {
+        this.actualizandoEstado = false;
+        Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+      }
     });
   }
 

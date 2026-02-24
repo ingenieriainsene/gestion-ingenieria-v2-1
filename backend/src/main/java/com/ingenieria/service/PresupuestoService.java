@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -84,8 +86,14 @@ public class PresupuestoService {
         p.setFecha(dto.getFecha() != null ? dto.getFecha() : LocalDate.now());
         p.setEstado(dto.getEstado() != null ? dto.getEstado() : "Borrador");
         p.setTipoPresupuesto(normalizeTipo(dto.getTipoPresupuesto()));
-        p.setFechaAceptacion(dto.getFechaAceptacion());
-        p.setDiasValidez(dto.getDiasValidez());
+
+        if ("Aceptado".equalsIgnoreCase(p.getEstado()) && dto.getFechaAceptacion() == null) {
+            p.setFechaAceptacion(OffsetDateTime.now(ZoneId.of("Europe/Madrid")));
+        } else {
+            p.setFechaAceptacion(dto.getFechaAceptacion());
+        }
+
+        p.setDiasValidez(dto.getDiasValidez() != null ? dto.getDiasValidez() : 20);
 
         if (dto.getTramiteId() != null) {
             Tramite tramite = tramiteRepository.findById(dto.getTramiteId())
@@ -139,7 +147,14 @@ public class PresupuestoService {
         }
 
         p.setFechaAceptacion(dto.getFechaAceptacion());
-        p.setDiasValidez(dto.getDiasValidez());
+        if ("Aceptado".equalsIgnoreCase(p.getEstado()) && p.getFechaAceptacion() == null) {
+            p.setFechaAceptacion(OffsetDateTime.now(ZoneId.of("Europe/Madrid")));
+        }
+        if (dto.getDiasValidez() != null) {
+            p.setDiasValidez(dto.getDiasValidez());
+        } else if (p.getDiasValidez() == null && "Aceptado".equalsIgnoreCase(p.getEstado())) {
+            p.setDiasValidez(20);
+        }
 
         // Preserve or update tramiteId
         if (dto.getTramiteId() != null) {
@@ -155,6 +170,28 @@ public class PresupuestoService {
 
         Presupuesto saved = presupuestoRepository.save(p);
         log.info("[Presupuesto] Actualizado id={} total={}", saved.getIdPresupuesto(), saved.getTotal());
+        return toDto(saved);
+    }
+
+    @Transactional
+    public PresupuestoDTO patchEstado(Long id, String nuevoEstado) {
+        Presupuesto p = presupuestoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
+
+        p.setEstado(nuevoEstado);
+
+        // Logic for "Aceptado"
+        if ("Aceptado".equalsIgnoreCase(nuevoEstado)) {
+            if (p.getFechaAceptacion() == null) {
+                p.setFechaAceptacion(OffsetDateTime.now(ZoneId.of("Europe/Madrid")));
+            }
+            if (p.getDiasValidez() == null) {
+                p.setDiasValidez(20);
+            }
+        }
+
+        Presupuesto saved = presupuestoRepository.save(p);
+        log.info("[Presupuesto] Estado actualizado id={} nuevoEstado={}", id, nuevoEstado);
         return toDto(saved);
     }
 
@@ -242,6 +279,8 @@ public class PresupuestoService {
                 p.getTotalConIva(),
                 p.getEstado(),
                 normalizeTipo(p.getTipoPresupuesto()),
+                p.getFechaAceptacion(),
+                p.getDiasValidez(),
                 p.getCliente() != null ? p.getCliente().getIdCliente() : null,
                 clienteNombre,
                 p.getVivienda() != null ? p.getVivienda().getIdLocal() : null,

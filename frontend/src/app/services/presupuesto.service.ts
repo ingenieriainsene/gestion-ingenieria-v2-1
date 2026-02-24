@@ -55,6 +55,8 @@ export interface PresupuestoListItem {
   total: number;
   estado: string;
   tipoPresupuesto?: string;
+  fechaAceptacion?: string;
+  diasValidez?: number;
   clienteId: number;
   clienteNombre: string;
   viviendaId: number;
@@ -93,6 +95,10 @@ export class PresupuestoService {
 
   deleteBudget(id: number): Observable<void> {
     return this.api.delete<void>(`${this.endpoint}/${id}`);
+  }
+
+  patchEstado(id: number, estado: string): Observable<PresupuestoDTO> {
+    return this.api.patch<PresupuestoDTO>(`${this.endpoint}/${id}/estado`, estado);
   }
 
   downloadPdf(id: number): Observable<Blob> {

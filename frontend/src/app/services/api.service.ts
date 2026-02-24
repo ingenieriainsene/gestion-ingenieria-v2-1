@@ -9,7 +9,7 @@ import { environment } from '../../environments/environments';
 export class ApiService {
   private url = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   get<T = any>(endpoint: string, params?: Record<string, string>): Observable<T> {
     const opts = params ? { params: new HttpParams({ fromObject: params }) } : {};
@@ -26,6 +26,10 @@ export class ApiService {
 
   put<T = any>(endpoint: string, data: unknown): Observable<T> {
     return this.http.put<T>(`${this.url}/${endpoint}`, data);
+  }
+
+  patch<T = any>(endpoint: string, data: unknown): Observable<T> {
+    return this.http.patch<T>(`${this.url}/${endpoint}`, data);
   }
 
   delete<T = void>(endpoint: string): Observable<T> {

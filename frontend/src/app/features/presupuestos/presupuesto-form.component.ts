@@ -111,7 +111,7 @@ import Swal from 'sweetalert2';
               <label class="form-label">Fecha Aceptación <span class="required">*</span></label>
               <div class="input-wrapper">
                 <span class="input-icon">✅</span>
-                <input type="date" class="form-control" formControlName="fechaAceptacion" />
+                <input type="datetime-local" class="form-control" formControlName="fechaAceptacion" />
               </div>
             </div>
 
@@ -582,8 +582,11 @@ export class PresupuestoFormComponent implements OnInit {
       if (nuevoEstado === 'Aceptado') {
         const fechaActual = this.form.get('fechaAceptacion')?.value;
         if (!fechaActual) {
+          const now = new Date();
+          const offset = now.getTimezoneOffset() * 60000;
+          const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
           this.form.patchValue({
-            fechaAceptacion: new Date().toISOString().slice(0, 10),
+            fechaAceptacion: localISOTime,
             diasValidez: 20 // Default suggested validez
           });
         }
@@ -880,8 +883,8 @@ export class PresupuestoFormComponent implements OnInit {
           fecha: p.fecha,
           estado: p.estado || 'Borrador',
           tipoPresupuesto: p.tipoPresupuesto || 'Obra',
-          fechaAceptacion: p.fechaAceptacion,
-          diasValidez: p.diasValidez
+          fechaAceptacion: p.fechaAceptacion ? p.fechaAceptacion.slice(0, 16) : (p.estado === 'Aceptado' ? this.formatLocalISO(new Date().toISOString()).slice(0, 16) : null),
+          diasValidez: p.diasValidez || (p.estado === 'Aceptado' ? 20 : null)
         });
         this.setClienteLabelById(p.clienteId);
         this.setViviendaLabelById(p.viviendaId);
@@ -987,6 +990,26 @@ export class PresupuestoFormComponent implements OnInit {
     }
   }
 
+  private formatLocalISO(val: string): string {
+    const date = new Date(val);
+    const offset = -date.getTimezoneOffset();
+    const sign = offset >= 0 ? '+' : '-';
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const diff = Math.abs(offset);
+    const h = pad(Math.floor(diff / 60));
+    const m = pad(diff % 60);
+
+    // Example: 2026-02-24T09:23:00+01:00
+    // We start from the ISO string but replace the trailing Z with the offset
+    // Note: val from datetime-local is YYYY-MM-DDTHH:mm
+    // We need to ensure we don't double-offset if the browser's Date() already handled it.
+    // Actually, new Date('2026-02-24T09:23') creates it as LOCAL time.
+    // So toISOString() will move it back to UTC.
+    // We want to keep it as 09:23 and add +01:00.
+    const isoLocal = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
+    return `${isoLocal}${sign}${h}:${m}`;
+  }
+
   guardar(): void {
     if (this.guardando) return;
     if (this.form.invalid || this.capitulos.length === 0) {
@@ -1045,7 +1068,7 @@ export class PresupuestoFormComponent implements OnInit {
       fecha: raw.fecha,
       estado: raw.estado,
       tipoPresupuesto: raw.tipoPresupuesto,
-      fechaAceptacion: raw.fechaAceptacion,
+      fechaAceptacion: raw.fechaAceptacion ? this.formatLocalISO(raw.fechaAceptacion) : undefined,
       diasValidez: raw.diasValidez,
       tramiteId: this.tramiteId ?? undefined,
       total: this.totalConIva,

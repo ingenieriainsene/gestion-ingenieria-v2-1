@@ -8,6 +8,7 @@ import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -66,7 +67,7 @@ public class Presupuesto {
     private String tipoPresupuesto;
 
     @Column(name = "fecha_aceptacion")
-    private LocalDate fechaAceptacion;
+    private OffsetDateTime fechaAceptacion;
 
     @Column(name = "dias_validez")
     private Integer diasValidez;
