@@ -35,6 +35,9 @@ import { ProductoService } from '../../services/producto.service';
           <th>DESCRIPCIÓN</th>
           <th>CATEGORÍA</th>
           <th>COSTE</th>
+          <th>MARGEN</th>
+          <th>PVP (B.I)</th>
+          <th>PVP TOTAL</th>
           <th style="text-align: right;">Acciones</th>
         </tr>
       </thead>
@@ -45,6 +48,11 @@ import { ProductoService } from '../../services/producto.service';
           <td>{{ p.descripcion }}</td>
           <td>{{ p.categoria || '—' }}</td>
           <td>{{ p.coste | number:'1.2-2' }} €</td>
+          <td>{{ (p.margen || 0) | number:'1.1-1' }}%</td>
+          <td><strong>{{ (p.precioVenta || 0) | number:'1.2-2' }} €</strong></td>
+          <td style="color: #059669; font-weight: 700;">
+            {{ ((p.precioVenta || 0) * (1 + (p.iva || 0) / 100)) | number:'1.2-2' }} €
+          </td>
           <td style="text-align: right;">
             <a [routerLink]="['/productos', p.id]" class="action-badge badge-edit">✏️</a>
             <a href="javascript:void(0)" class="action-badge badge-delete" (click)="eliminar(p)">🗑️</a>
@@ -81,6 +89,14 @@ import { ProductoService } from '../../services/producto.service';
             <div class="modal-field">
               <label>Coste *</label>
               <input type="number" name="coste" [(ngModel)]="nuevo.coste" step="0.01" min="0" required />
+            </div>
+            <div class="modal-field">
+              <label>Margen (%)</label>
+              <input type="number" name="margen" [(ngModel)]="nuevo.margen" step="0.1" />
+            </div>
+            <div class="modal-field">
+              <label>IVA (%)</label>
+              <input type="number" name="iva" [(ngModel)]="nuevo.iva" />
             </div>
           </div>
           <div class="modal-actions">
@@ -126,10 +142,13 @@ export class ProductoListComponent implements OnInit {
     codRef: '',
     descripcion: '',
     coste: 0,
+    margen: 0,
+    iva: 21,
+    precioVenta: 0,
     categoria: '',
   };
 
-  constructor(private productoService: ProductoService) {}
+  constructor(private productoService: ProductoService) { }
 
   ngOnInit(): void {
     this.cargar();
@@ -179,7 +198,7 @@ export class ProductoListComponent implements OnInit {
 
   abrirModalNuevo(): void {
     this.guardando = false;
-    this.nuevo = { codRef: '', descripcion: '', coste: 0, categoria: '' };
+    this.nuevo = { codRef: '', descripcion: '', coste: 0, margen: 0, iva: 21, precioVenta: 0, categoria: '' };
     this.modalVisible = true;
   }
 
@@ -198,6 +217,9 @@ export class ProductoListComponent implements OnInit {
       codRef: this.nuevo.codRef.trim(),
       descripcion: this.nuevo.descripcion.trim(),
       coste: Number(this.nuevo.coste),
+      margen: Number(this.nuevo.margen || 0),
+      iva: Number(this.nuevo.iva || 0),
+      precioVenta: +(Number(this.nuevo.coste) * (1 + Number(this.nuevo.margen || 0) / 100)).toFixed(2),
       categoria: this.nuevo.categoria?.trim() || '',
     };
     this.productoService.create(payload).subscribe({

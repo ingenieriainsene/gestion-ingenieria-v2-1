@@ -25,4 +25,13 @@ public class Producto {
 
     @Column(length = 100)
     private String categoria;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal margen;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal iva;
+
+    @Column(name = "precio_venta", precision = 12, scale = 2)
+    private BigDecimal precioVenta;
 }

@@ -420,8 +420,8 @@ export class PresupuestoFormComponent implements OnInit {
   clientes: Cliente[] = [];
   locales: Local[] = [];
   productos: Producto[] = [];
-  productosOptions: { id: number; label: string; coste: number; descripcion: string; codRef: string }[] = [];
-  productosFiltrados: { id: number; label: string; coste: number; descripcion: string; codRef: string }[] = [];
+  productosOptions: { id: number; label: string; coste: number; descripcion: string; codRef: string; margen: number; iva: number }[] = [];
+  productosFiltrados: { id: number; label: string; coste: number; descripcion: string; codRef: string; margen: number; iva: number }[] = [];
   modalProductoVisible = false;
   productoQuery = '';
   private productoTarget: { capIndex: number; partIndex: number } | null = null;
@@ -574,6 +574,8 @@ export class PresupuestoFormComponent implements OnInit {
           coste: Number(p.coste ?? 0),
           descripcion: p.descripcion ?? '',
           codRef: p.codRef ?? '',
+          margen: Number(p.margen ?? 0),
+          iva: Number(p.iva ?? 21),
         }));
       this.filtrarProductos();
     });
@@ -830,7 +832,7 @@ export class PresupuestoFormComponent implements OnInit {
     }).slice(0, 50);
   }
 
-  seleccionarProducto(p: { id: number; label: string; coste: number; descripcion: string }): void {
+  seleccionarProducto(p: { id: number; label: string; coste: number; descripcion: string; codRef: string; margen: number; iva: number }): void {
     if (!this.productoTarget) return;
     const part = this.getPartidas(this.productoTarget.capIndex).at(this.productoTarget.partIndex) as FormGroup;
     const patch: Record<string, unknown> = {
@@ -840,7 +842,11 @@ export class PresupuestoFormComponent implements OnInit {
     const concepto = String(part.get('concepto')?.value || '').trim();
     if (!concepto) patch['concepto'] = p.descripcion;
     const costeRaw = Number(part.get('costeUnitario')?.value || 0);
-    if (!costeRaw) patch['costeUnitario'] = p.coste;
+    if (!costeRaw) {
+      patch['costeUnitario'] = p.coste;
+      patch['factorMargen'] = 1 + (p.margen / 100);
+      patch['ivaPorcentaje'] = p.iva;
+    }
     part.patchValue(patch, { emitEvent: false });
     this.modalProductoVisible = false;
     this.productoTarget = null;
@@ -866,7 +872,11 @@ export class PresupuestoFormComponent implements OnInit {
     const concepto = String(part.get('concepto')?.value || '').trim();
     if (!concepto) patch['concepto'] = match.descripcion;
     const costeRaw = Number(part.get('costeUnitario')?.value || 0);
-    if (!costeRaw) patch['costeUnitario'] = match.coste;
+    if (!costeRaw) {
+      patch['costeUnitario'] = match.coste;
+      patch['factorMargen'] = 1 + (match.margen / 100);
+      patch['ivaPorcentaje'] = match.iva;
+    }
     part.patchValue(patch, { emitEvent: false });
     this.recalcularTotales();
   }

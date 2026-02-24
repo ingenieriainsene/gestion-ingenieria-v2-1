@@ -146,6 +146,9 @@ CREATE TABLE IF NOT EXISTS productos (
     cod_ref_producto VARCHAR(50) NOT NULL UNIQUE,
     descripcion VARCHAR(255) NOT NULL,
     coste NUMERIC(12, 2) NOT NULL,
+    margen NUMERIC(5, 2) DEFAULT 0,
+    iva NUMERIC(5, 2) DEFAULT 21,
+    precio_venta NUMERIC(12, 2) DEFAULT 0,
     categoria VARCHAR(100)
 );
 
@@ -1162,3 +1165,11 @@ ALTER TABLE public.local_ubicaciones REPLICA IDENTITY FULL;
 -- FIX PARA SUPABASE: Actualizar tipo de columna fecha_aceptacion de DATE a TIMESTAMPTZ para coincidir con backend Java (OffsetDateTime)
 --------------------------------------------------------------------------------------------------------------------------------------
 ALTER TABLE presupuestos ALTER COLUMN fecha_aceptacion TYPE TIMESTAMPTZ USING fecha_aceptacion::TIMESTAMPTZ;
+
+-- -------------------------------------------------------------------------
+-- FIX PARA PRODUCTOS: Añadir margen e iva para desglose de precios profesional
+-- -------------------------------------------------------------------------
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS margen NUMERIC(5, 2) DEFAULT 0;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS iva NUMERIC(5, 2) DEFAULT 21;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS precio_venta NUMERIC(12, 2) DEFAULT 0;
+

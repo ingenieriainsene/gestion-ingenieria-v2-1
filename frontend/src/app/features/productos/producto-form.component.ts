@@ -82,9 +82,85 @@ import { ProductoService } from '../../services/producto.service';
                   step="0.01"
                   required
                   placeholder="0.00"
+                  (input)="calcularPrecioVenta()"
                 />
               </div>
             </div>
+
+            <!-- Margen -->
+            <div class="form-group">
+              <label class="form-label">Margen de Beneficio (%)</label>
+              <div class="input-wrapper">
+                <span class="input-icon">📈</span>
+                <input
+                  type="number"
+                  class="form-control"
+                  name="margen"
+                  [(ngModel)]="modelo.margen"
+                  step="0.1"
+                  placeholder="0.0"
+                  (input)="calcularPrecioVenta()"
+                />
+              </div>
+            </div>
+
+            <!-- IVA -->
+            <div class="form-group">
+              <label class="form-label">IVA (%)</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🏛️</span>
+                <input
+                  type="number"
+                  class="form-control"
+                  name="iva"
+                  [(ngModel)]="modelo.iva"
+                  placeholder="21"
+                />
+              </div>
+            </div>
+
+            <!-- Precio Venta (PVP) -->
+            <div class="form-group">
+              <label class="form-label">Precio Venta (PVP Base) (€)</label>
+              <div class="input-wrapper">
+                <span class="input-icon">💰</span>
+                <input
+                  type="number"
+                  class="form-control"
+                  name="precioVenta"
+                  [(ngModel)]="modelo.precioVenta"
+                  step="0.01"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Price Breakdown Summary -->
+          <div class="price-breakdown mt-4" *ngIf="modelo.coste">
+             <h4>📊 Desglose de Precios</h4>
+             <div class="breakdown-grid">
+                <div class="breakdown-item">
+                  <span class="label">Coste:</span>
+                  <span class="value">{{ modelo.coste | number:'1.2-2' }} €</span>
+                </div>
+                <div class="breakdown-item">
+                  <span class="label">Beneficio ({{ modelo.margen || 0 }}%):</span>
+                  <span class="value">{{ (modelo.coste * (modelo.margen || 0) / 100) | number:'1.2-2' }} €</span>
+                </div>
+                <div class="breakdown-item highlight">
+                  <span class="label">PVP (Base Imp):</span>
+                  <span class="value">{{ modelo.precioVenta | number:'1.2-2' }} €</span>
+                </div>
+                <div class="breakdown-item">
+                  <span class="label">IVA ({{ modelo.iva || 0 }}%):</span>
+                  <span class="value">{{ (modelo.precioVenta || 0) * (modelo.iva || 0) / 100 | number:'1.2-2' }} €</span>
+                </div>
+                <div class="breakdown-item total">
+                  <span class="label">PVP TOTAL:</span>
+                  <span class="value">{{ (modelo.precioVenta || 0) * (1 + (modelo.iva || 0) / 100) | number:'1.2-2' }} €</span>
+                </div>
+             </div>
           </div>
 
           <div class="form-actions">
@@ -124,6 +200,14 @@ import { ProductoService } from '../../services/producto.service';
     .btn-save { padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
     .btn-save:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3); }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; background: #94a3b8; }
+
+    .price-breakdown { background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .price-breakdown h4 { margin: 0 0 1rem 0; color: #1e293b; font-size: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+    .breakdown-grid { display: grid; gap: 0.75rem; }
+    .breakdown-item { display: flex; justify-content: space-between; font-size: 0.95rem; color: #64748b; }
+    .breakdown-item.highlight { color: #2563eb; font-weight: 600; padding: 5px 0; border-top: 1px dashed #cbd5e1; border-bottom: 1px dashed #cbd5e1; margin: 2px 0; }
+    .breakdown-item.total { padding-top: 0.5rem; border-top: 2px solid #e2e8f0; color: #0f172a; font-weight: 700; font-size: 1.1rem; }
+    .mt-4 { margin-top: 1.5rem; }
     
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   `]
@@ -133,6 +217,9 @@ export class ProductoFormComponent implements OnInit {
     codRef: '',
     descripcion: '',
     coste: 0,
+    margen: 0,
+    iva: 21,
+    precioVenta: 0,
     categoria: '',
   };
   esNuevo = true;
@@ -153,7 +240,21 @@ export class ProductoFormComponent implements OnInit {
     }
   }
 
+  calcularPrecioVenta(): void {
+    if (this.modelo.coste != null && this.modelo.margen != null) {
+      const coste = Number(this.modelo.coste);
+      const margen = Number(this.modelo.margen);
+      this.modelo.precioVenta = +(coste + (coste * margen / 100)).toFixed(2);
+    }
+  }
+
   guardar(): void {
+    // Asegurar que los números sean tipos correctos
+    this.modelo.coste = Number(this.modelo.coste);
+    this.modelo.margen = Number(this.modelo.margen || 0);
+    this.modelo.iva = Number(this.modelo.iva || 0);
+    this.modelo.precioVenta = Number(this.modelo.precioVenta || 0);
+
     if (this.esNuevo) {
       this.productoService.create(this.modelo).subscribe(() => {
         this.router.navigate(['/productos']);
