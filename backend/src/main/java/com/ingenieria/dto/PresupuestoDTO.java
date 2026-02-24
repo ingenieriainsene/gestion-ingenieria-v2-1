@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Data
@@ -18,7 +19,7 @@ public class PresupuestoDTO {
     private BigDecimal totalConIva;
     private String estado;
     private String tipoPresupuesto;
-    private LocalDate fechaAceptacion;
+    private OffsetDateTime fechaAceptacion;
     private Integer diasValidez;
     private Long tramiteId;
     private List<PresupuestoLineaDTO> lineas;

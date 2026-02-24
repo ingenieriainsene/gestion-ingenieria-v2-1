@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class PresupuestoListResponse {
     private BigDecimal totalConIva;
     private String estado;
     private String tipoPresupuesto;
-    private LocalDate fechaAceptacion;
+    private OffsetDateTime fechaAceptacion;
     private Integer diasValidez;
     private Long clienteId;
     private String clienteNombre;
