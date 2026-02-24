@@ -57,7 +57,7 @@ import Swal from 'sweetalert2';
                   class="form-control"
                   formControlName="viviendaLabel"
                   list="viviendas-presupuestos-list"
-                  placeholder="Busca por dirección o CUPS"
+                  placeholder="Busca por dirección, CUPS o Ref. Catastral"
                   (input)="onViviendaInput()"
                 />
                 <datalist id="viviendas-presupuestos-list">
@@ -960,7 +960,8 @@ export class PresupuestoFormComponent implements OnInit {
   private buildLocalLabel(l: Local): string {
     const dir = l.direccionCompleta || 'Local sin dirección';
     const cups = l.cups ? ` · ${l.cups}` : '';
-    return `${dir}${cups}`;
+    const cat = l.referenciaCatastral ? ` · ${l.referenciaCatastral}` : '';
+    return `${dir}${cups}${cat}`;
   }
 
   private buildProductoLabel(p: Producto): string {
