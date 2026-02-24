@@ -45,6 +45,12 @@ export class TramiteDetalleComponent implements OnInit {
   activeTab = 'general';
   presupuestos: PresupuestoListItem[] = [];
 
+  // Provider Modal
+  modalProveedorVisible = false;
+  proveedorQuery = '';
+  proveedoresCompletos: any[] = [];
+  proveedoresFiltrados: any[] = [];
+
   formInfo: FormGroup;
   formHito: FormGroup;
   filesToUpload: File[] = [];
@@ -169,14 +175,15 @@ export class TramiteDetalleComponent implements OnInit {
 
   cargarProveedores() {
     this.proveedorService.getAll().subscribe({
-      next: (list: ProveedorDTO[] | any[]) => {
-        const raw = Array.isArray(list) ? list : [];
-        this.proveedores = raw
+      next: (list: any[]) => {
+        this.proveedoresCompletos = Array.isArray(list) ? list : [];
+        this.proveedores = this.proveedoresCompletos
           .map((p: any) => ({
             id: p.idProveedor ?? p.id,
             nombre: p.nombreComercial ?? p.razonSocial ?? 'Proveedor',
           }))
           .filter((p: any) => typeof p.id === 'number');
+        this.filtrarProveedores();
       },
       error: () => { },
     });
@@ -251,6 +258,48 @@ export class TramiteDetalleComponent implements OnInit {
     } else {
       this.formHito.patchValue({ idProveedor: null });
     }
+  }
+
+  abrirProveedorModal() {
+    this.proveedorQuery = '';
+    this.filtrarProveedores();
+    this.modalProveedorVisible = true;
+  }
+
+  cerrarProveedorModal() {
+    this.modalProveedorVisible = false;
+  }
+
+  filtrarProveedores() {
+    const term = this.proveedorQuery.trim().toLowerCase();
+    if (!term) {
+      this.proveedoresFiltrados = this.proveedoresCompletos.slice(0, 50);
+      return;
+    }
+    this.proveedoresFiltrados = this.proveedoresCompletos.filter(p => {
+      const nombre = (p.nombreComercial || '').toLowerCase();
+      const cif = (p.cif || '').toLowerCase();
+      const razon = (p.razonSocial || '').toLowerCase();
+      return nombre.includes(term) || cif.includes(term) || razon.includes(term);
+    }).slice(0, 50);
+  }
+
+  seleccionarProveedor(p: any) {
+    const id = p.idProveedor ?? p.id;
+    const nombre = p.nombreComercial || p.razonSocial || 'Proveedor';
+    this.formHito.patchValue({
+      idProveedor: id,
+      proveedorLabel: nombre
+    });
+    this.cerrarProveedorModal();
+  }
+
+  getOficiosLabels(p: any): string[] {
+    if (p.oficios && Array.isArray(p.oficios)) return p.oficios;
+    if (p.listaOficios && Array.isArray(p.listaOficios)) {
+      return p.listaOficios.map((o: any) => o.oficio);
+    }
+    return [];
   }
 
   editingHitoId: number | null = null;

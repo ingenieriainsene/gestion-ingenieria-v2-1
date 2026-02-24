@@ -151,9 +151,11 @@
             </div>
             <div class="form-group">
               <label class="form-label">Proveedor</label>
-              <div class="input-wrapper">
+              <div class="input-wrapper has-micro-btn">
                 <input type="text" class="form-control" formControlName="proveedorLabel" list="proveedores-list"
                   placeholder="Busca proveedor..." (input)="onProveedorInput()" />
+                <button type="button" class="btn-micro-search-form" (click)="abrirProveedorModal()"
+                  title="Búsqueda avanzada">🔍</button>
                 <datalist id="proveedores-list">
                   <option *ngFor="let p of proveedores" [value]="p.nombre"></option>
                 </datalist>
@@ -322,5 +324,44 @@
 
   <div *ngIf="loading" class="loading-state">
     <div class="spinner"></div>
+  </div>
+
+  <!-- Modal Búsqueda Proveedores -->
+  <div class="modal-overlay" [class.active]="modalProveedorVisible" (click)="cerrarProveedorModal()">
+    <div class="modal-card provider-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🔍 Seleccionar Proveedor</h3>
+        <button class="close-btn" (click)="cerrarProveedorModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-box">
+          <span class="search-icon">🔎</span>
+          <input type="text" class="search-input" placeholder="Buscar por nombre, CIF o razón social..."
+            [(ngModel)]="proveedorQuery" (ngModelChange)="filtrarProveedores()" autofocus />
+        </div>
+        <div class="provider-list">
+          <div class="provider-item" *ngFor="let p of proveedoresFiltrados" (click)="seleccionarProveedor(p)">
+            <div class="prov-main">
+              <div class="prov-name">{{ p.nombreComercial }}</div>
+              <div class="prov-cif">{{ p.cif || 'Sin CIF' }}</div>
+            </div>
+            <div class="prov-details">
+              <div class="oficios-row">
+                <span *ngFor="let o of getOficiosLabels(p)" class="oficio-tag">{{ o }}</span>
+              </div>
+              <div *ngIf="p.razonSocial && p.razonSocial !== p.nombreComercial" class="prov-razon">
+                {{ p.razonSocial }}
+              </div>
+            </div>
+          </div>
+          <div *ngIf="proveedoresFiltrados.length === 0" class="empty-results">
+            No se encontraron proveedores para "{{ proveedorQuery }}".
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cerrarProveedorModal()">Cerrar</button>
+      </div>
+    </div>
   </div>
 </div>
