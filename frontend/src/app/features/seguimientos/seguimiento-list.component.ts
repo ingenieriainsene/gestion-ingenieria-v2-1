@@ -49,7 +49,7 @@ import { ProveedorService } from '../../services/proveedor.service';
           <label>Proveedor</label>
           <select [(ngModel)]="filtroProveedor" (change)="aplicarFiltro()" class="form-select">
             <option [ngValue]="null">-- Todos --</option>
-            <option *ngFor="let p of proveedores" [ngValue]="p.idProveedor">{{ p.nombreComercial }}</option>
+            <option *ngFor="let p of proveedores" [ngValue]="p.idProveedor ?? p.id">{{ p.nombreComercial }}</option>
           </select>
         </div>
         <div class="filter-group">
@@ -317,8 +317,8 @@ export class SeguimientoListComponent implements OnInit {
     }
 
     // Proveedor
-    if (this.filtroProveedor) {
-      res = res.filter(s => s.idProveedor === this.filtroProveedor);
+    if (this.filtroProveedor != null) {
+      res = res.filter(s => s.idProveedor == this.filtroProveedor);
     }
 
     // Urgencia

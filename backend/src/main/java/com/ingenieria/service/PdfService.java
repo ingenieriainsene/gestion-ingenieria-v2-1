@@ -140,15 +140,13 @@ public class PdfService {
             if ("CAPITULO".equals(l.getTipoJerarquia())) {
                 String capitulo = (l.getCodigoVisual() != null ? l.getCodigoVisual() + " " : "") +
                         (l.getConcepto() != null ? l.getConcepto() : "—");
-                BigDecimal capTotal = sumarCapituloConIva(l);
+                BigDecimal capTotal = sumarCapituloBase(l);
                 addBodyCellBold(table, capitulo);
                 addBodyCell(table, "—");
                 addBodyCell(table, "—");
                 addBodyCellBold(table, formatMoney(capTotal));
-                for (PresupuestoLinea h : l.getHijos()) {
-                    addPartidaRow(table, h);
-                }
             } else {
+                // Si es una partida raíz (fuera de capítulos), la mostramos
                 addPartidaRow(table, l);
             }
         }
@@ -162,6 +160,9 @@ public class PdfService {
         BigDecimal totalIva = BigDecimal.ZERO;
         BigDecimal totalConIva = BigDecimal.ZERO;
 
+        // Mapa para desglose de IVA por tipos (p.ej. 21%, 10%)
+        Map<BigDecimal, BigDecimal> basesPorIva = new HashMap<>();
+
         java.util.Collection<PresupuestoLinea> lineas = p.getLineas();
         if (lineas != null) {
             for (PresupuestoLinea l : lineas) {
@@ -170,25 +171,56 @@ public class PdfService {
                 }
                 BigDecimal base = calcularBaseLinea(l);
                 BigDecimal ivaPct = l.getIvaPorcentaje() != null ? l.getIvaPorcentaje() : BigDecimal.valueOf(21);
-                BigDecimal iva = round2(base.multiply(ivaPct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
-                BigDecimal total = round2(base.add(iva));
+
                 totalSinIva = totalSinIva.add(base);
-                totalIva = totalIva.add(iva);
-                totalConIva = totalConIva.add(total);
+                basesPorIva.put(ivaPct, basesPorIva.getOrDefault(ivaPct, BigDecimal.ZERO).add(base));
             }
         }
 
-        PdfPTable totals = new PdfPTable(2);
-        totals.setWidthPercentage(40);
-        totals.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totals.setWidths(new float[] { 1.2f, 1f });
+        PdfPTable totalsTable = new PdfPTable(2);
+        totalsTable.setWidthPercentage(45);
+        totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        totalsTable.setWidths(new float[] { 1.5f, 1f });
 
-        addTotalsRow(totals, "Base imponible", formatMoney(round2(totalSinIva)));
-        addTotalsRow(totals, "Total IVA", formatMoney(round2(totalIva)));
-        addTotalsRow(totals, "Total final", formatMoney(round2(totalConIva)));
+        // Añadir desglose por cada tipo de IVA
+        List<BigDecimal> tipos = new ArrayList<>(basesPorIva.keySet());
+        tipos.sort(Comparator.reverseOrder());
 
-        document.add(totals);
+        for (BigDecimal pct : tipos) {
+            BigDecimal base = basesPorIva.get(pct);
+            BigDecimal cuota = round2(base.multiply(pct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+            totalIva = totalIva.add(cuota);
+
+            addTotalsRow(totalsTable, "Base Imponible " + pct + "%", formatMoney(round2(base)));
+            addTotalsRow(totalsTable, "IVA " + pct + "%", formatMoney(cuota));
+        }
+
+        totalConIva = totalSinIva.add(totalIva);
+
+        // Fila divisoria
+        PdfPCell separator = new PdfPCell(new Phrase(" "));
+        separator.setBorder(Rectangle.TOP);
+        separator.setColspan(2);
+        separator.setFixedHeight(2);
+        totalsTable.addCell(separator);
+
+        addTotalsRowBold(totalsTable, "TOTAL PRESUPUESTO", formatMoney(round2(totalConIva)));
+
+        document.add(totalsTable);
         document.add(Chunk.NEWLINE);
+    }
+
+    private void addTotalsRowBold(PdfPTable table, String label, String value) {
+        PdfPCell c1 = new PdfPCell(new Phrase(label, FONT_TITLE));
+        c1.setBorder(Rectangle.NO_BORDER);
+        c1.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        c1.setPadding(4);
+        PdfPCell c2 = new PdfPCell(new Phrase(value, FONT_TITLE));
+        c2.setBorder(Rectangle.NO_BORDER);
+        c2.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        c2.setPadding(4);
+        table.addCell(c1);
+        table.addCell(c2);
     }
 
     private void addFooter(Document document) throws DocumentException {
@@ -238,15 +270,13 @@ public class PdfService {
         addBodyCell(table, formatMoney(base));
     }
 
-    private BigDecimal sumarCapituloConIva(PresupuestoLinea capitulo) {
+    private BigDecimal sumarCapituloBase(PresupuestoLinea capitulo) {
         BigDecimal total = BigDecimal.ZERO;
         for (PresupuestoLinea h : capitulo.getHijos()) {
             if ("CAPITULO".equals(h.getTipoJerarquia())) {
-                total = total.add(sumarCapituloConIva(h));
+                total = total.add(sumarCapituloBase(h));
             } else {
-                BigDecimal base = calcularBaseLinea(h);
-                BigDecimal ivaPct = h.getIvaPorcentaje() != null ? h.getIvaPorcentaje() : BigDecimal.valueOf(21);
-                total = total.add(calcularTotalConIva(base, ivaPct));
+                total = total.add(calcularBaseLinea(h));
             }
         }
         return round2(total);
