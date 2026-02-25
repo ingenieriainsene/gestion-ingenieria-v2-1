@@ -44,6 +44,17 @@ public class DemoDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        try {
+            runInternal();
+        } catch (Exception e) {
+            // Si la BD no tiene las tablas aún (despliegue fresco sin DDL aplicado),
+            // no debe matar el proceso de Spring Boot. Solo logueamos el aviso.
+            System.err.println(">>> DemoDataSeeder omitido - BD no disponible o sin esquema: "
+                    + e.getClass().getSimpleName() + ": " + e.getMessage() + " <<<");
+        }
+    }
+
+    private void runInternal() {
         if (clienteRepository.count() > 0 || contratoRepository.count() > 0 || proveedorRepository.count() > 0) {
             System.out.println(">>> DemoDataSeeder omitido: ya existen datos <<<");
             return;

@@ -1,23 +1,22 @@
-# ETAPA 1: Compilar (Usamos una imagen de Maven que SÍ existe)
+# ETAPA 1: Compilar
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 
-# Copiamos archivos de configuración y descargamos librerías
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
-# Copiamos el código fuente y compilamos el .jar
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# ETAPA 2: Ejecutar (Usamos una imagen ligera válida)
+# ETAPA 2: Ejecutar
 FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
 
-# Copiamos el .jar que acabamos de fabricar arriba
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8080
+# Railway inyecta la variable PORT automáticamente.
+# Usamos CMD en forma shell (sh -c) para que ${PORT} se interpole en runtime.
+# En local sin PORT, Spring Boot usará el default de application.properties (8082).
+EXPOSE 8082
 
-# Arrancamos la aplicación
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8082}"]
