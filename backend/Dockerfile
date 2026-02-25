@@ -17,5 +17,7 @@ WORKDIR /app
 # Copiamos el .jar que acabamos de fabricar arriba
 COPY --from=build /app/target/*.jar app.jar
 
+EXPOSE 8080
+
 # Arrancamos la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
