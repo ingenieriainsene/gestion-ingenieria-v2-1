@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, of, Subscription } from 'rxjs';
 import { ClienteService } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
@@ -399,6 +400,7 @@ import Swal from 'sweetalert2';
 export class ClienteFichaComponent implements OnInit {
   form: FormGroup;
   idCliente: number | null = null;
+  private dniSub?: Subscription;
 
   constructor(
     private fb: FormBuilder,
@@ -455,6 +457,38 @@ export class ClienteFichaComponent implements OnInit {
         }
       });
     }
+
+    this.dniSub = this.form.get('dni')!.valueChanges.pipe(
+      debounceTime(600),
+      distinctUntilChanged(),
+      switchMap(dni => {
+        if (!dni || dni.length < 5) return of(null);
+        return this.service.checkDni(dni).pipe(
+          catchError(() => of(null))
+        );
+      })
+    ).subscribe(existente => {
+      // Solo avisamos si el DNI pertenece a OTRO cliente (no al que estamos editando)
+      if (existente && existente.idCliente && existente.idCliente !== this.idCliente) {
+        Swal.fire({
+          title: 'DNI ya registrado',
+          html: `Este DNI ya pertenece a otro cliente: <b>${existente.nombre} ${existente.apellido1}</b>.<br><br>¿Deseas ir a su ficha?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Ver Ficha Existente',
+          confirmButtonColor: '#2563eb',
+          cancelButtonText: 'Seguir Editando'
+        }).then(res => {
+          if (res.isConfirmed) {
+            this.router.navigate(['/clientes', existente.idCliente]);
+          }
+        });
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.dniSub?.unsubscribe();
   }
 
   save() {

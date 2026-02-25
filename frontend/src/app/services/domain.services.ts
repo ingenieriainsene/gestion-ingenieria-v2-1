@@ -190,6 +190,10 @@ export class ClienteService {
     update(id: number, data: Cliente): Observable<Cliente> { return this.api.put<Cliente>(`${this.endpoint}/${id}`, data); }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
 
+    checkDni(dni: string): Observable<Cliente> {
+        return this.api.get<Cliente>(`${this.endpoint}/check-dni/${dni}`);
+    }
+
     getArchivos(id: number): Observable<ArchivoCliente[]> {
         return this.api.get<ArchivoCliente[]>(`clientes/${id}/archivos`);
     }

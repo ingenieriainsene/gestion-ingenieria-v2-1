@@ -28,6 +28,13 @@ public class ClienteController {
         return service.search(term);
     }
 
+    @GetMapping("/check-dni/{dni}")
+    public ResponseEntity<Cliente> checkDni(@PathVariable String dni) {
+        return service.findByDni(dni)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<Cliente> create(@RequestBody Cliente cliente) {
         return ResponseEntity.ok(service.save(cliente));

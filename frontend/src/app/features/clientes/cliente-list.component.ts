@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, of, Subscription } from 'rxjs';
 import { Cliente, ClienteService } from '../../services/domain.services';
 import { environment } from '../../../environments/environments';
 import Swal from 'sweetalert2';
@@ -390,13 +391,14 @@ import Swal from 'sweetalert2';
     .phone-row { display: flex; flex-direction: column; }
   `]
 })
-export class ClienteListComponent implements OnInit {
+export class ClienteListComponent implements OnInit, OnDestroy {
   clientes: Cliente[] = [];
   filtrados: Cliente[] = [];
   filtro = '';
   modalVisible = false;
   guardando = false;
   formModal: FormGroup;
+  private dniSub?: Subscription;
 
   // Archivos variables
   modalArchivosVisible = false;
@@ -442,6 +444,38 @@ export class ClienteListComponent implements OnInit {
       this.clientes = data;
       this.filtrados = data;
     });
+
+    this.dniSub = this.formModal.get('dni')!.valueChanges.pipe(
+      debounceTime(600),
+      distinctUntilChanged(),
+      switchMap(dni => {
+        if (!dni || dni.length < 5 || !this.modalVisible) return of(null);
+        return this.service.checkDni(dni).pipe(
+          catchError(() => of(null))
+        );
+      })
+    ).subscribe(existente => {
+      if (existente && existente.idCliente) {
+        Swal.fire({
+          title: 'DNI ya registrado',
+          html: `Ya existe un cliente con este DNI: <b>${existente.nombre} ${existente.apellido1}</b>.<br><br>¿Deseas ir a su ficha?`,
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: 'Ver Ficha',
+          confirmButtonColor: '#2563eb',
+          cancelButtonText: 'Seguir aquí'
+        }).then(res => {
+          if (res.isConfirmed) {
+            this.cerrarModal();
+            this.irAFicha(existente);
+          }
+        });
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.dniSub?.unsubscribe();
   }
 
   irAFicha(c: Cliente) {

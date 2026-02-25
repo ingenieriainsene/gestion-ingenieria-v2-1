@@ -102,28 +102,24 @@ public class ClienteService {
     public Cliente save(Cliente cliente) {
         // Validar DNI único
         if (cliente.getDni() != null) {
-            // Si es nuevo o ha cambiado el DNI
-            boolean esNuevo = cliente.getIdCliente() == null;
-            if (esNuevo) {
-                if (clienteRepository.existsByDni(cliente.getDni())) {
-                    throw new IllegalArgumentException("Ya existe un cliente con el DNI: " + cliente.getDni());
+            clienteRepository.findByDni(cliente.getDni()).ifPresent(existente -> {
+                if (cliente.getIdCliente() == null || !existente.getIdCliente().equals(cliente.getIdCliente())) {
+                    throw new IllegalArgumentException(
+                            "Ya existe un cliente registrado con el DNI: " + cliente.getDni());
                 }
-            } else {
-                Cliente existente = findById(cliente.getIdCliente());
-                if (!existente.getDni().equals(cliente.getDni())) {
-                    if (clienteRepository.existsByDni(cliente.getDni())) {
-                        throw new IllegalArgumentException("El nuevo DNI " + cliente.getDni() + " ya está en uso.");
-                    }
-                }
-            }
+            });
         }
 
-        // Asegurar bidireccionalidad de teléfonos
+        // Asegurar relación bidireccional de teléfonos
         if (cliente.getTelefonos() != null) {
             cliente.getTelefonos().forEach(t -> t.setCliente(cliente));
         }
 
         return clienteRepository.save(cliente);
+    }
+
+    public java.util.Optional<Cliente> findByDni(String dni) {
+        return clienteRepository.findByDni(dni);
     }
 
     public void delete(Long id) {
