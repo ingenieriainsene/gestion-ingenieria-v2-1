@@ -23,6 +23,16 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    /**
+     * Los preflights OPTIONS no llevan Authorization header y no deben ser
+     * procesados por este filtro. La respuesta CORS la gestiona Spring Security
+     * antes de llegar aquí.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
