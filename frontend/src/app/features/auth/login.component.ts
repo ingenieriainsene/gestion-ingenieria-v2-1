@@ -42,7 +42,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
         });
     }
 
-    ngOnInit() {}
+    ngOnInit() { }
 
     ngAfterViewInit() {
         const canvas = this.canvasRef.nativeElement;
@@ -189,11 +189,28 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
             },
             error: (err) => {
                 const status = err?.status;
-                const body = err?.error && typeof err.error === 'object' ? err.error : {};
-                const msg = body['message'] ?? body['error'] ?? (typeof err?.error === 'string' ? err.error : null);
-                console.error('[Login] Error:', status, msg ?? err?.message, err);
-                const text = (typeof msg === 'string' && msg) ? msg : 'Credenciales inválidas. Usuario: jefe_admin, contraseña: admin123';
-                Swal.fire('Error', text, 'error');
+                console.error('[Login] Error HTTP status:', status, err);
+
+                if (status === 0) {
+                    // status 0 = error de red o CORS — el servidor no respondió
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: 'No se pudo contactar con el servidor. Por favor, comprueba tu conexión e inténtalo de nuevo.',
+                        footer: 'Si el problema persiste, contacta con el administrador.'
+                    });
+                } else if (status === 401) {
+                    // 401 real = credenciales incorrectas
+                    Swal.fire('Acceso denegado', 'Usuario o contraseña incorrectos.', 'error');
+                } else {
+                    // Cualquier otro error del servidor
+                    const body = err?.error && typeof err.error === 'object' ? err.error : {};
+                    const msg = body['message'] ?? body['error'] ?? (typeof err?.error === 'string' ? err.error : null);
+                    const text = (typeof msg === 'string' && msg)
+                        ? msg
+                        : `Error inesperado (código ${status ?? 'desconocido'}). Inténtalo de nuevo.`;
+                    Swal.fire('Error del servidor', text, 'error');
+                }
             }
         });
     }
