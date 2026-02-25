@@ -27,52 +27,65 @@ import Swal from 'sweetalert2';
       <button class="btn-search" (click)="aplicarFiltro()">🔍</button>
     </div>
 
-    <!-- CLIENTS GRID -->
-    <div class="client-grid">
-      <div 
-        *ngFor="let c of filtrados" 
-        class="client-card fade-in" 
-        (click)="irAFicha(c)"
-      >
-        <div class="card-content">
-          <div class="client-avatar">
-            #{{ c.idCliente }}
-          </div>
-          <div class="client-info">
-            <h3>{{ c.nombre }} {{ c.apellido1 }} {{ c.apellido2 || '' }}</h3>
-            <span class="client-dni">{{ c.dni }}</span>
-            <p class="client-address" *ngIf="c.direccionFiscalCompleta">
-              📍 {{ c.direccionFiscalCompleta }}
-            </p>
-          </div>
-        </div>
-        
-        <div class="card-actions">
-           <button 
-             class="btn-icon btn-edit" 
-             title="Editar" 
-             (click)="$event.stopPropagation()" 
-             [routerLink]="['/clientes', c.idCliente, 'editar']"
-           >✏️</button>
-           
-           <button 
-             class="btn-icon btn-files" 
-             title="Archivos" 
-             (click)="$event.stopPropagation(); abrirArchivos(c)"
-           >📂</button>
-           
-           <button 
-             class="btn-icon btn-delete" 
-             title="Eliminar" 
-             (click)="$event.stopPropagation(); eliminar(c)"
-           >🗑️</button>
-        </div>
-      </div>
-      
-      <!-- Empty State -->
-      <div *ngIf="filtrados.length === 0" class="empty-state">
-         No se encontraron clientes con los criterios de búsqueda.
-      </div>
+    <!-- CLIENTS TABLE (LIST MODE) -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>CLIENTE</th>
+            <th>DNI/CIF</th>
+            <th>DIRECCIÓN FISCAL</th>
+            <th>FECHA ALTA</th>
+            <th style="text-align:right;">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of filtrados" (click)="irAFicha(c)" style="cursor:pointer;">
+            <td><strong>#{{ c.idCliente }}</strong></td>
+            <td>
+              <div class="client-name-cell">
+                <div class="client-mini-avatar">{{ getInitials(c) }}</div>
+                <span>{{ c.nombre }} {{ c.apellido1 }} {{ c.apellido2 || '' }}</span>
+              </div>
+            </td>
+            <td><code class="dni-badge">{{ c.dni }}</code></td>
+            <td><small>{{ c.direccionFiscalCompleta || '—' }}</small></td>
+            <td><small>{{ c.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
+            <td style="text-align:right; white-space:nowrap;">
+               <a 
+                 class="action-badge" 
+                 style="background:#3498db;" 
+                 title="Ver ficha" 
+                 (click)="$event.stopPropagation(); irAFicha(c)"
+               >👁️</a>
+               <a 
+                 class="action-badge badge-edit" 
+                 title="Editar" 
+                 (click)="$event.stopPropagation()" 
+                 [routerLink]="['/clientes', c.idCliente, 'editar']"
+               >✏️</a>
+               <button 
+                 class="action-badge" 
+                 style="background: #f39c12; border:none; cursor:pointer;" 
+                 title="Archivos" 
+                 (click)="$event.stopPropagation(); abrirArchivos(c)"
+               >📂</button>
+               <button 
+                 class="action-badge badge-delete" 
+                 style="border:none; cursor:pointer;" 
+                 title="Eliminar" 
+                 (click)="$event.stopPropagation(); eliminar(c)"
+               >🗑️</button>
+            </td>
+          </tr>
+          <tr *ngIf="filtrados.length === 0">
+            <td colspan="6" style="text-align:center; padding:40px; color:#64748b;">
+               No se encontraron clientes con los criterios de búsqueda.
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- MODAL NUEVO CLIENTE -->
@@ -216,126 +229,84 @@ import Swal from 'sweetalert2';
       font-size: 1.2rem;
     }
 
-    /* Grid System */
-    .client-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-    
-    .client-card {
+    /* Table System */
+    .table-container {
       background: white;
-      border: 1px solid #e2e8f0;
       border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      cursor: pointer; /* Indicates interactivity */
-      transition: all 0.2s ease-out;
-      display: flex;
-      flex-direction: column;
+      border: 1px solid #e2e8f0;
       overflow: hidden;
-      animation: fadeIn 0.4s ease-out;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
-    
-    .client-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      border-color: #3b82f6;
+    table {
+      width: 100%;
+      border-collapse: collapse;
     }
-    
-    .card-content {
-      padding: 1.5rem;
+    th {
+      background: #f8fafc;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    .client-name-cell {
       display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      flex: 1;
+      align-items: center;
+      gap: 12px;
     }
-    
-    .client-avatar {
-      width: 48px;
-      height: 48px;
+    .client-mini-avatar {
+      width: 32px;
+      height: 32px;
       background: #eff6ff;
       color: #3b82f6;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
-      font-size: 1.2rem;
-      flex-shrink: 0;
-    }
-    
-    .client-info {
-      overflow: hidden;
-    }
-    
-    .client-info h3 {
-      margin: 0 0 0.25rem 0;
-      font-size: 1.1rem;
-      color: #1e293b;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .client-dni {
-      display: inline-block;
-      background: #f1f5f9;
-      color: #64748b;
+      font-weight: 700;
       font-size: 0.8rem;
+    }
+
+    .dni-badge {
+      background: #f1f5f9;
+      color: #475569;
       padding: 2px 6px;
       border-radius: 4px;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
       font-family: monospace;
+      font-weight: 600;
     }
-    
-    .client-address {
-      margin: 0.5rem 0 0 0;
-      font-size: 0.85rem;
-      color: #64748b;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    
-    .card-actions {
-      border-top: 1px solid #f1f5f9;
-      padding: 0.75rem 1.5rem;
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.5rem;
-      background: #fcfcfc;
-    }
-    
-    .btn-icon {
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      width: 32px;
-      height: 32px;
-      display: flex;
+
+    .action-badge {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      font-size: 1rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      margin-left: 6px;
+      text-decoration: none;
       transition: all 0.2s;
+      font-size: 1.1rem;
+      color: white;
     }
-    
-    .btn-icon:hover { background: #f1f5f9; border-color: #e2e8f0; }
-    
-    .btn-edit:hover { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
-    .btn-files:hover { color: #d97706; background: #fffbeb; border-color: #fcd34d; }
-    .btn-delete:hover { color: #dc2626; background: #fee2e2; border-color: #fecaca; }
-    
-    .empty-state {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 3rem;
-      color: #94a3b8;
-      background: #f8fafc;
-      border-radius: 12px;
+    .badge-edit { background: #f1c40f; }
+    .badge-delete { background: #e74c3c; color: white !important; }
+    .action-badge:hover {
+      transform: scale(1.1);
+      filter: brightness(1.1);
     }
 
     /* Modal Styles (Legacy) */
