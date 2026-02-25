@@ -9,4 +9,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     List<Cliente> findByNombreContainingOrApellido1ContainingOrDniContaining(String nombre, String apellido,
             String dni);
+
+    boolean existsByDni(String dni);
 }

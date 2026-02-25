@@ -9,6 +9,7 @@ export interface Cliente {
     apellido1: string;
     apellido2?: string;
     dni: string;
+    email?: string;
     direccionFiscalCompleta?: string;
     codigoPostal?: string;
     cuentaBancaria?: string;
@@ -16,6 +17,13 @@ export interface Cliente {
     creadoPor?: string;
     modificadoPor?: string;
     fechaModificacion?: string;
+    telefonos?: ClienteTelefono[];
+}
+
+export interface ClienteTelefono {
+    idTelefono?: number;
+    telefono: string;
+    descripcion?: string;
 }
 
 export interface LocalUbicacion {

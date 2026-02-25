@@ -31,6 +31,21 @@
       <h3>Estado Registro</h3>
       <p class="estado-activo">ACTIVO</p>
     </div>
+    <div class="info-card">
+      <h3>Correo Electrónico</h3>
+      <p><a [href]="'mailto:' + cliente.email" *ngIf="cliente.email" style="color:#3b82f6; text-decoration:none;">{{
+          cliente.email }}</a><span *ngIf="!cliente.email">—</span></p>
+    </div>
+    <div class="info-card">
+      <h3>Teléfonos de Contacto</h3>
+      <div *ngIf="cliente.telefonos && cliente.telefonos.length > 0">
+        <div *ngFor="let t of cliente.telefonos" style="font-size:0.9em; margin-bottom:4px;">
+          <strong>{{ t.telefono }}</strong> <span *ngIf="t.descripcion" style="color:#64748b;">({{ t.descripcion
+            }})</span>
+        </div>
+      </div>
+      <p *ngIf="!cliente.telefonos || cliente.telefonos.length === 0">—</p>
+    </div>
     <div class="info-card info-card-lg">
       <h3>Dirección Fiscal Completa</h3>
       <p>{{ cliente.direccionFiscalCompleta || '—' }}<span *ngIf="cliente.codigoPostal"> ({{ cliente.codigoPostal

@@ -51,6 +51,9 @@ public class Cliente {
     @Column(name = "cuenta_bancaria", length = 34)
     private String cuentaBancaria;
 
+    @Column(length = 100)
+    private String email;
+
     @Column(name = "fecha_alta", insertable = false, updatable = false)
     private LocalDateTime fechaAlta;
 
@@ -87,6 +90,11 @@ public class Cliente {
     @JsonIgnoreProperties("cliente")
     @BatchSize(size = 50)
     private Set<Cita> citas = new HashSet<>();
+
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("cliente")
+    @BatchSize(size = 50)
+    private Set<ClienteTelefono> telefonos = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

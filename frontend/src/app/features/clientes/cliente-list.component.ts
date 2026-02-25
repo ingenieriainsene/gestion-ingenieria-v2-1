@@ -125,6 +125,25 @@ import Swal from 'sweetalert2';
               <label>Cuenta bancaria (IBAN)</label>
               <input type="text" formControlName="cuentaBancaria" />
             </div>
+            <div class="modal-field full">
+              <label>Correo electrónico</label>
+              <input type="email" formControlName="email" placeholder="ejemplo@correo.com" />
+            </div>
+
+            <!-- DYNAMIC PHONES -->
+            <div class="modal-field full">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label>Teléfonos</label>
+                <button type="button" class="btn-add-phone" (click)="addTelefono()">+ Añadir</button>
+              </div>
+              <div formArrayName="telefonos" *ngFor="let t of telefonosArr.controls; let i=index" class="phone-row">
+                <div [formGroupName]="i" style="display:flex; gap:8px; margin-top:8px;">
+                  <input type="text" formControlName="telefono" placeholder="Número" style="flex:2;" />
+                  <input type="text" formControlName="descripcion" placeholder="Etiqueta (Móvil, etc)" style="flex:1;" />
+                  <button type="button" class="btn-remove-phone" (click)="removeTelefono(i)">✕</button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="modal-actions">
             <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
@@ -349,6 +368,26 @@ import Swal from 'sweetalert2';
        from { opacity: 0; transform: translateY(10px); }
        to { opacity: 1; transform: translateY(0); }
     }
+
+    .btn-add-phone {
+      background: #ecf3ff;
+      color: #3b82f6;
+      border: 1px solid #d0e1fd;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-remove-phone {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      width: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .phone-row { display: flex; flex-direction: column; }
   `]
 })
 export class ClienteListComponent implements OnInit {
@@ -378,7 +417,24 @@ export class ClienteListComponent implements OnInit {
       codigoPostal: [''],
       direccionFiscalCompleta: [''],
       cuentaBancaria: [''],
+      email: ['', Validators.email],
+      telefonos: this.fb.array([])
     });
+  }
+
+  get telefonosArr() {
+    return this.formModal.get('telefonos') as import('@angular/forms').FormArray;
+  }
+
+  addTelefono() {
+    this.telefonosArr.push(this.fb.group({
+      telefono: ['', Validators.required],
+      descripcion: ['']
+    }));
+  }
+
+  removeTelefono(i: number) {
+    this.telefonosArr.removeAt(i);
   }
 
   ngOnInit() {

@@ -6,10 +6,10 @@ import { ClienteService } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
 @Component({
-    selector: 'app-cliente-ficha',
-    standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterLink],
-    template: `
+  selector: 'app-cliente-ficha',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  template: `
     <div class="ficha-wrapper">
       <div class="header-section">
         <a [routerLink]="idCliente ? ['/clientes', idCliente] : ['/clientes']" class="back-link">
@@ -126,6 +126,46 @@ import Swal from 'sweetalert2';
                 />
               </div>
             </div>
+
+            <!-- Email -->
+            <div class="form-group full-width">
+              <label class="form-label" for="email">Correo Electrónico</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input
+                  type="email"
+                  id="email"
+                  class="form-control"
+                  formControlName="email"
+                  placeholder="ejemplo@correo.com"
+                />
+              </div>
+            </div>
+
+            <!-- Teléfonos Dinámicos -->
+            <div class="form-group full-width">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <label class="form-label">Teléfonos de Contacto</label>
+                <button type="button" class="btn-add-phone" (click)="addTelefono()">+ Añadir Teléfono</button>
+              </div>
+              
+              <div formArrayName="telefonos">
+                <div *ngFor="let t of telefonosArr.controls; let i=index" [formGroupName]="i" class="phone-item-row">
+                  <div class="input-wrapper" style="flex: 2;">
+                    <span class="input-icon">📞</span>
+                    <input type="text" formControlName="telefono" class="form-control" placeholder="Número" />
+                  </div>
+                  <div class="input-wrapper" style="flex: 1;">
+                    <span class="input-icon">🏷️</span>
+                    <input type="text" formControlName="descripcion" class="form-control" placeholder="Etiqueta" />
+                  </div>
+                  <button type="button" class="btn-remove-phone" (click)="removeTelefono(i)">✕</button>
+                </div>
+              </div>
+              <p *ngIf="telefonosArr.length === 0" style="color:#94a3b8; font-size:0.9rem; text-align:center; padding:1rem; border:1px dashed #e2e8f0; border-radius:8px;">
+                No hay teléfonos registrados.
+              </p>
+            </div>
           </div>
 
           <div class="form-actions">
@@ -142,7 +182,7 @@ import Swal from 'sweetalert2';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .ficha-wrapper {
       max-width: 900px;
       margin: 0 auto;
@@ -314,52 +354,122 @@ import Swal from 'sweetalert2';
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    .btn-add-phone {
+      background: #eff6ff;
+      color: #3b82f6;
+      border: 1px solid #bfdbfe;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-add-phone:hover { background: #dbeafe; }
+
+    .phone-item-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .btn-remove-phone {
+      background: #fee2e2;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-remove-phone:hover { background: #fecaca; }
   `]
 })
 export class ClienteFichaComponent implements OnInit {
-    form: FormGroup;
-    idCliente: number | null = null;
+  form: FormGroup;
+  idCliente: number | null = null;
 
-    constructor(
-        private fb: FormBuilder,
-        private route: ActivatedRoute,
-        private service: ClienteService,
-        private router: Router
-    ) {
-        this.form = this.fb.group({
-            nombre: ['', Validators.required],
-            apellido1: ['', Validators.required],
-            apellido2: [''],
-            dni: ['', Validators.required],
-            codigoPostal: [''],
-            direccionFiscalCompleta: [''],
-            cuentaBancaria: ['']
-        });
-    }
+  constructor(
+    private fb: FormBuilder,
+    private route: ActivatedRoute,
+    private service: ClienteService,
+    private router: Router
+  ) {
+    this.form = this.fb.group({
+      nombre: ['', Validators.required],
+      apellido1: ['', Validators.required],
+      apellido2: [''],
+      dni: ['', Validators.required],
+      codigoPostal: [''],
+      direccionFiscalCompleta: [''],
+      cuentaBancaria: [''],
+      email: ['', Validators.email],
+      telefonos: this.fb.array([])
+    });
+  }
 
-    ngOnInit() {
-        const id = this.route.snapshot.paramMap.get('id');
-        if (id && id !== 'nuevo') {
-            this.idCliente = +id;
-            this.service.getById(this.idCliente).subscribe(cliente => {
-                this.form.patchValue(cliente);
-            });
+  get telefonosArr() {
+    return this.form.get('telefonos') as import('@angular/forms').FormArray;
+  }
+
+  addTelefono() {
+    this.telefonosArr.push(this.fb.group({
+      telefono: ['', Validators.required],
+      descripcion: ['']
+    }));
+  }
+
+  removeTelefono(index: number) {
+    this.telefonosArr.removeAt(index);
+  }
+
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id && id !== 'nuevo') {
+      this.idCliente = +id;
+      this.service.getById(this.idCliente).subscribe(cliente => {
+        // Primero parchamos los campos simples
+        this.form.patchValue(cliente);
+
+        // Luego reconstruimos el FormArray de teléfonos
+        if (cliente.telefonos && Array.isArray(cliente.telefonos)) {
+          this.telefonosArr.clear();
+          cliente.telefonos.forEach(t => {
+            this.telefonosArr.push(this.fb.group({
+              idTelefono: [t.idTelefono],
+              telefono: [t.telefono, Validators.required],
+              descripcion: [t.descripcion]
+            }));
+          });
         }
+      });
     }
+  }
 
-    save() {
-        if (this.form.invalid) return;
-        const value = this.form.value;
-        if (this.idCliente) {
-            this.service.update(this.idCliente, value).subscribe(() => {
-                Swal.fire('Guardado', 'Cliente actualizado correctamente', 'success')
-                    .then(() => this.router.navigate(['/clientes']));
-            });
-        } else {
-            this.service.create(value).subscribe(() => {
-                Swal.fire('Guardado', 'Cliente guardado correctamente', 'success')
-                    .then(() => this.router.navigate(['/clientes']));
-            });
-        }
+  save() {
+    if (this.form.invalid) return;
+    const value = this.form.value;
+    if (this.idCliente) {
+      this.service.update(this.idCliente, value).subscribe(() => {
+        Swal.fire('Guardado', 'Cliente actualizado correctamente', 'success')
+          .then(() => this.router.navigate(['/clientes']));
+      });
+    } else {
+      this.service.create(value).subscribe(() => {
+        Swal.fire('Guardado', 'Cliente guardado correctamente', 'success')
+          .then(() => this.router.navigate(['/clientes']));
+      });
     }
+  }
 }
