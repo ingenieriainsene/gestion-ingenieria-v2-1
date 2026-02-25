@@ -365,7 +365,8 @@ export class SidebarComponent implements OnInit {
         { label: 'Intervenciones', route: '/intervenciones' },
         { label: 'Agendar citas', route: '/agendar-citas' },
         { label: 'Almacen', route: '/productos' },
-        { label: 'Proveedores', route: '/proveedores' }
+        { label: 'Proveedores', route: '/proveedores' },
+        { label: 'Análisis de Datos', route: '/operaciones/analisis-datos' }
       ]
     },
     {

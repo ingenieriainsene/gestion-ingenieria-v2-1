@@ -80,6 +80,15 @@ export const routes: Routes = [
             { path: 'presupuestos/nuevo', component: PresupuestoFormComponent },
             { path: 'presupuestos/:id/editar', component: PresupuestoFormComponent },
             { path: 'presupuestos/:id', component: PresupuestoFichaViewComponent },
+
+            // Módulo Análisis de Datos (Operaciones → Análisis de Datos)
+            {
+                path: 'operaciones/analisis-datos',
+                loadComponent: () =>
+                    import('./features/analytics/analytics-data.component').then(
+                        m => m.AnalyticsDataComponent
+                    )
+            },
         ]
     }
 ];
