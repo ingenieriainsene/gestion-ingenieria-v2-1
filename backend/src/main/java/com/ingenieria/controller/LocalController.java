@@ -13,10 +13,13 @@ import java.util.List;
 @RequestMapping("/api/locales")
 
 public class LocalController {
-    @Autowired private LocalService service;
+    @Autowired
+    private LocalService service;
 
     @GetMapping
-    public List<Local> getAll() { return service.findAll(); }
+    public List<Local> getAll() {
+        return service.findAll();
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Local> getById(@PathVariable Long id) {
@@ -39,6 +42,12 @@ public class LocalController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/check-rc/{rc}")
+    public ResponseEntity<Local> getByRC(@PathVariable String rc) {
+        Local l = service.findByReferenciaCatastral(rc);
+        return l != null ? ResponseEntity.ok(l) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")

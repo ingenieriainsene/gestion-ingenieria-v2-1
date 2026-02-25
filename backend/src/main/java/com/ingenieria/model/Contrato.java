@@ -75,6 +75,9 @@ public class Contrato {
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
+    @Column(length = 50)
+    private String estado = "Activo";
+
     @Column(name = "fecha_alta", updatable = false)
     private LocalDateTime fechaAlta;
 

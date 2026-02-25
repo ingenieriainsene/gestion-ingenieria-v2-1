@@ -191,7 +191,7 @@ public class TramiteService {
     @Transactional(readOnly = true)
     public List<TramiteMapaResponse> findActivosByContratoId(Long idContrato) {
         List<Tramite> list = tramiteRepository.findByContrato_IdContratoAndEstadoIn(
-                idContrato, List.of("En proceso", "Terminado"));
+                idContrato, List.of("En proceso", "Terminado", "Anulado"));
         return list.stream()
                 .sorted(Comparator
                         .comparing((Tramite t) -> "En proceso".equals(t.getEstado()) ? 0 : 1)

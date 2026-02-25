@@ -131,6 +131,16 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
               <label class="form-label">Fecha Vencimiento <span class="required">*</span></label>
               <input type="date" class="form-control" formControlName="fechaVencimiento" />
             </div>
+
+            <!-- Estado -->
+            <div class="form-group" *ngIf="idContrato">
+              <label class="form-label">Estado del Contrato <span class="required">*</span></label>
+              <select class="form-control" formControlName="estado">
+                <option value="Activo">Activo</option>
+                <option value="Terminado">Terminado</option>
+                <option value="Anulado">Anulado</option>
+              </select>
+            </div>
           </div>
 
           <div class="separator"></div>
@@ -526,7 +536,8 @@ export class ContratoFichaComponent implements OnInit {
       enviadoCeePost: [false],
       licenciaObras: [false],
       subvencionEstado: [false],
-      libroEdifIncluido: [false]
+      libroEdifIncluido: [false],
+      estado: ['Activo']
     });
   }
 
@@ -580,8 +591,8 @@ export class ContratoFichaComponent implements OnInit {
 
         // Map string 'Realizado'/'Concedida' to boolean checks if needed
         this.form.patchValue({
-          idCliente: c.idCliente,
-          idLocal: c.idLocal,
+          idCliente: c.idCliente || c.cliente?.idCliente,
+          idLocal: c.idLocal || c.local?.idLocal,
           tipoContrato: c.tipoContrato,
           fechaInicio: this.formatDate(c.fechaInicio),
           fechaVencimiento: this.formatDate(c.fechaVencimiento),
@@ -593,7 +604,8 @@ export class ContratoFichaComponent implements OnInit {
           enviadoCeePost: !!c.enviadoCeePost,
           licenciaObras: c.licenciaObras === 'Concedida',
           subvencionEstado: c.subvencionEstado === 'Concedida',
-          libroEdifIncluido: !!c.libroEdifIncluido
+          libroEdifIncluido: !!c.libroEdifIncluido,
+          estado: c.estado || 'Activo'
         });
 
         // Filter locales for the loaded client if dependencies are ready
@@ -676,54 +688,100 @@ export class ContratoFichaComponent implements OnInit {
     });
   }
 
-  save() {
+  async save() {
     if (this.form.invalid) return;
     this.loading = true;
-    const v = this.form.value;
+    try {
+      const v = this.form.value;
 
-    // Map booleans/forms back to payload
-    const payload: Contrato = {
-      idCliente: v.idCliente,
-      idLocal: v.idLocal,
-      tipoContrato: v.tipoContrato,
-      fechaInicio: v.fechaInicio,
-      fechaVencimiento: v.fechaVencimiento,
-      observaciones: v.observaciones,
-      // Booleans mapped to strings/booleans as per interface/backend logic
-      cePrevio: v.cePrevio ? 'Realizado' : 'Pendiente',
-      cePost: v.cePost ? 'Realizado' : 'Pendiente',
-      mtd: !!v.mtd,
-      planos: !!v.planos,
-      enviadoCeePost: !!v.enviadoCeePost,
-      licenciaObras: v.licenciaObras ? 'Concedida' : 'No requerida',
-      subvencionEstado: v.subvencionEstado ? 'Concedida' : 'No solicitada',
-      libroEdifIncluido: !!v.libroEdifIncluido
-    };
+      let anularHijos = false;
+      // Si el estado es Anulado y estamos en edición, preguntar por procesos asociados
+      if (this.idContrato && v.estado === 'Anulado') {
+        // Fetch current interventions to show in the prompt
+        let tramitesMsg = '';
+        try {
+          const tramaList = await new Promise<any[]>((resolve) => {
+            this.contratoService.getTramitesPorContrato(this.idContrato!).subscribe({
+              next: (data) => resolve(data || []),
+              error: () => resolve([])
+            });
+          });
 
-    if (this.idContrato) {
-      this.contratoService.update(this.idContrato, payload as any).subscribe({
-        next: () => {
-          this.loading = false;
-          Swal.fire('Guardado', 'Contrato actualizado correctamente.', 'success');
-          this.router.navigate(['/contratos', this.idContrato]);
-        },
-        error: () => {
-          this.loading = false;
-          Swal.fire('Error', 'No se pudo actualizar el contrato.', 'error');
+          if (tramaList.length > 0) {
+            tramitesMsg = '<p style="text-align:left; margin-top:10px;"><b>Se anularán las siguientes intervenciones (y sus seguimientos):</b></p>' +
+              '<ul style="text-align:left; font-size:0.9rem; max-height:150px; overflow-y:auto; background:#f8fafc; padding:10px 10px 10px 30px; border-radius:8px; border:1px solid #e2e8f0;">' +
+              tramaList.map(t => `<li>${t.tipoTramite} (${t.estado})</li>`).join('') +
+              '</ul>';
+          }
+        } catch (e) {
+          console.error('Error fetching tramites for confirmation', e);
         }
-      });
-    } else {
-      this.contratoService.create(payload).subscribe({
-        next: (created) => {
-          this.loading = false;
-          Swal.fire('Creado', 'Contrato creado correctamente.', 'success');
-          this.router.navigate(['/contratos', created.idContrato]);
-        },
-        error: () => {
-          this.loading = false;
-          Swal.fire('Error', 'No se pudo crear el contrato.', 'error');
+
+        const confirm = await Swal.fire({
+          title: '¿Anular procesos asociados?',
+          html: `Has marcado el contrato como <b>ANULADO</b>.<br/>` +
+            (tramitesMsg || '¿Deseas anular también todas las intervenciones y seguimientos asociados?') +
+            `<p style="margin-top:15px; font-size:0.85rem; color:#64748b;">Esta acción no se puede deshacer de forma masiva.</p>`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, anular todo',
+          cancelButtonText: 'No, solo el contrato',
+          confirmButtonColor: '#dc2626',
+        });
+        if (confirm.isConfirmed) {
+          anularHijos = true;
         }
-      });
+      }
+
+      // Map booleans/forms back to payload
+      const payload: Contrato = {
+        idCliente: v.idCliente,
+        idLocal: v.idLocal,
+        tipoContrato: v.tipoContrato,
+        fechaInicio: v.fechaInicio,
+        fechaVencimiento: v.fechaVencimiento,
+        observaciones: v.observaciones,
+        estado: v.estado,
+        anularHijos: anularHijos,
+        // Booleans mapped to strings/booleans as per interface/backend logic
+        cePrevio: v.cePrevio ? 'Realizado' : 'Pendiente',
+        cePost: v.cePost ? 'Realizado' : 'Pendiente',
+        mtd: !!v.mtd,
+        planos: !!v.planos,
+        enviadoCeePost: !!v.enviadoCeePost,
+        licenciaObras: v.licenciaObras ? 'Concedida' : 'No requerida',
+        subvencionEstado: v.subvencionEstado ? 'Concedida' : 'No solicitada',
+        libroEdifIncluido: !!v.libroEdifIncluido
+      };
+
+      if (this.idContrato) {
+        this.contratoService.update(this.idContrato, payload as any).subscribe({
+          next: () => {
+            this.loading = false;
+            Swal.fire('Guardado', 'Contrato actualizado correctamente.', 'success');
+            this.router.navigate(['/contratos', this.idContrato]);
+          },
+          error: (err) => {
+            this.loading = false;
+            Swal.fire('Error', 'No se pudo actualizar el contrato.', 'error');
+          }
+        });
+      } else {
+        this.contratoService.create(payload).subscribe({
+          next: (created) => {
+            this.loading = false;
+            Swal.fire('Creado', 'Contrato creado correctamente.', 'success');
+            this.router.navigate(['/contratos', created.idContrato]);
+          },
+          error: (err) => {
+            this.loading = false;
+            Swal.fire('Error', 'No se pudo crear el contrato.', 'error');
+          }
+        });
+      }
+    } catch (e) {
+      this.loading = false;
+      console.error(e);
     }
   }
 

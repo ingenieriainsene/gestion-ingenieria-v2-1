@@ -18,19 +18,30 @@ import java.util.List;
 
 @Service
 public class ContratoService {
-    @Autowired private ContratoRepository contratoRepository;
-    @Autowired private ClienteRepository clienteRepository;
-    @Autowired private LocalRepository localRepository;
+    @Autowired
+    private ContratoRepository contratoRepository;
+    @Autowired
+    private ClienteRepository clienteRepository;
+    @Autowired
+    private LocalRepository localRepository;
 
     @Transactional(readOnly = true)
-    public List<Contrato> findAll() { return contratoRepository.findAll(); }
+    public List<Contrato> findAll() {
+        return contratoRepository.findAll();
+    }
 
     @Transactional(readOnly = true)
-    public Contrato findById(Long id) { return contratoRepository.findById(id).orElseThrow(); }
+    public Contrato findById(Long id) {
+        return contratoRepository.findById(id).orElseThrow();
+    }
 
-    public Contrato save(Contrato contrato) { return contratoRepository.save(contrato); }
+    public Contrato save(Contrato contrato) {
+        return contratoRepository.save(contrato);
+    }
 
-    public void delete(Long id) { contratoRepository.deleteById(id); }
+    public void delete(Long id) {
+        contratoRepository.deleteById(id);
+    }
 
     public Contrato createFromRequest(ContratoRequest req) {
         validarFechas(req.getFechaInicio(), req.getFechaVencimiento());
@@ -48,7 +59,10 @@ public class ContratoService {
         return contratoRepository.save(c);
     }
 
+    @Transactional
     public Contrato updateFromRequest(Long idContrato, ContratoRequest req) {
+        System.out.println("DEBUG: Updating contract " + idContrato + " with estado: " + req.getEstado()
+                + ", anularHijos: " + req.getAnularHijos());
         validarFechas(req.getFechaInicio(), req.getFechaVencimiento());
 
         Contrato c = contratoRepository.findById(idContrato).orElseThrow();
@@ -66,8 +80,41 @@ public class ContratoService {
 
         aplicarCampos(c, req);
         c.setModificadoPor(getUsuarioActual());
-        return contratoRepository.save(c);
+
+        System.out.println("DEBUG: Final state before save: " + c.getEstado());
+        Contrato saved = contratoRepository.save(c);
+        contratoRepository.flush(); // Force flush
+        System.out.println("DEBUG: Saved contract " + saved.getIdContrato() + " with state: " + saved.getEstado());
+
+        // Lógica de anulación en cascada
+        if ("Anulado".equalsIgnoreCase(req.getEstado()) && Boolean.TRUE.equals(req.getAnularHijos())) {
+            anularProcesosAsociados(saved);
+        }
+
+        return saved;
     }
+
+    private void anularProcesosAsociados(Contrato c) {
+        if (c.getTramites() != null) {
+            for (com.ingenieria.model.Tramite t : c.getTramites()) {
+                t.setEstado("Anulado");
+                tramiteRepository.save(t);
+                // También anulamos los seguimientos de cada trámite
+                List<com.ingenieria.model.Seguimiento> hitos = seguimientoRepo
+                        .findByTramite_IdTramiteOrderByFechaRegistroDesc(t.getIdTramite());
+                for (com.ingenieria.model.Seguimiento s : hitos) {
+                    s.setEstado("Anulado");
+                    seguimientoRepo.save(s);
+                }
+            }
+        }
+    }
+
+    @Autowired
+    private com.ingenieria.repository.TramiteRepository tramiteRepository;
+
+    @Autowired
+    private com.ingenieria.repository.SeguimientoRepository seguimientoRepo;
 
     private void aplicarCampos(Contrato c, ContratoRequest req) {
         c.setTipoContrato(req.getTipoContrato());
@@ -83,10 +130,24 @@ public class ContratoService {
         c.setSubvencionEstado(req.getSubvencionEstado());
         c.setLibroEdifIncluido(req.getLibroEdifIncluido());
         c.setObservaciones(req.getObservaciones());
+        if (req.getEstado() != null && !req.getEstado().trim().isBlank()) {
+            String est = req.getEstado().trim();
+            // Normalizar a Capitalizado para evitar inconsistencias
+            if ("activo".equalsIgnoreCase(est))
+                est = "Activo";
+            if ("terminado".equalsIgnoreCase(est))
+                est = "Terminado";
+            if ("anulado".equalsIgnoreCase(est))
+                est = "Anulado";
+            c.setEstado(est);
+        } else if (c.getEstado() == null) {
+            c.setEstado("Activo");
+        }
     }
 
     private void validarFechas(LocalDate inicio, LocalDate vencimiento) {
-        if (inicio == null || vencimiento == null) return;
+        if (inicio == null || vencimiento == null)
+            return;
         if (!vencimiento.isAfter(inicio)) {
             throw new IllegalArgumentException("La fecha de vencimiento debe ser posterior a la de inicio.");
         }
@@ -94,7 +155,8 @@ public class ContratoService {
 
     private String getUsuarioActual() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return "Sistema";
+        if (auth == null)
+            return "Sistema";
         String name = auth.getName();
         return (name == null || name.isBlank()) ? "Sistema" : name;
     }

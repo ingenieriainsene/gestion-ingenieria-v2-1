@@ -77,6 +77,8 @@ export interface Contrato {
     subvencionEstado?: string;
     libroEdifIncluido?: boolean;
     observaciones?: string;
+    estado?: string;
+    anularHijos?: boolean; // Solo para envío en update
     // Datos enriquecidos que vienen del backend para pantallas tipo listado/gestión
     cliente?: Cliente;
     local?: Local;
@@ -228,6 +230,9 @@ export class LocalService {
     create(data: Partial<Local> & { idCliente: number }): Observable<Local> { return this.api.post<Local>(this.endpoint, data); }
     update(id: number, data: Record<string, unknown>): Observable<Local> {
         return this.api.put<Local>(`${this.endpoint}/${id}`, data);
+    }
+    checkRC(rc: string): Observable<Local> {
+        return this.api.get<Local>(`${this.endpoint}/check-rc/${rc}`);
     }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
 }

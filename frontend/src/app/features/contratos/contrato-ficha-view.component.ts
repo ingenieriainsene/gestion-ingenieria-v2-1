@@ -24,6 +24,9 @@ import Swal from 'sweetalert2';
           <div class="header-badge-wrap">
             <span class="header-label">SERVICIO:</span>
             <span class="badge-tipo">{{ contrato.tipoContrato }}</span>
+            <span class="status-badge" [ngClass]="contrato.estado?.toLowerCase() || 'activo'" style="margin-left: 10px; vertical-align: middle;">
+              {{ contrato.estado || 'Activo' }}
+            </span>
           </div>
         </div>
 
@@ -128,7 +131,7 @@ import Swal from 'sweetalert2';
                 </div>
                 <div class="map-col">
                   <span class="map-label">Estado</span>
-                  <span class="status-badge" [ngClass]="ta.estado === 'En proceso' ? 'en-proceso' : 'terminado'">{{ ta.estado }}</span>
+                  <span class="status-badge" [ngClass]="ta.estado?.toLowerCase()?.replace(' ', '-')">{{ ta.estado }}</span>
                 </div>
                 <div class="map-col">
                   <span class="map-label">F. Inicio</span>
@@ -324,6 +327,8 @@ import Swal from 'sweetalert2';
     .status-badge.pendiente { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
     .status-badge.en-proceso { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
     .status-badge.terminado { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .status-badge.activo { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .status-badge.anulado { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
 
     .venta-actions { display: flex; justify-content: center; align-items: center; gap: 8px; }
     .btn-primary {
@@ -432,7 +437,7 @@ export class ContratoFichaViewComponent implements OnInit {
     this.ventas = list.filter(t => e(t.estado) === 'pendiente');
     this.activas = list.filter(t => {
       const est = e(t.estado);
-      return est === 'en proceso' || est === 'terminado';
+      return est === 'en proceso' || est === 'terminado' || est === 'anulado';
     });
   }
 
@@ -500,6 +505,7 @@ export class ContratoFichaViewComponent implements OnInit {
         planos: actual.planos,
         subvencionEstado: actual.subvencionEstado,
         libroEdifIncluido: actual.libroEdifIncluido,
+        estado: actual.estado,
         observaciones: obs
       };
       this.contratos.update(actual.idContrato!, body).subscribe(() => {

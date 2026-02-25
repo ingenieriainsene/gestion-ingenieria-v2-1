@@ -21,6 +21,7 @@ import { ProveedorService } from '../../services/proveedor.service';
         <div class="tabs">
           <button class="tab-btn" [class.active]="estadoFiltro === 'Pendiente'" (click)="setEstado('Pendiente')">Pendientes</button>
           <button class="tab-btn" [class.active]="estadoFiltro === 'Terminado'" (click)="setEstado('Terminado')">Terminados</button>
+          <button class="tab-btn" [class.active]="estadoFiltro === 'Anulado'" (click)="setEstado('Anulado')">Anulados</button>
           <button class="tab-btn" [class.active]="estadoFiltro === null" (click)="setEstado(null)">Todos</button>
         </div>
         <div class="search">
@@ -106,7 +107,7 @@ import { ProveedorService } from '../../services/proveedor.service';
             <span *ngIf="s.esUrgente" class="urg-badge">URG</span>
           </td>
           <td>
-            <span class="status-badge" [class.ok]="s.estado === 'Terminado'">{{ s.estado || '—' }}</span>
+            <span class="status-badge" [ngClass]="s.estado?.toLowerCase()">{{ s.estado || '—' }}</span>
           </td>
           <td style="text-align:right; white-space: nowrap;">
             <a
@@ -235,9 +236,20 @@ import { ProveedorService } from '../../services/proveedor.service';
       background: #f1f5f9;
       color: #1e293b;
     }
-    .status-badge.ok {
+    .status-badge.terminado {
       background: #dcfce7;
       color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .status-badge.anulado {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .status-badge.pendiente {
+      background: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fed7aa;
     }
   `],
 })

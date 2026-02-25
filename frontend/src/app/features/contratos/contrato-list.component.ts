@@ -46,6 +46,16 @@ import Swal from 'sweetalert2';
             <option *ngFor="let t of types" [value]="t">{{ t }}</option>
           </select>
         </div>
+        
+        <div class="filter-group">
+          <label>Estado</label>
+          <select formControlName="estado">
+            <option value="">Cualquier estado</option>
+            <option value="Activo">Activo</option>
+            <option value="Terminado">Terminado</option>
+            <option value="Anulado">Anulado</option>
+          </select>
+        </div>
 
         <button type="button" class="btn-clear" (click)="clearFilters()" title="Limpiar filtros">
           🔄 Limpiar
@@ -64,6 +74,7 @@ import Swal from 'sweetalert2';
             <th>TIPO</th>
             <th>INICIO</th>
             <th>VENCIMIENTO</th>
+            <th>ESTADO</th>
             <th style="min-width: 150px; text-align: right;">ACCIONES</th>
           </tr>
         </thead>
@@ -96,6 +107,11 @@ import Swal from 'sweetalert2';
             </td>
             <td>{{ c.fechaInicio | date:'dd/MM/yyyy' }}</td>
             <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="c.estado?.toLowerCase() || 'activo'">
+                {{ c.estado || 'Activo' }}
+              </span>
+            </td>
             <td class="actions-cell">
               <a
                 [routerLink]="['/contratos', c.idContrato]"
@@ -326,6 +342,14 @@ import Swal from 'sweetalert2';
     .action-btn.delete { background: #e74c3c; color: white; }
     .action-btn.delete:hover { transform: scale(1.1); }
 
+    .status-badge {
+      padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; border: 1px solid transparent; white-space: nowrap;
+    }
+    .status-badge.activo { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .status-badge.terminado { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+    .status-badge.anulado { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
     .empty-state {
       text-align: center;
       padding: 3rem;
@@ -350,7 +374,8 @@ export class ContratoListComponent implements OnInit, OnDestroy {
       searchId: [''],
       searchCliente: [''],
       searchLocal: [''],
-      tipo: ['']
+      tipo: [''],
+      estado: ['']
     });
   }
 
@@ -395,7 +420,7 @@ export class ContratoListComponent implements OnInit, OnDestroy {
   }
 
   private applyFilters() {
-    const { searchId, searchCliente, searchLocal, tipo } = this.filterForm.value;
+    const { searchId, searchCliente, searchLocal, tipo, estado } = this.filterForm.value;
     const sId = (searchId || '').toLowerCase().trim().replace('#', '');
     const sCli = this.normalizeString(searchCliente || '').trim();
     const sLoc = this.normalizeString(searchLocal || '').trim();
@@ -412,9 +437,10 @@ export class ContratoListComponent implements OnInit, OnDestroy {
         this.normalizeString(c.local?.direccionCompleta || '').includes(sLoc);
 
       const matchesTipo = !tipo || c.tipoContrato === tipo;
+      const matchesEstado = !estado || (c.estado || 'Activo') === estado;
 
-      return matchesId && matchesCliente && matchesLocal && matchesTipo;
-    });
+      return matchesId && matchesCliente && matchesLocal && matchesTipo && matchesEstado;
+    }).sort((a, b) => (b.idContrato || 0) - (a.idContrato || 0));
   }
 
   clearFilters() {
@@ -422,7 +448,8 @@ export class ContratoListComponent implements OnInit, OnDestroy {
       searchId: '',
       searchCliente: '',
       searchLocal: '',
-      tipo: ''
+      tipo: '',
+      estado: ''
     });
   }
 

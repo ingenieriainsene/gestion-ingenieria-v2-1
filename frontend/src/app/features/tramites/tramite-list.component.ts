@@ -4,10 +4,10 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TramiteService, Tramite } from '../../services/domain.services';
 
 @Component({
-    selector: 'app-tramite-list',
-    standalone: true,
-    imports: [CommonModule, RouterLink],
-    template: `
+  selector: 'app-tramite-list',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  template: `
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2>Trámites del Contrato {{ idContrato }}</h2>
       <a [routerLink]="['/contratos', idContrato, 'tramites', 'nuevo']" class="btn btn-primary">+ Nuevo Trámite</a>
@@ -18,7 +18,7 @@ import { TramiteService, Tramite } from '../../services/domain.services';
            <h5 class="mb-1">{{ t.tipoTramite }}</h5>
            <p class="mb-1 text-muted">{{ t.detalleSeguimiento }}</p>
         </div>
-        <span class="badge" [ngClass]="{'bg-success': t.estado === 'Terminado', 'bg-warning': t.estado === 'Pendiente'}">
+        <span class="badge" [ngClass]="{'bg-success': t.estado === 'Terminado', 'bg-warning': t.estado === 'Pendiente', 'bg-danger': t.estado === 'Anulado'}">
             {{ t.estado }}
         </span>
       </a>
@@ -29,17 +29,17 @@ import { TramiteService, Tramite } from '../../services/domain.services';
   `
 })
 export class TramiteListComponent implements OnInit {
-    tramites: Tramite[] = [];
-    idContrato: number | null = null;
+  tramites: Tramite[] = [];
+  idContrato: number | null = null;
 
-    constructor(private service: TramiteService, private route: ActivatedRoute) { }
+  constructor(private service: TramiteService, private route: ActivatedRoute) { }
 
-    ngOnInit() {
-        this.route.paramMap.subscribe(params => {
-            this.idContrato = Number(params.get('idContrato'));
-            if (this.idContrato) {
-                this.service.getByContrato(this.idContrato).subscribe(data => this.tramites = data);
-            }
-        });
-    }
+  ngOnInit() {
+    this.route.paramMap.subscribe(params => {
+      this.idContrato = Number(params.get('idContrato'));
+      if (this.idContrato) {
+        this.service.getByContrato(this.idContrato).subscribe(data => this.tramites = data);
+      }
+    });
+  }
 }

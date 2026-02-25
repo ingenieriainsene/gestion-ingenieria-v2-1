@@ -2,14 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LocalService } from '../../services/domain.services';
+import { LocalService, ClienteService, Cliente, Local } from '../../services/domain.services';
+import { AutocompleteComponent } from '../../shared/components/autocomplete/autocomplete.component';
 import Swal from 'sweetalert2';
 
 @Component({
-    selector: 'app-local-ficha',
-    standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterLink],
-    template: `
+  selector: 'app-local-ficha',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AutocompleteComponent],
+  template: `
     <div class="ficha-wrapper">
       <div class="header-section">
         <a [routerLink]="idLocal ? ['/locales', idLocal] : ['/locales']" class="back-link">
@@ -22,19 +23,17 @@ import Swal from 'sweetalert2';
       <div class="form-card">
         <form [formGroup]="form" (ngSubmit)="save()" class="modern-form">
           <div class="form-grid">
-            <!-- Cliente (ID) -->
+            <!-- Cliente (Selector) -->
             <div class="form-group">
-              <label class="form-label" for="idCliente">ID Cliente <span class="required">*</span></label>
-              <div class="input-wrapper">
-                <span class="input-icon">👤</span>
-                <input
-                  type="number"
-                  id="idCliente"
-                  class="form-control"
-                  formControlName="idCliente"
-                  placeholder="ID del cliente asociado"
-                />
-              </div>
+              <label class="form-label">Vincular a Cliente (Opcional)</label>
+              <app-autocomplete
+                formControlName="idCliente"
+                [data]="clientes"
+                [searchProps]="['nombre', 'apellido1', 'dni', 'email']"
+                valueProp="idCliente"
+                [displayFn]="displayCliente"
+                placeholder="Buscar cliente para autocompletar datos..."
+              ></app-autocomplete>
             </div>
 
             <!-- Nombre Titular -->
@@ -114,7 +113,7 @@ import Swal from 'sweetalert2';
 
             <!-- Ref. Catastral -->
             <div class="form-group">
-              <label class="form-label" for="referenciaCatastral">Ref. Catastral</label>
+              <label class="form-label" for="referenciaCatastral">Ref. Catastral <span class="required">*</span></label>
               <div class="input-wrapper">
                 <span class="input-icon">🏠</span>
                 <input
@@ -133,7 +132,7 @@ import Swal from 'sweetalert2';
             <button
               type="submit"
               class="btn-save"
-              [disabled]="form.invalid"
+              [disabled]="form.invalid || loading"
             >
               {{ idLocal ? 'Guardar Cambios' : 'Crear Local' }}
             </button>
@@ -142,7 +141,7 @@ import Swal from 'sweetalert2';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .ficha-wrapper {
       max-width: 900px;
       margin: 0 auto;
@@ -317,89 +316,164 @@ import Swal from 'sweetalert2';
   `]
 })
 export class LocalFichaComponent implements OnInit {
-    form: FormGroup;
-    idLocal: number | null = null;
+  form!: FormGroup;
+  idLocal: number | null = null;
+  clientes: Cliente[] = [];
+  loading = false;
 
-    constructor(
-        private fb: FormBuilder,
-        private route: ActivatedRoute,
-        private router: Router,
-        private service: LocalService
-    ) {
-        this.form = this.fb.group({
-            idCliente: [null, Validators.required],
-            nombreTitular: ['', Validators.required],
-            apellido1Titular: ['', Validators.required],
-            apellido2Titular: [''],
-            direccionCompleta: ['', Validators.required],
-            cups: [''],
-            referenciaCatastral: ['']
-        });
-    }
+  constructor(
+    private fb: FormBuilder,
+    private route: ActivatedRoute,
+    private router: Router,
+    private service: LocalService,
+    private clienteService: ClienteService
+  ) { }
 
-    ngOnInit() {
-        this.route.paramMap.subscribe((params) => {
-            const id = params.get('id');
-            if (id && id !== 'nuevo') {
-                this.idLocal = +id;
-                this.service.getById(this.idLocal).subscribe({
-                    next: (l: any) => {
-                        this.form.patchValue({
-                            idCliente: l.cliente?.idCliente ?? l.idCliente,
-                            nombreTitular: l.nombreTitular,
-                            apellido1Titular: l.apellido1Titular,
-                            apellido2Titular: l.apellido2Titular ?? '',
-                            direccionCompleta: l.direccionCompleta,
-                            cups: l.cups ?? '',
-                            referenciaCatastral: l.referenciaCatastral ?? ''
-                        });
-                    },
-                    error: () => this.router.navigate(['/locales'])
-                });
-            } else if (params.get('id') === 'nuevo') {
-                // Check for query params to prefill client ID
-                this.route.queryParams.subscribe(qp => {
-                    if (qp['clienteId']) {
-                        this.form.patchValue({ idCliente: +qp['clienteId'] });
-                    }
-                });
-                this.idLocal = null;
-            } else {
-                this.idLocal = null;
-            }
-        });
-    }
+  ngOnInit() {
+    this.initForm();
+    this.cargarClientes();
 
-    save() {
-        if (this.form.invalid) return;
-        const v = this.form.value;
-        const payload: any = {
-            idCliente: v.idCliente,
-            nombreTitular: v.nombreTitular,
-            apellido1Titular: v.apellido1Titular,
-            apellido2Titular: v.apellido2Titular || null,
-            direccionCompleta: v.direccionCompleta,
-            cups: v.cups || null,
-            referenciaCatastral: v.referenciaCatastral || null
-        };
-        // Explicitly set idLocal for updates if needed by backend, though usually handled by URL
-        if (this.idLocal) {
-            payload.idLocal = this.idLocal;
-            this.service.update(this.idLocal, payload).subscribe({
-                next: () => {
-                    Swal.fire('Guardado', 'Local actualizado correctamente', 'success');
-                    this.router.navigate(['/locales', this.idLocal]);
-                },
-                error: (e) => Swal.fire('Error', e?.error?.message || 'No se pudo actualizar.', 'error')
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id && id !== 'nuevo') {
+        this.idLocal = +id;
+        this.service.getById(this.idLocal).subscribe({
+          next: (l: Local) => {
+            this.form.patchValue({
+              idCliente: l.cliente?.idCliente ?? l.idCliente,
+              nombreTitular: l.nombreTitular,
+              apellido1Titular: l.apellido1Titular,
+              apellido2Titular: l.apellido2Titular ?? '',
+              direccionCompleta: l.direccionCompleta,
+              cups: l.cups ?? '',
+              referenciaCatastral: l.referenciaCatastral ?? ''
             });
-        } else {
-            this.service.create(payload).subscribe({
-                next: (loc) => {
-                    Swal.fire('Guardado', 'Local creado correctamente', 'success');
-                    this.router.navigate(loc?.idLocal ? ['/locales', loc.idLocal] : ['/locales']);
-                },
-                error: (e) => Swal.fire('Error', e?.error?.message || 'No se pudo crear.', 'error')
-            });
+          },
+          error: () => this.router.navigate(['/locales'])
+        });
+      } else {
+        this.idLocal = null;
+        this.route.queryParams.subscribe(qp => {
+          if (qp['clienteId']) {
+            this.form.patchValue({ idCliente: +qp['clienteId'] });
+          }
+        });
+      }
+    });
+  }
+
+  private initForm() {
+    this.form = this.fb.group({
+      idCliente: [null],
+      nombreTitular: ['', Validators.required],
+      apellido1Titular: ['', Validators.required],
+      apellido2Titular: [''],
+      direccionCompleta: ['', Validators.required],
+      cups: [''],
+      referenciaCatastral: ['', Validators.required]
+    });
+
+    // Validar RC en tiempo real
+    const rcControl = this.form.get('referenciaCatastral');
+    if (rcControl) {
+      rcControl.valueChanges.subscribe((val: string | null) => {
+        if (val && val.length > 5) {
+          this.service.checkRC(val).subscribe({
+            next: (existente: Local) => {
+              if (existente && existente.idLocal !== this.idLocal) {
+                let htmlMsg = `<p>Ya existe un local con la Referencia Catastral: <b>${val}</b></p>`;
+                if (existente.idLocal) {
+                  htmlMsg += `<p><a href="/locales/${existente.idLocal}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Haz clic aquí para ver la ficha del local existente</a></p>`;
+                }
+                Swal.fire({
+                  title: 'Local duplicado',
+                  html: htmlMsg,
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonText: 'Ir al Local Existente',
+                  cancelButtonText: 'Cerrar'
+                }).then((result) => {
+                  if (result.isConfirmed && existente.idLocal) {
+                    this.router.navigate(['/locales', existente.idLocal]);
+                  }
+                });
+              }
+            },
+            error: () => { }
+          });
         }
+      });
     }
+
+    // Auto-fill Titular when a Cliente is selected
+    const idClienteControl = this.form.get('idCliente');
+    if (idClienteControl) {
+      idClienteControl.valueChanges.subscribe(val => {
+        if (val) {
+          const selectedCliente = this.clientes.find(c => c.idCliente === val);
+          if (selectedCliente) {
+            this.form.patchValue({
+              nombreTitular: selectedCliente.nombre,
+              apellido1Titular: selectedCliente.apellido1,
+              apellido2Titular: selectedCliente.apellido2 || ''
+            });
+          }
+        }
+      });
+    }
+  }
+
+  cargarClientes() {
+    this.clienteService.getAll().subscribe(res => {
+      this.clientes = res;
+    });
+  }
+
+  displayCliente(c: Cliente): string {
+    return c ? `${c.nombre} ${c.apellido1} (${c.dni})` : '';
+  }
+
+  save() {
+    if (this.form.invalid) return;
+    this.loading = true;
+    const v = this.form.value;
+
+    const payload: any = {
+      idCliente: v.idCliente,
+      nombreTitular: v.nombreTitular,
+      apellido1Titular: v.apellido1Titular,
+      apellido2Titular: v.apellido2Titular || null,
+      direccionCompleta: v.direccionCompleta,
+      cups: v.cups || null,
+      referenciaCatastral: v.referenciaCatastral
+    };
+
+    if (this.idLocal) {
+      this.service.update(this.idLocal, payload).subscribe({
+        next: () => {
+          this.loading = false;
+          Swal.fire('Guardado', 'Local actualizado correctamente', 'success');
+          this.router.navigate(['/locales', this.idLocal]);
+        },
+        error: (e: any) => {
+          this.loading = false;
+          const msg = typeof e.error === 'string' ? e.error : (e.error?.message || 'Error al actualizar');
+          Swal.fire('Error', msg, 'error');
+        }
+      });
+    } else {
+      this.service.create(payload as any).subscribe({
+        next: (loc: Local) => {
+          this.loading = false;
+          Swal.fire('Creado', 'Local registrado correctamente', 'success');
+          this.router.navigate(['/locales', loc.idLocal]);
+        },
+        error: (e: any) => {
+          this.loading = false;
+          const msg = typeof e.error === 'string' ? e.error : (e.error?.message || 'Error al crear');
+          Swal.fire('Error', msg, 'error');
+        }
+      });
+    }
+  }
 }

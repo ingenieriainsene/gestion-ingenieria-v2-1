@@ -5,7 +5,8 @@ import lombok.Data;
 import java.time.LocalDate;
 
 /**
- * DTO de entrada para crear/actualizar contratos (equivalente a guardar_contrato.php / actualizar_contrato.php).
+ * DTO de entrada para crear/actualizar contratos (equivalente a
+ * guardar_contrato.php / actualizar_contrato.php).
  * El frontend envía IDs (idCliente/idLocal) en lugar de objetos JPA anidados.
  */
 @Data
@@ -27,5 +28,6 @@ public class ContratoRequest {
     private String subvencionEstado;
     private Boolean libroEdifIncluido;
     private String observaciones;
+    private String estado;
+    private Boolean anularHijos;
 }
-
