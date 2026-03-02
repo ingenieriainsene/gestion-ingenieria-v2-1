@@ -11,94 +11,101 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AutocompleteComponent],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-3 header-row" style="margin-bottom: 25px;">
+    <div class="header-bar">
       <h1>Gestión de Locales</h1>
       <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Local</button>
     </div>
 
-    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 25px;">
-      <input
-        type="text"
-        [(ngModel)]="filtro"
-        (ngModelChange)="aplicarFiltro()"
-        placeholder="Buscar por dirección, titular, CUPS o Referencia..."
-        style="flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;"
-      />
-      <button class="btn-primary" (click)="aplicarFiltro()">Filtrar</button>
+    <div class="filter-card">
+      <div class="filter-toolbar single-search">
+        <div class="filter-group search-locales">
+          <label>Buscar</label>
+          <div class="input-with-icon">
+            <span class="icon">🔍</span>
+            <input
+              type="text"
+              [(ngModel)]="filtro"
+              (ngModelChange)="aplicarFiltro()"
+              placeholder="Buscar por dirección, titular, CUPS o Referencia..."
+            />
+          </div>
+        </div>
+        <button class="btn-clear" (click)="aplicarFiltro()">Filtrar</button>
+      </div>
     </div>
 
-    <table class="table-card">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>DIRECCIÓN (MAPA)</th>
-          <th>CUPS</th>
-          <th>REF. CATASTRAL</th>
-          <th>TITULAR</th>
-          <th>DNI TITULAR</th>
-          <th>FECHA ALTA</th>
-          <th style="text-align: right;">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let l of filtrados">
-          <td data-label="ID"><strong>#{{ l.idLocal }}</strong></td>
-          <td data-label="Dirección">
-            <small>
+    <div class="table-container">
+      <table class="table-card">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>DIRECCIÓN (MAPA)</th>
+            <th>CUPS</th>
+            <th>REF. CATASTRAL</th>
+            <th>TITULAR</th>
+            <th>DNI TITULAR</th>
+            <th>FECHA ALTA</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of filtrados">
+            <td data-label="ID"><strong>#{{ l.idLocal }}</strong></td>
+            <td data-label="Dirección">
+              <small>
+                <a
+                  class="maps-link"
+                  target="_blank"
+                  [href]="buildMapsUrl(l.direccionCompleta)"
+                >
+                  📍 {{ l.direccionCompleta }}
+                </a>
+              </small>
+            </td>
+            <td data-label="CUPS"><code class="code-pill">{{ l.cups || '---' }}</code></td>
+            <td data-label="Ref. catastral">
+              <ng-container *ngIf="l.referenciaCatastral; else noRc">
+                <a
+                  class="catastro-link code-pill"
+                  target="_blank"
+                  [href]="buildCatastroUrl(l.referenciaCatastral!)"
+                >
+                  📑 {{ l.referenciaCatastral }}
+                </a>
+              </ng-container>
+              <ng-template #noRc>
+                <span class="muted">---</span>
+              </ng-template>
+            </td>
+            <td data-label="Titular">{{ l.apellido1Titular }} {{ l.apellido2Titular || '' }}, {{ l.nombreTitular }}</td>
+            <td data-label="DNI titular"><code class="code-pill">{{ l.dniTitular || '---' }}</code></td>
+            <td data-label="Fecha alta"><small>{{ l.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
+            <td data-label="Acciones" class="actions-cell">
               <a
-                class="maps-link"
-                target="_blank"
-                [href]="buildMapsUrl(l.direccionCompleta)"
-              >
-                📍 {{ l.direccionCompleta }}
-              </a>
-            </small>
-          </td>
-          <td data-label="CUPS"><code>{{ l.cups || '---' }}</code></td>
-          <td data-label="Ref. catastral">
-            <ng-container *ngIf="l.referenciaCatastral; else noRc">
+                [routerLink]="['/locales', l.idLocal]"
+                class="action-ghost"
+                title="Ver ficha técnica"
+              >👁️</a>
               <a
-                class="catastro-link"
-                target="_blank"
-                [href]="buildCatastroUrl(l.referenciaCatastral!)"
-              >
-                📑 {{ l.referenciaCatastral }}
-              </a>
-            </ng-container>
-            <ng-template #noRc>
-              <span style="color:#94a3b8;">---</span>
-            </ng-template>
-          </td>
-          <td data-label="Titular">{{ l.apellido1Titular }} {{ l.apellido2Titular || '' }}, {{ l.nombreTitular }}</td>
-          <td data-label="DNI titular"><code style="background:#f1f5f9;">{{ l.dniTitular || '---' }}</code></td>
-          <td data-label="Fecha alta"><small>{{ l.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
-          <td data-label="Acciones" class="actions-cell" style="text-align: right; white-space: nowrap;">
-            <a
-              [routerLink]="['/locales', l.idLocal]"
-              class="action-badge"
-              style="background:#3498db;"
-              title="Ver ficha técnica"
-            >👁️</a>
-            <a
-              [routerLink]="['/locales', l.idLocal, 'editar']"
-              class="action-badge badge-edit"
-              title="Editar local"
-            >✏️</a>
-            <button
-              class="action-badge badge-delete"
-              style="border:none; cursor:pointer;"
-              title="Eliminar"
-              (click)="eliminar(l)"
-            >🗑️</button>
-          </td>
-        </tr>
-        <tr *ngIf="filtrados.length === 0">
-          <td colspan="8" style="text-align:center; padding:40px; color:#64748b;">
-            No se encontraron locales con los criterios de búsqueda.
-          </td>
-        </tr>
-      </tbody>
-    </table>
+                [routerLink]="['/locales', l.idLocal, 'editar']"
+                class="action-ghost edit"
+                title="Editar local"
+              >✏️</a>
+              <button
+                class="action-ghost danger"
+                title="Eliminar"
+                (click)="eliminar(l)"
+              >🗑️</button>
+            </td>
+          </tr>
+          <tr *ngIf="filtrados.length === 0">
+            <td colspan="8" class="empty-state">
+              No se encontraron locales con los criterios de búsqueda.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Modal Nuevo Local -->
     <div class="modal-overlay" *ngIf="modalVisible" (click)="onOverlayClick($event)">
@@ -154,6 +161,214 @@ import Swal from 'sweetalert2';
     </div>
   `,
   styles: [`
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .header-bar h1 {
+      font-size: 1.8rem;
+      color: #0f172a;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    .filter-card {
+      background: #ffffff;
+      padding: 18px 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 18px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .filter-toolbar {
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .filter-group label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon .icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .input-with-icon input {
+      width: 100%;
+      padding: 10px 12px 10px 34px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-size: 0.9rem;
+      background: #f8fafc;
+      transition: all 0.2s;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .input-with-icon input:focus {
+      border-color: #3b82f6;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    }
+
+    .btn-clear {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      height: 42px;
+    }
+
+    .btn-clear:hover {
+      background: #eef2f7;
+      color: #1e293b;
+    }
+
+    .table-container {
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    }
+
+    .table-card {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .table-card thead th {
+      background: #f9fafb;
+      padding: 14px 18px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+
+    .table-card td {
+      padding: 16px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #0f172a;
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+
+    .table-card tr:hover td {
+      background: #f8fafc;
+    }
+
+    .code-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #1e293b;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: 1px solid #e2e8f0;
+      text-decoration: none;
+    }
+
+    .maps-link {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .maps-link:hover {
+      text-decoration: underline;
+      color: #1d4ed8;
+    }
+
+    .catastro-link {
+      text-decoration: none;
+    }
+
+    .muted {
+      color: #94a3b8;
+    }
+
+    .actions-cell {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .action-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: 6px;
+      font-size: 1rem;
+    }
+
+    .action-ghost:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .action-ghost.edit:hover {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .action-ghost.danger:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #94a3b8;
+      font-style: italic;
+    }
+
     .modal-form { max-width: 720px; width: 90%; text-align: left; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
     .modal-header h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }
@@ -180,18 +395,18 @@ import Swal from 'sweetalert2';
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 
     @media (max-width: 768px) {
-      .header-row {
+      .header-bar {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
       }
 
-      .filter-row {
+      .filter-toolbar {
         flex-direction: column;
         align-items: stretch;
       }
 
-      .filter-row button {
+      .btn-clear {
         width: 100%;
       }
 

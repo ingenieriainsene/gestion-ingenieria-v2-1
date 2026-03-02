@@ -214,16 +214,17 @@ import Swal from 'sweetalert2';
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      background: #1e293b;
       color: white;
       padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-      transition: transform 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
     }
+    .btn-primary:hover { background: #334155; transform: translateY(-1px); }
     .btn-primary:active { transform: translateY(1px); }
 
     /* Search Bar */
