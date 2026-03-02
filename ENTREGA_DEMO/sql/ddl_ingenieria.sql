@@ -996,3 +996,19 @@ CREATE TABLE IF NOT EXISTS facturas_proveedor_lineas (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fac_prov_lineas_factura ON facturas_proveedor_lineas(factura_id);
+
+-- ======================================================
+-- 7. GESTOR DOCUMENTAL (Metadatos)
+-- ======================================================
+CREATE TABLE IF NOT EXISTS archivos_adjuntos (
+    id_archivo UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    entidad_tipo VARCHAR(50) NOT NULL,
+    entidad_id BIGINT NOT NULL,
+    nombre_original VARCHAR(255) NOT NULL,
+    nombre_disco VARCHAR(255) NOT NULL,
+    tipo_mime VARCHAR(120),
+    tamano_bytes BIGINT,
+    fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_archivos_adjuntos_entidad ON archivos_adjuntos(entidad_tipo, entidad_id);

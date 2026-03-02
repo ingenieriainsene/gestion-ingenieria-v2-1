@@ -81,6 +81,13 @@ export const routes: Routes = [
             { path: 'presupuestos/:id/editar', component: PresupuestoFormComponent },
             { path: 'presupuestos/:id', component: PresupuestoFichaViewComponent },
 
+            // Gestor Documental
+            {
+                path: 'documentos/:entidadTipo/:entidadId',
+                loadComponent: () => import('./features/documentos/gestor-documental.component')
+                    .then(m => m.GestorDocumentalComponent)
+            },
+
             // Módulo Análisis de Datos (Operaciones → Análisis de Datos)
             {
                 path: 'operaciones/analisis-datos',
