@@ -361,6 +361,76 @@ import Swal from 'sweetalert2';
       background: #1e293b; color: white; border: none; padding: 15px; border-radius: 10px;
       font-weight: 800; width: 100%; cursor: pointer; text-transform: uppercase; transition: 0.3s;
     }
+
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 0.5rem;
+      }
+
+      .info-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 18px 16px;
+      }
+
+      .header-badge-wrap {
+        text-align: left;
+      }
+
+      .panel-grid {
+        grid-template-columns: 1fr;
+        padding: 0.75rem;
+        gap: 16px;
+      }
+
+      .panel-section-full,
+      .grid-layout-wrap {
+        grid-column: span 1;
+      }
+
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-bar {
+        flex-wrap: wrap;
+        padding: 10px 12px;
+      }
+
+      .data-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .data-label {
+        width: auto;
+      }
+
+      .venta-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .intervencion-map-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .map-actions {
+        justify-content: flex-start;
+      }
+
+      .map-data-sm {
+        max-width: none;
+        white-space: normal;
+      }
+
+      .panel-ventas-pendientes {
+        max-height: none;
+      }
+    }
   `],
 })
 export class ContratoFichaViewComponent implements OnInit {

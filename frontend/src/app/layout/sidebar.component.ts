@@ -330,34 +330,30 @@ interface NavCategory {
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
-        transform: translateX(-100%);
-      }
-
-      .sidebar:not(.collapsed) {
-        transform: translateX(0);
-      }
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
         width: 85vw;
         max-width: 320px;
-        transform: translateX(0);
+        left: 0;
+        transform: none;
+        transition: left 0.3s ease;
       }
 
       .sidebar.collapsed {
-        width: 64px;
-        transform: translateX(0);
+        left: -85vw;
+        width: 85vw;
       }
 
       .toggle-btn {
         width: 44px;
         height: 44px;
         font-size: 1.4rem;
+        position: fixed;
+        left: 12px;
+        top: 12px;
+        z-index: 1100;
       }
 
       .nav-brand-container {
-        padding: 16px 16px 16px 16px;
+        padding: 16px;
       }
 
       .category-header {

@@ -374,6 +374,7 @@ td {
     .main-container {
         padding: 20px 16px;
         border-radius: 12px;
+        width: 100%;
     }
 
     h1 {

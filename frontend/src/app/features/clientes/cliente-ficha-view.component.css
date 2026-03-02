@@ -477,12 +477,12 @@
   }
 
   .table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: visible;
   }
 
   .ficha-table {
-    min-width: 720px;
+    min-width: 0;
+    width: 100%;
   }
 
   .badge-ver,

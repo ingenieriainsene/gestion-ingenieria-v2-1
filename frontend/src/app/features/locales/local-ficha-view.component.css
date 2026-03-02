@@ -290,9 +290,26 @@
   .ficha-body-flex {
     padding: 20px 16px;
     gap: 20px;
+    align-items: stretch;
+  }
+
+  .main-column {
+    width: 100%;
+  }
+
+  .info-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-card.action-card {
+    width: 100%;
   }
 
   .side-column {
     min-width: auto;
+  }
+
+  .areas-container {
+    margin: 0 16px 24px;
   }
 }

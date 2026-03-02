@@ -73,6 +73,22 @@ import { CommonModule } from '@angular/common';
       color: #1e293b;
       font-weight: 700;
     }
+
+    @media (max-width: 768px) {
+      .user-stamp {
+        float: none;
+        width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin: 0 0 12px 0;
+      }
+
+      .stamp-item {
+        justify-content: flex-start;
+      }
+    }
   `]
 })
 export class AuditStampComponent {

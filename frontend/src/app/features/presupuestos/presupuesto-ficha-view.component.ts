@@ -118,7 +118,7 @@ import { FormsModule } from '@angular/forms';
           <h2>📋 Capítulos y partidas</h2>
         </div>
         <div class="table-wrap">
-          <table class="ficha-table">
+          <table class="ficha-table table-card">
             <thead>
               <tr>
                 <th>CÓDIGO</th>
@@ -137,35 +137,35 @@ import { FormsModule } from '@angular/forms';
             <tbody>
               <ng-container *ngFor="let cap of presupuesto.lineas; let i = index">
                 <tr class="row-capitulo">
-                  <td>{{ cap.codigoVisual || '—' }}</td>
-                  <td>
+                  <td data-label="Código">{{ cap.codigoVisual || '—' }}</td>
+                  <td data-label="Concepto">
                     <button type="button" class="toggle-btn" (click)="toggleCapitulo(i)">
                       {{ collapsed[i] ? '▶' : '▼' }}
                     </button>
                     {{ cap.concepto || '—' }}
                   </td>
-                  <td style="text-align:right;">—</td>
-                  <td style="text-align:right;">—</td>
-                  <td style="text-align:right;">{{ getCapituloTotalCoste(cap) | number:'1.2-2' }} €</td>
-                  <td style="text-align:right;">—</td>
-                  <td style="text-align:right;">{{ getCapituloTotalPvp(cap) | number:'1.2-2' }} €</td>
-                  <td style="text-align:right;" *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">—</td>
-                  <td style="text-align:right;">—</td>
-                  <td style="text-align:right;">{{ getCapituloImporteIva(cap) | number:'1.2-2' }} €</td>
-                  <td style="text-align:right;">{{ getCapituloTotalFinal(cap) | number:'1.2-2' }} €</td>
+                  <td data-label="Cant." style="text-align:right;">—</td>
+                  <td data-label="P. coste" style="text-align:right;">—</td>
+                  <td data-label="Tot. coste" style="text-align:right;">{{ getCapituloTotalCoste(cap) | number:'1.2-2' }} €</td>
+                  <td data-label="Margen" style="text-align:right;">—</td>
+                  <td data-label="Tot. PVP" style="text-align:right;">{{ getCapituloTotalPvp(cap) | number:'1.2-2' }} €</td>
+                  <td data-label="Visitas" style="text-align:right;" *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">—</td>
+                  <td data-label="% IVA" style="text-align:right;">—</td>
+                  <td data-label="Imp. IVA" style="text-align:right;">{{ getCapituloImporteIva(cap) | number:'1.2-2' }} €</td>
+                  <td data-label="Total" style="text-align:right;">{{ getCapituloTotalFinal(cap) | number:'1.2-2' }} €</td>
                 </tr>
                 <tr *ngFor="let l of cap.hijos || []" class="row-partida" [class.hidden]="collapsed[i]">
-                  <td class="indent">{{ l.codigoVisual || '—' }}</td>
-                  <td>{{ l.concepto || '—' }}</td>
-                  <td style="text-align:right;">{{ l.cantidad | number:'1.2-2' }}</td>
-                  <td style="text-align:right;">{{ l.costeUnitario | number:'1.2-2' }} €</td>
-                  <td style="text-align:right;">{{ getPartidaTotalCoste(l) | number:'1.2-2' }} €</td>
-                  <td style="text-align:right;">{{ l.factorMargen | number:'1.2-2' }}</td>
-                  <td style="text-align:right;">{{ getPartidaTotalPvp(l) | number:'1.2-2' }} €</td>
-                  <td style="text-align:right;" *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">{{ l.numVisitas || 0 }}</td>
-                  <td style="text-align:right;">{{ l.ivaPorcentaje ?? 21 }}</td>
-                  <td style="text-align:right;">{{ getPartidaImporteIva(l) | number:'1.2-2' }} €</td>
-                  <td style="text-align:right;">{{ getPartidaTotalFinal(l) | number:'1.2-2' }} €</td>
+                  <td data-label="Código" class="indent">{{ l.codigoVisual || '—' }}</td>
+                  <td data-label="Concepto">{{ l.concepto || '—' }}</td>
+                  <td data-label="Cant." style="text-align:right;">{{ l.cantidad | number:'1.2-2' }}</td>
+                  <td data-label="P. coste" style="text-align:right;">{{ l.costeUnitario | number:'1.2-2' }} €</td>
+                  <td data-label="Tot. coste" style="text-align:right;">{{ getPartidaTotalCoste(l) | number:'1.2-2' }} €</td>
+                  <td data-label="Margen" style="text-align:right;">{{ l.factorMargen | number:'1.2-2' }}</td>
+                  <td data-label="Tot. PVP" style="text-align:right;">{{ getPartidaTotalPvp(l) | number:'1.2-2' }} €</td>
+                  <td data-label="Visitas" style="text-align:right;" *ngIf="presupuesto.tipoPresupuesto === 'Preventivo'">{{ l.numVisitas || 0 }}</td>
+                  <td data-label="% IVA" style="text-align:right;">{{ l.ivaPorcentaje ?? 21 }}</td>
+                  <td data-label="Imp. IVA" style="text-align:right;">{{ getPartidaImporteIva(l) | number:'1.2-2' }} €</td>
+                  <td data-label="Total" style="text-align:right;">{{ getPartidaTotalFinal(l) | number:'1.2-2' }} €</td>
                 </tr>
               </ng-container>
               <tr *ngIf="presupuesto.lineas.length === 0">
