@@ -59,14 +59,22 @@ export class ClienteFichaViewComponent implements OnInit {
     this.localService.getAll().subscribe({
       next: (list) => {
         const id = this.idCliente;
-        this.locales = (list || []).filter((l: any) => (l.cliente?.idCliente ?? l.idCliente) === id);
+        this.locales = (list || []).filter(
+          (l: any) => (l.cliente?.idCliente ?? l.idCliente ?? l.clienteId) === id
+        );
       },
       error: () => { },
     });
     this.contratoService.getAll().subscribe({
       next: (list) => {
         const id = this.idCliente;
-        this.contratos = (list || []).filter((c: any) => (c.cliente?.idCliente ?? c.idCliente) === id);
+        this.contratos = (list || [])
+          .map((c: any) => ({
+            ...c,
+            idCliente: c.idCliente ?? c.cliente?.idCliente,
+            idLocal: c.idLocal ?? c.local?.idLocal,
+          }))
+          .filter((c: any) => c.idCliente === id);
       },
       error: () => { },
     });
@@ -100,6 +108,11 @@ export class ClienteFichaViewComponent implements OnInit {
   direccionLocalContrato(c: Contrato): string {
     const loc = (c as any).local;
     return (loc?.direccionCompleta as string) || '—';
+  }
+
+  localIdContrato(c: Contrato): number | null {
+    const localId = (c as any).idLocal ?? (c as any).local?.idLocal;
+    return typeof localId === 'number' ? localId : null;
   }
 
   getContratosPorLocal(idLocal: number): Contrato[] {

@@ -25,13 +25,15 @@ public class ContratoService {
     @Autowired
     private LocalRepository localRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Contrato> findAll() {
+        actualizarEstadosVencidos();
         return contratoRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Contrato findById(Long id) {
+        actualizarEstadosVencidos();
         return contratoRepository.findById(id).orElseThrow();
     }
 
@@ -143,6 +145,14 @@ public class ContratoService {
         } else if (c.getEstado() == null) {
             c.setEstado("Activo");
         }
+
+        // Si ya venció y no está anulado, forzamos Terminado
+        if (c.getFechaVencimiento() != null && c.getFechaVencimiento().isBefore(LocalDate.now())) {
+            String estadoActual = c.getEstado();
+            if (estadoActual == null || estadoActual.isBlank() || "Activo".equalsIgnoreCase(estadoActual)) {
+                c.setEstado("Terminado");
+            }
+        }
     }
 
     private void validarFechas(LocalDate inicio, LocalDate vencimiento) {
@@ -151,6 +161,10 @@ public class ContratoService {
         if (!vencimiento.isAfter(inicio)) {
             throw new IllegalArgumentException("La fecha de vencimiento debe ser posterior a la de inicio.");
         }
+    }
+
+    private void actualizarEstadosVencidos() {
+        contratoRepository.marcarVencidos(LocalDate.now());
     }
 
     private String getUsuarioActual() {

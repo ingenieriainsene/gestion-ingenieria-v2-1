@@ -132,10 +132,10 @@
               <td><strong>#{{ c.idContrato }}</strong></td>
               <td>{{ c.tipoContrato || '—' }}</td>
               <td>
-                <a *ngIf="c.idLocal" [routerLink]="['/locales', c.idLocal]" class="direct-link">
+                <a *ngIf="localIdContrato(c)" [routerLink]="['/locales', localIdContrato(c)]" class="direct-link">
                   {{ direccionLocalContrato(c) }}
                 </a>
-                <span *ngIf="!c.idLocal" class="error-text">⚠️ Sin local vinculado</span>
+                <span *ngIf="!localIdContrato(c)" class="error-text">⚠️ Sin local vinculado</span>
               </td>
               <td>{{ titularContrato(c) }}</td>
               <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
