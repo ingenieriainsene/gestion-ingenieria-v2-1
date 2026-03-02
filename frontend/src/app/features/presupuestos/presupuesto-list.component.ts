@@ -51,7 +51,7 @@ import Swal from 'sweetalert2';
     </div>
 
     <div class="table-container">
-      <table>
+      <table class="table-card">
         <thead>
           <tr>
             <th>ID</th>
@@ -66,20 +66,20 @@ import Swal from 'sweetalert2';
         </thead>
         <tbody>
           <tr *ngFor="let p of filteredPresupuestos" (click)="verFicha(p)" style="cursor:pointer;">
-            <td>
+            <td data-label="ID">
               <strong [title]="p.idPresupuesto">{{ formatId(p.idPresupuesto) }}</strong>
             </td>
-            <td>{{ p.clienteNombre || '—' }}</td>
-            <td>{{ p.viviendaDireccion || '—' }}</td>
-            <td>{{ p.fecha | date:'dd/MM/yyyy' }}</td>
-            <td>{{ p.total | number:'1.2-2' }} €</td>
-            <td>
+            <td data-label="Cliente">{{ p.clienteNombre || '—' }}</td>
+            <td data-label="Vivienda">{{ p.viviendaDireccion || '—' }}</td>
+            <td data-label="Fecha">{{ p.fecha | date:'dd/MM/yyyy' }}</td>
+            <td data-label="Total">{{ p.total | number:'1.2-2' }} €</td>
+            <td data-label="Estado">
               <span class="badge" [ngClass]="getStatusClass(p.estado)">
                 {{ p.estado || '—' }}
               </span>
             </td>
-            <td>{{ p.tipoPresupuesto || 'Obra' }}</td>
-            <td style="text-align:right; white-space:nowrap;">
+            <td data-label="Tipo">{{ p.tipoPresupuesto || 'Obra' }}</td>
+            <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space:nowrap;">
               <a
                 [routerLink]="['/presupuestos', p.idPresupuesto]"
                 class="action-badge"
@@ -265,6 +265,29 @@ import Swal from 'sweetalert2';
     .action-badge:hover {
       transform: scale(1.1);
       filter: brightness(1.1);
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filter-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-group,
+      .global-search {
+        width: 100%;
+        min-width: 100%;
+      }
+
+      .btn-clear {
+        width: 100%;
+      }
     }
   `]
 })

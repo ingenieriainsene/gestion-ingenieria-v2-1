@@ -411,6 +411,28 @@ import Swal from 'sweetalert2';
     .prod-price { font-weight: 700; color: #059669; font-size: 0.95rem; }
     .product-empty { text-align: center; color: #94a3b8; padding: 2rem; font-style: italic; }
 
+    @media (max-width: 768px) {
+      .header-section {
+        text-align: left;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .lines-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+    }
+
     @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   `]

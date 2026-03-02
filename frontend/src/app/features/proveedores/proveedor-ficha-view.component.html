@@ -74,7 +74,7 @@
                 <h2>📞 Contactos del Proveedor</h2>
             </div>
             <div class="table-wrap">
-                <table class="ficha-table">
+                <table class="ficha-table table-card">
                     <thead>
                         <tr>
                             <th>NOMBRE</th>
@@ -85,10 +85,10 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let c of detail.listaContactos">
-                            <td><strong>{{ c.nombre }}</strong></td>
-                            <td>{{ c.cargo || '—' }}</td>
-                            <td>{{ c.telefono || '—' }}</td>
-                            <td>{{ c.email || '—' }}</td>
+                            <td data-label="Nombre"><strong>{{ c.nombre }}</strong></td>
+                            <td data-label="Cargo">{{ c.cargo || '—' }}</td>
+                            <td data-label="Teléfono">{{ c.telefono || '—' }}</td>
+                            <td data-label="Email">{{ c.email || '—' }}</td>
                         </tr>
                         <tr *ngIf="!detail.listaContactos?.length">
                             <td colspan="4" class="empty-cell">No hay contactos registrados.</td>
@@ -106,7 +106,7 @@
                 <h2>📋 Intervenciones en las que participa</h2>
             </div>
             <div class="table-wrap">
-                <table class="ficha-table">
+                <table class="ficha-table table-card">
                     <thead>
                         <tr>
                             <th>TRAMITE</th>
@@ -119,16 +119,16 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let t of detail.listaTrabajos">
-                            <td>
+                            <td data-label="Trámite">
                                 <a [routerLink]="['/tramite-detalle', t.idTramite]" class="link-tramite">
                                     #{{ t.idTramite }}
                                 </a>
                             </td>
-                            <td>{{ t.tipoTramite }}</td>
-                            <td>{{ t.clienteNombre }}</td>
-                            <td><small>{{ t.viviendaDireccion }}</small></td>
-                            <td>{{ t.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
-                            <td>{{ t.estado }}</td>
+                            <td data-label="Tipo">{{ t.tipoTramite }}</td>
+                            <td data-label="Cliente">{{ t.clienteNombre }}</td>
+                            <td data-label="Dirección"><small>{{ t.viviendaDireccion }}</small></td>
+                            <td data-label="Fecha">{{ t.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
+                            <td data-label="Estado">{{ t.estado }}</td>
                         </tr>
                         <tr *ngIf="!detail.listaTrabajos?.length">
                             <td colspan="6" class="empty-cell">No se encontraron trabajos asociados.</td>
@@ -146,7 +146,7 @@
                 <h2>📦 Albaranes de Proveedor</h2>
             </div>
             <div class="table-wrap">
-                <table class="ficha-table">
+                <table class="ficha-table table-card">
                     <thead>
                         <tr>
                             <th>Nº ALBARÁN</th>
@@ -158,17 +158,17 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let a of detail.listaAlbaranes">
-                            <td><strong>{{ a.numeroAlbaran }}</strong></td>
-                            <td>{{ a.fecha | date:'dd/MM/yyyy' }}</td>
-                            <td class="text-amount">{{ a.importe | currency:'EUR' }}</td>
-                            <td>
+                            <td data-label="Nº albarán"><strong>{{ a.numeroAlbaran }}</strong></td>
+                            <td data-label="Fecha">{{ a.fecha | date:'dd/MM/yyyy' }}</td>
+                            <td data-label="Importe" class="text-amount">{{ a.importe | currency:'EUR' }}</td>
+                            <td data-label="Trámite">
                                 <a *ngIf="a.idTramite" [routerLink]="['/tramite-detalle', a.idTramite]"
                                     class="link-tramite">
                                     #{{ a.idTramite }} ({{ a.numeroTramite }})
                                 </a>
                                 <span *ngIf="!a.idTramite">—</span>
                             </td>
-                            <td>{{ a.notas || '—' }}</td>
+                            <td data-label="Notas">{{ a.notas || '—' }}</td>
                         </tr>
                         <tr *ngIf="!detail.listaAlbaranes?.length">
                             <td colspan="5" class="empty-cell">No hay albaranes registrados.</td>
@@ -186,7 +186,7 @@
                 <h2>📄 Facturas de Proveedor</h2>
             </div>
             <div class="table-wrap">
-                <table class="ficha-table">
+                <table class="ficha-table table-card">
                     <thead>
                         <tr>
                             <th>Nº FACTURA</th>
@@ -198,17 +198,17 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let f of detail.listaFacturas">
-                            <td><strong>{{ f.numeroFactura }}</strong></td>
-                            <td>{{ f.fecha | date:'dd/MM/yyyy' }}</td>
-                            <td class="text-amount">{{ f.importe | currency:'EUR' }}</td>
-                            <td>
+                            <td data-label="Nº factura"><strong>{{ f.numeroFactura }}</strong></td>
+                            <td data-label="Fecha">{{ f.fecha | date:'dd/MM/yyyy' }}</td>
+                            <td data-label="Importe" class="text-amount">{{ f.importe | currency:'EUR' }}</td>
+                            <td data-label="Estado">
                                 <span class="badge" [ngClass]="{
                                     'badge-pending': f.estado === 'Pendiente',
                                     'badge-paid': f.estado === 'Pagada',
                                     'badge-overdue': f.estado === 'Vencida'
                                 }">{{ f.estado }}</span>
                             </td>
-                            <td>
+                            <td data-label="Trámite">
                                 <a *ngIf="f.idTramite" [routerLink]="['/tramite-detalle', f.idTramite]"
                                     class="link-tramite">
                                     #{{ f.idTramite }} ({{ f.numeroTramite }})

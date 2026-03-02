@@ -202,6 +202,19 @@
     }
 }
 
+@media (max-width: 768px) {
+    .ficha-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .ficha-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
 /* Tabs Navigation */
 .tabs-navigation {
     display: flex;

@@ -75,7 +75,7 @@
       <h2>📋 Historial de Contratos</h2>
     </div>
     <div class="table-wrap">
-      <table class="ficha-table">
+      <table class="ficha-table table-card">
         <thead>
           <tr>
             <th>ID</th>
@@ -89,14 +89,14 @@
         </thead>
         <tbody>
           <tr *ngFor="let c of contratos">
-            <td><strong>#{{ c.idContrato }}</strong></td>
-            <td>{{ c.tipoContrato || '—' }}</td>
-            <td>{{ direccionLocalContrato(c) }}</td>
-            <td>{{ titularContrato(c) }}</td>
-            <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
-            <td><span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">{{ vigente(c) ?
+            <td data-label="ID"><strong>#{{ c.idContrato }}</strong></td>
+            <td data-label="Tipo">{{ c.tipoContrato || '—' }}</td>
+            <td data-label="Dirección">{{ direccionLocalContrato(c) }}</td>
+            <td data-label="Titular">{{ titularContrato(c) }}</td>
+            <td data-label="Vencimiento">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+            <td data-label="Estado"><span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">{{ vigente(c) ?
                 'Vigente' : 'Vencido' }}</span></td>
-            <td>
+            <td data-label="Gestión" class="actions-cell">
               <a [routerLink]="['/contratos', c.idContrato]" class="badge-edit">✏️ Ver</a>
             </td>
           </tr>

@@ -337,6 +337,47 @@ interface NavCategory {
         transform: translateX(0);
       }
     }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 85vw;
+        max-width: 320px;
+        transform: translateX(0);
+      }
+
+      .sidebar.collapsed {
+        width: 64px;
+        transform: translateX(0);
+      }
+
+      .toggle-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.4rem;
+      }
+
+      .nav-brand-container {
+        padding: 16px 16px 16px 16px;
+      }
+
+      .category-header {
+        padding: 14px 16px;
+        min-height: 44px;
+      }
+
+      .side-item {
+        padding: 12px 16px 12px 44px;
+        min-height: 44px;
+      }
+
+      .sidebar.collapsed .side-item {
+        padding-left: 20px;
+      }
+
+      .footer-item {
+        min-height: 44px;
+      }
+    }
   `]
 })
 export class SidebarComponent implements OnInit {

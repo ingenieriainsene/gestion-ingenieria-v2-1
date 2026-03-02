@@ -22,12 +22,12 @@ interface ProveedorRow {
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
+    <div class="d-flex justify-content-between align-items-center mb-3 header-row" style="margin-bottom: 25px;">
       <h1>Gestión de Proveedores</h1>
       <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Proveedor</button>
     </div>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 25px;">
       <input
         type="text"
         [(ngModel)]="filtro"
@@ -38,7 +38,7 @@ interface ProveedorRow {
       <button class="btn-primary" (click)="aplicarFiltro()">Filtrar</button>
     </div>
 
-    <table>
+    <table class="table-card">
       <thead>
         <tr>
           <th>ID</th>
@@ -52,23 +52,23 @@ interface ProveedorRow {
       </thead>
       <tbody>
         <tr *ngFor="let p of filtrados">
-          <td><strong>#{{ p.id }}</strong></td>
-          <td>{{ p.nombreComercial }}</td>
-          <td><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">{{ p.cif }}</code></td>
-          <td>{{ p.tipo }}</td>
-          <td>
+          <td data-label="ID"><strong>#{{ p.id }}</strong></td>
+          <td data-label="Nombre">{{ p.nombreComercial }}</td>
+          <td data-label="CIF"><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">{{ p.cif }}</code></td>
+          <td data-label="Tipo">{{ p.tipo }}</td>
+          <td data-label="Oficios">
             <ng-container *ngIf="p.listaOficios?.length; else sinOficios">
               <span *ngFor="let o of p.listaOficios; let last = last">{{ o }}<span *ngIf="!last">, </span></span>
             </ng-container>
             <ng-template #sinOficios><span class="muted">Sin oficios</span></ng-template>
           </td>
-          <td>
+          <td data-label="Contactos">
             <ng-container *ngIf="p.contactosCount > 0; else sinContactos">
               {{ p.contactosCount }} persona{{ p.contactosCount !== 1 ? 's' : '' }}
             </ng-container>
             <ng-template #sinContactos>—</ng-template>
           </td>
-          <td style="text-align: right; white-space: nowrap;">
+          <td data-label="Acciones" class="actions-cell" style="text-align: right; white-space: nowrap;">
             <a [routerLink]="['/proveedores', p.id]" class="action-badge" style="background:#3498db; cursor: pointer;" title="Ver ficha">👁️</a>
             <a [routerLink]="['/proveedores', p.id, 'editar']" class="action-badge badge-edit" title="Editar">✏️</a>
             <button class="action-badge badge-delete" style="border:none; cursor:pointer;" title="Eliminar" (click)="eliminar(p)">🗑️</button>
@@ -157,6 +157,32 @@ interface ProveedorRow {
     `table { width: 100%; border-collapse: collapse; margin-top: 10px; }`,
     `th { background: #f8fafc; padding: 12px; text-align: left; font-size: 0.75rem; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }`,
     `td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }`,
+    `
+    @media (max-width: 768px) {
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-row button {
+        width: 100%;
+      }
+
+      .contacto-fila {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+    }
+    `,
   ],
 })
 export class ProveedorListComponent implements OnInit {

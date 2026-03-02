@@ -61,7 +61,7 @@ interface TareaPlan {
           <h2>🧰 Tareas a programar</h2>
         </div>
         <div class="table-wrap">
-          <table class="ficha-table">
+          <table class="ficha-table table-card">
             <thead>
               <tr>
                 <th>TAREA</th>
@@ -72,10 +72,10 @@ interface TareaPlan {
             </thead>
             <tbody>
               <tr *ngFor="let t of tareas">
-                <td>{{ t.nombre }}</td>
-                <td>{{ t.descripcion || '—' }}</td>
-                <td style="text-align:right;">{{ t.frecuenciaMeses }}</td>
-                <td style="text-align:right;">
+                <td data-label="Tarea">{{ t.nombre }}</td>
+                <td data-label="Descripción">{{ t.descripcion || '—' }}</td>
+                <td data-label="Frecuencia" style="text-align:right;">{{ t.frecuenciaMeses }}</td>
+                <td data-label="Fecha inicio" style="text-align:right;">
                   <input type="date" [(ngModel)]="t.fechaInicio" (ngModelChange)="recalcularPreview()" />
                 </td>
               </tr>
@@ -92,7 +92,7 @@ interface TareaPlan {
           <h2>📅 Previsualización de intervenciones</h2>
         </div>
         <div class="table-wrap">
-          <table class="ficha-table">
+          <table class="ficha-table table-card">
             <thead>
               <tr>
                 <th>FECHA</th>
@@ -101,8 +101,8 @@ interface TareaPlan {
             </thead>
             <tbody>
               <tr *ngFor="let p of preview">
-                <td>{{ p.fecha | date:'dd/MM/yyyy' }}</td>
-                <td>{{ p.tareas.join(', ') }}</td>
+                <td data-label="Fecha">{{ p.fecha | date:'dd/MM/yyyy' }}</td>
+                <td data-label="Tareas">{{ p.tareas.join(', ') }}</td>
               </tr>
             </tbody>
           </table>
@@ -138,7 +138,7 @@ interface TareaPlan {
           <h2>📆 Intervenciones generadas</h2>
         </div>
         <div class="table-wrap">
-          <table class="ficha-table">
+          <table class="ficha-table table-card">
             <thead>
               <tr>
                 <th>FECHA</th>
@@ -148,9 +148,9 @@ interface TareaPlan {
             </thead>
             <tbody>
               <tr *ngFor="let a of avisos">
-                <td>{{ a.fechaProgramada | date:'dd/MM/yyyy' }}</td>
-                <td>{{ a.estado || 'Pendiente' }}</td>
-                <td>
+                <td data-label="Fecha">{{ a.fechaProgramada | date:'dd/MM/yyyy' }}</td>
+                <td data-label="Estado">{{ a.estado || 'Pendiente' }}</td>
+                <td data-label="Detalle">
                   <div *ngIf="a.detalles?.length; else sinDetalles">
                     <span *ngFor="let d of a.detalles; let last = last">
                       {{ d.tareaNombre || ('Tarea ' + d.tareaContratoId) }}<span *ngIf="!last">, </span>
@@ -189,6 +189,18 @@ interface TareaPlan {
       background: #1e293b;
       border-color: #1e293b;
       color: #f8fafc;
+    }
+
+    @media (max-width: 768px) {
+      .stepper {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
     }
   `],
 })

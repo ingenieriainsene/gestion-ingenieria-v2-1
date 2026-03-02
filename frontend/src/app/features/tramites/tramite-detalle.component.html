@@ -185,7 +185,7 @@
       </div>
 
       <div class="table-responsive">
-        <table class="modern-table">
+        <table class="modern-table table-card">
           <thead>
             <tr>
               <th style="width: 140px;">Fecha</th>
@@ -199,26 +199,26 @@
           </thead>
           <tbody>
             <tr *ngFor="let h of hitos; let i = index">
-              <td>
+              <td data-label="Fecha">
                 <div class="date-cell">
                   <strong>{{ h.fechaRegistro | date:'dd/MM/yyyy' }}</strong>
                   <small>{{ h.fechaRegistro | date:'HH:mm' }}</small>
                 </div>
               </td>
-              <td>
+              <td data-label="Comentario">
                 <div class="comment-text">{{ h.comentario }}</div>
                 <div class="sub-text">Por: {{ h.nombreCreador || 'Sistema' }}</div>
                 <span *ngIf="h.esUrgente" class="badge-urgente">URGENTE</span>
               </td>
-              <td>{{ h.nombreAsignado || '—' }}</td>
-              <td>{{ h.nombreProveedor || '—' }}</td>
-              <td>{{ h.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
-              <td>
+              <td data-label="Asignado">{{ h.nombreAsignado || '—' }}</td>
+              <td data-label="Proveedor">{{ h.nombreProveedor || '—' }}</td>
+              <td data-label="Próx. seg.">{{ h.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Estado">
                 <span class="status-badge" [ngClass]="h.estado === 'Terminado' ? 'done' : 'pending'">
                   {{ h.estado }}
                 </span>
               </td>
-              <td class="center">
+              <td data-label="Acciones" class="actions-cell center">
                 <button type="button" class="btn-icon-edit" (click)="editarHito(h)" title="Editar">✏️</button>
                 <button type="button" class="btn-icon-delete" (click)="eliminarHito(h, i)" title="Eliminar">🗑️</button>
               </td>
@@ -274,7 +274,7 @@
       </div>
       <div class="card-body">
         <div class="table-responsive">
-          <table class="modern-table">
+          <table class="modern-table table-card">
             <thead>
               <tr>
                 <th>Referencia</th>
@@ -286,13 +286,13 @@
             </thead>
             <tbody>
               <tr *ngFor="let p of presupuestos">
-                <td>{{ p.codigoReferencia }}</td>
-                <td>{{ p.fecha | date:'dd/MM/yyyy' }}</td>
-                <td>
+                <td data-label="Referencia">{{ p.codigoReferencia }}</td>
+                <td data-label="Fecha">{{ p.fecha | date:'dd/MM/yyyy' }}</td>
+                <td data-label="Estado">
                   <span class="status-badge" [ngClass]="p.estado.toLowerCase()">{{ p.estado }}</span>
                 </td>
-                <td>{{ p.total | currency:'EUR' }}</td>
-                <td>
+                <td data-label="Total">{{ p.total | currency:'EUR' }}</td>
+                <td data-label="Acciones" class="actions-cell">
                   <a [routerLink]="['/presupuestos', p.idPresupuesto]" class="btn-icon-edit" title="Ver">👁️</a>
                   <button
                     type="button"
@@ -444,7 +444,7 @@
               <div class="albaran-body">
                 <div class="albaran-notas" *ngIf="a.notas">Notas: {{ a.notas }}</div>
                 <div class="albaran-estado" *ngIf="a.estado">Estado: <strong>{{ a.estado }}</strong></div>
-                <table class="modern-table">
+                <table class="modern-table table-card">
                   <thead>
                     <tr>
                       <th>Producto / Concepto</th>
@@ -456,11 +456,11 @@
                   </thead>
                   <tbody>
                     <tr *ngFor="let l of a.lineas">
-                      <td>{{ l.concepto }}</td>
-                      <td class="right">{{ l.cantidad | number:'1.2-2' }}</td>
-                      <td class="right">{{ l.precioUnitario | currency:'EUR' }}</td>
-                      <td class="right">{{ l.ivaPorcentaje | number:'1.0-2' }}</td>
-                      <td class="right">{{ l.totalConIva | currency:'EUR' }}</td>
+                      <td data-label="Concepto">{{ l.concepto }}</td>
+                      <td data-label="Cantidad" class="right">{{ l.cantidad | number:'1.2-2' }}</td>
+                      <td data-label="P. unit." class="right">{{ l.precioUnitario | currency:'EUR' }}</td>
+                      <td data-label="IVA %" class="right">{{ l.ivaPorcentaje | number:'1.0-2' }}</td>
+                      <td data-label="Total" class="right">{{ l.totalConIva | currency:'EUR' }}</td>
                     </tr>
                     <tr *ngIf="!a.lineas || a.lineas.length === 0">
                       <td colspan="5" class="empty-state">Sin líneas registradas.</td>
@@ -507,7 +507,7 @@
                 </div>
               </summary>
               <div class="albaran-body">
-                <table class="modern-table">
+                <table class="modern-table table-card">
                   <thead>
                     <tr>
                       <th>Concepto</th>
@@ -519,11 +519,11 @@
                   </thead>
                   <tbody>
                     <tr *ngFor="let l of a.lineas">
-                      <td>{{ l.concepto }}</td>
-                      <td class="right">{{ l.cantidad | number:'1.2-2' }}</td>
-                      <td class="right">{{ l.precioUnitario | currency:'EUR' }}</td>
-                      <td class="right">{{ l.ivaPorcentaje | number:'1.0-2' }}</td>
-                      <td class="right">{{ l.totalConIva | currency:'EUR' }}</td>
+                      <td data-label="Concepto">{{ l.concepto }}</td>
+                      <td data-label="Cantidad" class="right">{{ l.cantidad | number:'1.2-2' }}</td>
+                      <td data-label="P. unit." class="right">{{ l.precioUnitario | currency:'EUR' }}</td>
+                      <td data-label="IVA %" class="right">{{ l.ivaPorcentaje | number:'1.0-2' }}</td>
+                      <td data-label="Total" class="right">{{ l.totalConIva | currency:'EUR' }}</td>
                     </tr>
                     <tr *ngIf="!a.lineas || a.lineas.length === 0">
                       <td colspan="5" class="empty-state">Sin líneas registradas.</td>

@@ -203,7 +203,7 @@ import Swal from 'sweetalert2';
             </div>
 
             <div class="table-responsive">
-              <table class="modern-table">
+              <table class="modern-table table-card">
                 <thead>
                   <tr>
                     <th>Nombre</th>
@@ -215,11 +215,11 @@ import Swal from 'sweetalert2';
                 </thead>
                 <tbody>
                   <tr *ngFor="let c of contactos">
-                    <td><strong>{{ c.nombre }}</strong></td>
-                    <td>{{ c.cargo || '—' }}</td>
-                    <td>{{ c.telefono || '—' }}</td>
-                    <td>{{ c.email || '—' }}</td>
-                    <td class="actions-cell">
+                    <td data-label="Nombre"><strong>{{ c.nombre }}</strong></td>
+                    <td data-label="Cargo">{{ c.cargo || '—' }}</td>
+                    <td data-label="Teléfono">{{ c.telefono || '—' }}</td>
+                    <td data-label="Email">{{ c.email || '—' }}</td>
+                    <td data-label="Acciones" class="actions-cell">
                       <button class="action-btn edit" (click)="abrirModalContacto(c)" title="Editar">✏️</button>
                       <button class="action-btn delete" (click)="eliminarContacto(c)" title="Eliminar">🗑️</button>
                     </td>

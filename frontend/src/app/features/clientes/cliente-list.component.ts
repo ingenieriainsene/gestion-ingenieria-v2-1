@@ -30,7 +30,7 @@ import Swal from 'sweetalert2';
 
     <!-- CLIENTS TABLE (LIST MODE) -->
     <div class="table-container">
-      <table>
+      <table class="table-card">
         <thead>
           <tr>
             <th>ID</th>
@@ -43,17 +43,17 @@ import Swal from 'sweetalert2';
         </thead>
         <tbody>
           <tr *ngFor="let c of filtrados" (click)="irAFicha(c)" style="cursor:pointer;">
-            <td><strong>#{{ c.idCliente }}</strong></td>
-            <td>
+            <td data-label="ID"><strong>#{{ c.idCliente }}</strong></td>
+            <td data-label="Cliente">
               <div class="client-name-cell">
                 <div class="client-mini-avatar">{{ getInitials(c) }}</div>
                 <span>{{ c.nombre }} {{ c.apellido1 }} {{ c.apellido2 || '' }}</span>
               </div>
             </td>
-            <td><code class="dni-badge">{{ c.dni }}</code></td>
-            <td><small>{{ c.direccionFiscalCompleta || '—' }}</small></td>
-            <td><small>{{ c.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
-            <td style="text-align:right; white-space:nowrap;">
+            <td data-label="DNI/CIF"><code class="dni-badge">{{ c.dni }}</code></td>
+            <td data-label="Dirección fiscal"><small>{{ c.direccionFiscalCompleta || '—' }}</small></td>
+            <td data-label="Fecha alta"><small>{{ c.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
+            <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space:nowrap;">
                <a 
                  class="action-badge" 
                  style="background:#3498db;" 
@@ -389,6 +389,26 @@ import Swal from 'sweetalert2';
       cursor: pointer;
     }
     .phone-row { display: flex; flex-direction: column; }
+
+    @media (max-width: 768px) {
+      .header-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .search-bar {
+        flex-direction: column;
+      }
+
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+    }
   `]
 })
 export class ClienteListComponent implements OnInit, OnDestroy {

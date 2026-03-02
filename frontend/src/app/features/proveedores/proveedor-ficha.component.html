@@ -96,7 +96,7 @@
       <button type="button" class="btn-primary" (click)="abrirModalContacto()">+ Nuevo Contacto</button>
     </div>
     <div class="table-wrap">
-      <table class="ficha-table">
+      <table class="ficha-table table-card">
         <thead>
           <tr>
             <th>NOMBRE</th>
@@ -108,11 +108,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let c of contactos">
-            <td>{{ c.nombre }}</td>
-            <td>{{ c.cargo || '—' }}</td>
-            <td>{{ c.telefono || '—' }}</td>
-            <td>{{ c.email || '—' }}</td>
-            <td>
+            <td data-label="Nombre">{{ c.nombre }}</td>
+            <td data-label="Cargo">{{ c.cargo || '—' }}</td>
+            <td data-label="Teléfono">{{ c.telefono || '—' }}</td>
+            <td data-label="Email">{{ c.email || '—' }}</td>
+            <td data-label="Acciones" class="actions-cell">
               <button type="button" class="btn-sm-link" (click)="abrirModalContacto(c)" title="Editar">✏️</button>
               <button type="button" class="btn-sm-danger" (click)="eliminarContacto(c)" title="Eliminar">🗑️</button>
             </td>

@@ -64,7 +64,7 @@ import Swal from 'sweetalert2';
     </div>
 
     <div class="table-container">
-      <table>
+      <table class="table-card">
         <thead>
           <tr>
             <th>ID</th>
@@ -80,8 +80,8 @@ import Swal from 'sweetalert2';
         </thead>
         <tbody>
           <tr *ngFor="let c of filteredContratos">
-            <td><strong>#{{ c.idContrato }}</strong></td>
-            <td>
+            <td data-label="ID"><strong>#{{ c.idContrato }}</strong></td>
+            <td data-label="Cliente">
               <a
                 [routerLink]="['/clientes', c.cliente?.idCliente || c.idCliente]"
                 class="entity-link"
@@ -90,10 +90,10 @@ import Swal from 'sweetalert2';
                 👤 {{ c.cliente?.nombre }} {{ c.cliente?.apellido1 }}
               </a>
             </td>
-            <td>
+            <td data-label="DNI/CIF">
               <span class="dni-text">{{ c.cliente?.dni || '—' }}</span>
             </td>
-            <td>
+            <td data-label="Local">
               <a
                 [routerLink]="['/locales', c.local?.idLocal || c.idLocal]"
                 class="entity-link"
@@ -102,17 +102,17 @@ import Swal from 'sweetalert2';
                 🏠 {{ c.local?.direccionCompleta }}
               </a>
             </td>
-            <td>
+            <td data-label="Tipo">
               <span class="badge-tipo">{{ c.tipoContrato }}</span>
             </td>
-            <td>{{ c.fechaInicio | date:'dd/MM/yyyy' }}</td>
-            <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
-            <td>
+            <td data-label="Inicio">{{ c.fechaInicio | date:'dd/MM/yyyy' }}</td>
+            <td data-label="Vencimiento">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+            <td data-label="Estado">
               <span class="status-badge" [ngClass]="c.estado?.toLowerCase() || 'activo'">
                 {{ c.estado || 'Activo' }}
               </span>
             </td>
-            <td class="actions-cell">
+            <td data-label="Acciones" class="actions-cell">
               <a
                 [routerLink]="['/contratos', c.idContrato]"
                 class="action-btn view"
@@ -355,6 +355,32 @@ import Swal from 'sweetalert2';
       padding: 3rem;
       color: #94a3b8;
       font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filter-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-group,
+      .filter-group.small,
+      .filter-group.search-cliente,
+      .filter-group.search-local {
+        width: 100%;
+        min-width: 100%;
+      }
+
+      .filter-group select,
+      .filter-group input {
+        width: 100%;
+      }
     }
   `]
 })

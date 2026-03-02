@@ -73,7 +73,7 @@ import { ProveedorService } from '../../services/proveedor.service';
       </div>
     </div>
 
-    <table>
+    <table class="table-card">
       <thead>
         <tr>
           <th>FECHA REGISTRO</th>
@@ -89,27 +89,27 @@ import { ProveedorService } from '../../services/proveedor.service';
       </thead>
       <tbody>
         <tr *ngFor="let s of filtrados">
-          <td>
+          <td data-label="Fecha registro">
             <strong>{{ s.fechaRegistro | date:'dd/MM/yyyy' }}</strong><br />
             <small>{{ s.fechaRegistro | date:'HH:mm' }}</small>
           </td>
-          <td>
+          <td data-label="Trámite">
             <a *ngIf="s.idTramite" [routerLink]="['/tramite-detalle', s.idTramite]" class="maps-link" style="font-weight:700;">
               #{{ s.idTramite }}
             </a>
             <span *ngIf="!s.idTramite">—</span>
           </td>
-          <td>{{ s.comentario || '—' }}</td>
-          <td class="col-tecnico">{{ s.nombreAsignado || '—' }}</td>
-          <td>{{ s.nombreProveedor || '—' }}</td>
-          <td>{{ s.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
-          <td style="text-align:center;">
+          <td data-label="Comentario">{{ s.comentario || '—' }}</td>
+          <td data-label="Técnico" class="col-tecnico">{{ s.nombreAsignado || '—' }}</td>
+          <td data-label="Proveedor">{{ s.nombreProveedor || '—' }}</td>
+          <td data-label="Próx. seguimiento">{{ s.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
+          <td data-label="Urg." style="text-align:center;">
             <span *ngIf="s.esUrgente" class="urg-badge">URG</span>
           </td>
-          <td>
+          <td data-label="Estado">
             <span class="status-badge" [ngClass]="s.estado?.toLowerCase()">{{ s.estado || '—' }}</span>
           </td>
-          <td style="text-align:right; white-space: nowrap;">
+          <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space: nowrap;">
             <a
               *ngIf="s.idTramite"
               [routerLink]="['/tramite-detalle', s.idTramite]"
@@ -250,6 +250,34 @@ import { ProveedorService } from '../../services/proveedor.service';
       background: #fff7ed;
       color: #c2410c;
       border: 1px solid #fed7aa;
+    }
+
+    @media (max-width: 768px) {
+      .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .tabs {
+        flex-wrap: wrap;
+      }
+
+      .search input {
+        min-width: 100%;
+        width: 100%;
+      }
+
+      .advanced-filters {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-actions {
+        margin-left: 0;
+      }
+
+      .filter-actions .btn-clear {
+        width: 100%;
+      }
     }
   `],
 })

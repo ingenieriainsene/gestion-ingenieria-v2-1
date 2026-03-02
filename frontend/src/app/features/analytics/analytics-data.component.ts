@@ -108,7 +108,7 @@ import {
       <div class="grid-card" *ngIf="!loading && !error">
 
         <div class="table-wrapper">
-          <table class="data-table">
+          <table class="data-table table-card">
             <thead>
               <tr>
                 <th class="sortable" (click)="setSort('idTramite')">
@@ -140,32 +140,32 @@ import {
                 <td colspan="10" class="empty-row">No hay registros para los filtros seleccionados.</td>
               </tr>
               <tr *ngFor="let row of rows" [class.row-urgente]="row.esUrgente">
-                <td class="cell-id">{{ row.idTramite }}</td>
-                <td>
+                <td data-label="ID" class="cell-id">{{ row.idTramite }}</td>
+                <td data-label="Tipo">
                   <span class="tipo-badge">{{ row.tipoTramite }}</span>
                 </td>
-                <td>
+                <td data-label="Estado">
                   <span class="estado-badge" [ngClass]="estadoClass(row.estado)">
                     {{ row.estado }}
                   </span>
                 </td>
-                <td>
+                <td data-label="Cliente">
                   <span *ngIf="row.nombreCliente">
                     {{ row.nombreCliente }} {{ row.apellido1Cliente }}
                   </span>
                   <span class="text-muted" *ngIf="!row.nombreCliente">—</span>
                 </td>
-                <td class="cell-dir">
+                <td data-label="Local/Dirección" class="cell-dir">
                   <span *ngIf="row.direccionLocal">{{ row.direccionLocal }}</span>
                   <span class="text-muted" *ngIf="!row.direccionLocal">—</span>
                 </td>
-                <td>
+                <td data-label="Técnico">
                   <span *ngIf="row.tecnicoAsignado">{{ row.tecnicoAsignado }}</span>
                   <span class="text-muted" *ngIf="!row.tecnicoAsignado">—</span>
                 </td>
-                <td class="cell-date">{{ formatDate(row.fechaCreacion) }}</td>
-                <td class="cell-date">{{ formatDate(row.fechaEjecucion) }}</td>
-                <td class="cell-duracion">
+                <td data-label="Inicio" class="cell-date">{{ formatDate(row.fechaCreacion) }}</td>
+                <td data-label="Fin" class="cell-date">{{ formatDate(row.fechaEjecucion) }}</td>
+                <td data-label="Duración" class="cell-duracion">
                   <span *ngIf="row.duracionDias !== null && row.duracionDias !== undefined"
                         [ngClass]="duracionClass(row.duracionDias)">
                     {{ row.duracionDias }}d
@@ -174,7 +174,7 @@ import {
                     En curso
                   </span>
                 </td>
-                <td class="cell-urgente">
+                <td data-label="Urgente" class="cell-urgente">
                   <span *ngIf="row.esUrgente" class="urgente-dot" title="Urgente">🔴</span>
                 </td>
               </tr>
@@ -517,6 +517,33 @@ import {
       color: #475569;
       background: #fff;
       cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .analytics-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-group,
+      .filter-actions {
+        width: 100%;
+      }
+
+      .pagination {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-btn,
+      .page-size-select {
+        width: 100%;
+      }
     }
   `]
 })

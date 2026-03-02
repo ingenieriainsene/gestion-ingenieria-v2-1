@@ -274,3 +274,25 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 768px) {
+  .ficha-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px 16px;
+  }
+
+  .ficha-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ficha-body-flex {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+
+  .side-column {
+    min-width: auto;
+  }
+}

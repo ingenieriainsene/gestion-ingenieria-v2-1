@@ -60,7 +60,7 @@
       <h2>📋 Líneas de presupuesto</h2>
     </div>
     <div class="table-wrap">
-      <table class="ficha-table">
+      <table class="ficha-table table-card">
         <thead>
           <tr>
             <th>ORDEN</th>
@@ -74,13 +74,13 @@
         </thead>
         <tbody>
           <tr *ngFor="let l of presupuesto.lineas">
-            <td>{{ l.orden }}</td>
-            <td>{{ l.productoTexto || '—' }}</td>
-            <td>{{ l.concepto || '—' }}</td>
-            <td>{{ l.ivaPorcentaje ?? 21 }}</td>
-            <td>{{ l.cantidad | number:'1.2-2' }}</td>
-            <td>{{ l.precioUnitario | number:'1.2-2' }} €</td>
-            <td>{{ l.totalLinea | number:'1.2-2' }} €</td>
+            <td data-label="Orden">{{ l.orden }}</td>
+            <td data-label="Producto">{{ l.productoTexto || '—' }}</td>
+            <td data-label="Tipo">{{ l.concepto || '—' }}</td>
+            <td data-label="IVA %">{{ l.ivaPorcentaje ?? 21 }}</td>
+            <td data-label="Cantidad">{{ l.cantidad | number:'1.2-2' }}</td>
+            <td data-label="Precio">{{ l.precioUnitario | number:'1.2-2' }} €</td>
+            <td data-label="Total">{{ l.totalLinea | number:'1.2-2' }} €</td>
           </tr>
           <tr *ngIf="presupuesto.lineas.length === 0">
             <td colspan="7" class="empty-cell">No hay líneas registradas.</td>

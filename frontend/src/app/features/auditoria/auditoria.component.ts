@@ -26,7 +26,7 @@ interface AuditoriaSesion {
 
       <div class="audit-card">
         <div class="table-responsive">
-          <table class="modern-table">
+          <table class="modern-table table-card">
             <thead>
               <tr>
                 <th>Usuario</th>
@@ -40,7 +40,7 @@ interface AuditoriaSesion {
             </thead>
             <tbody>
               <tr *ngFor="let s of sesiones" [class.active-row]="isActive(s)">
-                <td>
+                <td data-label="Usuario">
                   <div class="user-cell">
                     <div class="user-avatar" [ngStyle]="{'background-color': getAvatarColor(s.nombreUsuario)}">
                       {{ s.nombreUsuario.charAt(0).toUpperCase() }}
@@ -48,30 +48,30 @@ interface AuditoriaSesion {
                     <span class="username">{{ s.nombreUsuario }}</span>
                   </div>
                 </td>
-                <td>
+                <td data-label="Estado">
                   <span class="status-badge" [ngClass]="isActive(s) ? 'status-online' : 'status-offline'">
                     <span class="status-dot"></span>
                     {{ isActive(s) ? 'En Línea' : 'Desconectado' }}
                   </span>
                 </td>
-                <td class="time-cell">
+                <td data-label="Inicio" class="time-cell">
                   {{ s.fechaInicio | date : 'dd MMM yyyy, HH:mm:ss' }}
                 </td>
-                <td class="time-cell">
+                <td data-label="Fin" class="time-cell">
                   <span *ngIf="s.fechaFin">{{ s.fechaFin | date : 'dd MMM yyyy, HH:mm:ss' }}</span>
                   <span *ngIf="!s.fechaFin" class="text-muted">En uso...</span>
                 </td>
-                <td class="duration-cell">
+                <td data-label="Tiempo" class="duration-cell">
                   <span class="duration-badge" [class.active-duration]="isActive(s)">
                     ⏱️ {{ calculateDuration(s) }}
                   </span>
                 </td>
-                <td class="activity-cell">
+                <td data-label="Última actividad" class="activity-cell">
                   <span class="activity-badge" [class.active-activity]="isActive(s)">
                     {{ formatLastActivity(s) }}
                   </span>
                 </td>
-                <td class="ip-cell">
+                <td data-label="IP" class="ip-cell">
                   <span class="ip-badge">{{ s.ipAcceso }}</span>
                 </td>
               </tr>
@@ -272,6 +272,21 @@ interface AuditoriaSesion {
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .header-section {
+        text-align: left;
+      }
+
+      .user-cell {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .table-responsive {
+        overflow-x: auto;
+      }
     }
   `]
 })

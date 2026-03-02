@@ -11,12 +11,12 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AutocompleteComponent],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
+    <div class="d-flex justify-content-between align-items-center mb-3 header-row" style="margin-bottom: 25px;">
       <h1>Gestión de Locales</h1>
       <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Local</button>
     </div>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 25px;">
       <input
         type="text"
         [(ngModel)]="filtro"
@@ -27,7 +27,7 @@ import Swal from 'sweetalert2';
       <button class="btn-primary" (click)="aplicarFiltro()">Filtrar</button>
     </div>
 
-    <table>
+    <table class="table-card">
       <thead>
         <tr>
           <th>ID</th>
@@ -42,8 +42,8 @@ import Swal from 'sweetalert2';
       </thead>
       <tbody>
         <tr *ngFor="let l of filtrados">
-          <td><strong>#{{ l.idLocal }}</strong></td>
-          <td>
+          <td data-label="ID"><strong>#{{ l.idLocal }}</strong></td>
+          <td data-label="Dirección">
             <small>
               <a
                 class="maps-link"
@@ -54,8 +54,8 @@ import Swal from 'sweetalert2';
               </a>
             </small>
           </td>
-          <td><code>{{ l.cups || '---' }}</code></td>
-          <td>
+          <td data-label="CUPS"><code>{{ l.cups || '---' }}</code></td>
+          <td data-label="Ref. catastral">
             <ng-container *ngIf="l.referenciaCatastral; else noRc">
               <a
                 class="catastro-link"
@@ -69,10 +69,10 @@ import Swal from 'sweetalert2';
               <span style="color:#94a3b8;">---</span>
             </ng-template>
           </td>
-          <td>{{ l.apellido1Titular }} {{ l.apellido2Titular || '' }}, {{ l.nombreTitular }}</td>
-          <td><code style="background:#f1f5f9;">{{ l.dniTitular || '---' }}</code></td>
-          <td><small>{{ l.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
-          <td style="text-align: right; white-space: nowrap;">
+          <td data-label="Titular">{{ l.apellido1Titular }} {{ l.apellido2Titular || '' }}, {{ l.nombreTitular }}</td>
+          <td data-label="DNI titular"><code style="background:#f1f5f9;">{{ l.dniTitular || '---' }}</code></td>
+          <td data-label="Fecha alta"><small>{{ l.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
+          <td data-label="Acciones" class="actions-cell" style="text-align: right; white-space: nowrap;">
             <a
               [routerLink]="['/locales', l.idLocal]"
               class="action-badge"
@@ -178,6 +178,31 @@ import Swal from 'sweetalert2';
     .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; }
     .btn-secondary { background: #f1f5f9; color: #475569; padding: 10px 18px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: 600; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+
+    @media (max-width: 768px) {
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-row button {
+        width: 100%;
+      }
+
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+    }
   `]
 })
 export class LocalListComponent implements OnInit {

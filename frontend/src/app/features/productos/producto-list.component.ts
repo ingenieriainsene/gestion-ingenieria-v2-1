@@ -11,12 +11,12 @@ import { ProductoService } from '../../services/producto.service';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
+    <div class="d-flex justify-content-between align-items-center mb-3 header-row" style="margin-bottom: 25px;">
       <h1>Almacén de Productos</h1>
       <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Producto</button>
     </div>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 25px;">
       <input
         type="text"
         [(ngModel)]="filtro"
@@ -27,7 +27,7 @@ import { ProductoService } from '../../services/producto.service';
       <button class="btn-primary" (click)="aplicarFiltro()">Filtrar</button>
     </div>
 
-    <table>
+    <table class="table-card">
       <thead>
         <tr>
           <th>ID</th>
@@ -43,17 +43,17 @@ import { ProductoService } from '../../services/producto.service';
       </thead>
       <tbody>
         <tr *ngFor="let p of filtrados">
-          <td><strong>#{{ p.id }}</strong></td>
-          <td><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">{{ p.codRef }}</code></td>
-          <td>{{ p.descripcion }}</td>
-          <td>{{ p.categoria || '—' }}</td>
-          <td>{{ p.coste | number:'1.2-2' }} €</td>
-          <td>{{ (p.margen || 0) | number:'1.1-1' }}%</td>
-          <td><strong>{{ (p.precioVenta || 0) | number:'1.2-2' }} €</strong></td>
-          <td style="color: #059669; font-weight: 700;">
+          <td data-label="ID"><strong>#{{ p.id }}</strong></td>
+          <td data-label="Código"><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">{{ p.codRef }}</code></td>
+          <td data-label="Descripción">{{ p.descripcion }}</td>
+          <td data-label="Categoría">{{ p.categoria || '—' }}</td>
+          <td data-label="Coste">{{ p.coste | number:'1.2-2' }} €</td>
+          <td data-label="Margen">{{ (p.margen || 0) | number:'1.1-1' }}%</td>
+          <td data-label="PVP (B.I)"><strong>{{ (p.precioVenta || 0) | number:'1.2-2' }} €</strong></td>
+          <td data-label="PVP total" style="color: #059669; font-weight: 700;">
             {{ ((p.precioVenta || 0) * (1 + (p.iva || 0) / 100)) | number:'1.2-2' }} €
           </td>
-          <td style="text-align: right;">
+          <td data-label="Acciones" class="actions-cell" style="text-align: right;">
             <a [routerLink]="['/productos', p.id]" class="action-badge badge-edit">✏️</a>
             <a href="javascript:void(0)" class="action-badge badge-delete" (click)="eliminar(p)">🗑️</a>
           </td>
@@ -129,6 +129,31 @@ import { ProductoService } from '../../services/producto.service';
       border: none;
       cursor: pointer;
       font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-row button {
+        width: 100%;
+      }
+
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
     }
   `],
 })

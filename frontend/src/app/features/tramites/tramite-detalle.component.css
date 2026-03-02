@@ -1137,3 +1137,55 @@ details > summary::-webkit-details-marker {
   border-color: #94a3b8;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+
+@media (max-width: 768px) {
+  .summary-row {
+    flex-direction: column;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .tabs-header {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lineas-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .albaran-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .modal-header,
+  .modal-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

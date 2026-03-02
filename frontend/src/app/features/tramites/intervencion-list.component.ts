@@ -41,7 +41,7 @@ import { TramiteService, TramiteListResponse } from '../../services/domain.servi
       </div>
     </div>
 
-    <table>
+    <table class="table-card">
       <thead>
         <tr>
           <th>FECHA</th>
@@ -56,26 +56,26 @@ import { TramiteService, TramiteListResponse } from '../../services/domain.servi
       </thead>
       <tbody>
         <tr *ngFor="let t of filtrados">
-          <td>
+          <td data-label="Fecha">
             <strong>{{ t.fechaSeguimiento | date:'dd/MM/yyyy' }}</strong>
           </td>
-          <td>
+          <td data-label="Contrato/Cliente">
             <a [routerLink]="['/contratos', t.idContrato]" class="maps-link" style="font-weight:700; display:block;">
               #{{ t.idContrato }} - {{ t.nombreCliente || 'N/A' }}
             </a>
             <small class="text-muted">{{ t.direccionLocal || '—' }}</small>
           </td>
-          <td>
+          <td data-label="Intervención">
             <span class="badge-tipo">{{ t.tipoTramite }}</span>
           </td>
-          <td>
+          <td data-label="Detalle">
             {{ t.detalleSeguimiento || '—' }}
           </td>
-          <td>{{ t.tecnicoAsignado || '—' }}</td>
-          <td style="text-align:center;">
+          <td data-label="Técnico">{{ t.tecnicoAsignado || '—' }}</td>
+          <td data-label="Urg." style="text-align:center;">
             <span *ngIf="t.esUrgente" class="urg-badge">URG</span>
           </td>
-          <td>
+          <td data-label="Estado">
             <span class="status-badge" 
                   [class.pendiente]="t.estado === 'Pendiente'"
                   [class.proceso]="t.estado === 'En proceso'"
@@ -83,7 +83,7 @@ import { TramiteService, TramiteListResponse } from '../../services/domain.servi
               {{ t.estado || '—' }}
             </span>
           </td>
-          <td style="text-align:right; white-space: nowrap;">
+          <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space: nowrap;">
             <a
               [routerLink]="['/tramite-detalle', t.idTramite]"
               class="action-badge"
@@ -174,6 +174,26 @@ import { TramiteService, TramiteListResponse } from '../../services/domain.servi
       background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;
     }
     .text-muted { color: #64748b; font-size: 0.85rem; }
+
+    @media (max-width: 768px) {
+      .filters-secondary {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .tabs {
+        flex-wrap: wrap;
+      }
+
+      .date-filter {
+        width: 100%;
+      }
+
+      .search input {
+        min-width: 100%;
+        width: 100%;
+      }
+    }
   `]
 })
 export class IntervencionListComponent implements OnInit {
