@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${documento.titulo}">Documento</title>
+  <style>
+    @page { size: A4; margin: 24mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #1f2937; }
+    .doc { width: 100%; }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .logo { width: 40%; }
+    .logo-box { width: 180px; height: 60px; border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
+    .logo img { max-width: 180px; max-height: 60px; }
+    .company { text-align: right; width: 60%; }
+    .company-name { font-size: 18px; font-weight: bold; }
+    .muted { color: #64748b; }
+    .section { margin-top: 18px; }
+    .section-title { font-size: 12px; font-weight: bold; color: #0f172a; margin-bottom: 6px; }
+    .grid { display: flex; gap: 16px; }
+    .card { border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 6px; width: 50%; }
+    .doc-meta { display: flex; justify-content: space-between; gap: 16px; }
+    .meta-item { width: 50%; }
+    .meta-label { font-weight: bold; color: #475569; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th { background: #0f172a; color: white; text-align: left; padding: 8px; font-size: 11px; }
+    td { border: 1px solid #e2e8f0; padding: 8px; font-size: 11px; }
+    .text-right { text-align: right; }
+    .totals { width: 45%; margin-left: auto; margin-top: 12px; }
+    .totals td { border: none; padding: 4px 8px; }
+    .totals .total-row td { border-top: 1px solid #0f172a; font-weight: bold; }
+    .footer { margin-top: 22px; font-size: 10px; color: #64748b; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="doc">
+    <div class="header">
+      <div class="logo">
+        <div th:if="${logoBase64 != null}">
+          <img th:src="'data:image/png;base64,' + ${logoBase64}" alt="Logo" />
+        </div>
+        <div th:if="${logoBase64 == null}" class="logo-box">LOGO</div>
+      </div>
+      <div class="company">
+        <div class="company-name" th:text="${empresa.nombre}">Empresa</div>
+        <div th:text="${empresa.cif}">CIF</div>
+        <div th:text="${empresa.direccion}">Dirección</div>
+        <div class="muted" th:text="${empresa.email}">email</div>
+        <div class="muted" th:text="${empresa.telefono}">teléfono</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Datos del cliente</div>
+      <div class="grid">
+        <div class="card">
+          <div><span class="meta-label">Cliente:</span> <span th:text="${cliente.nombre}">Nombre</span></div>
+          <div><span class="meta-label">DNI/CIF:</span> <span th:text="${cliente.dni}">DNI</span></div>
+          <div><span class="meta-label">Dirección:</span> <span th:text="${cliente.direccion}">Dirección</span></div>
+          <div><span class="meta-label">Email:</span> <span th:text="${cliente.email}">Email</span></div>
+        </div>
+        <div class="card">
+          <div class="doc-meta">
+            <div class="meta-item">
+              <div class="meta-label" th:text="${documento.tipo}">DOCUMENTO</div>
+              <div th:text="${documento.numero}">Nº</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Fecha</div>
+              <div th:text="${documento.fecha}">Fecha</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <div class="meta-label">Referencia</div>
+            <div th:text="${documento.referencia}">Referencia</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Concepto</th>
+          <th class="text-right">Cantidad</th>
+          <th class="text-right">Precio unitario</th>
+          <th class="text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="l : ${lineas}">
+          <td th:text="${l.concepto}">Concepto</td>
+          <td class="text-right" th:text="${l.cantidad}">0</td>
+          <td class="text-right" th:text="${l.precioUnitario}">0</td>
+          <td class="text-right" th:text="${l.total}">0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="totals">
+      <tr>
+        <td class="text-right">Subtotal</td>
+        <td class="text-right" th:text="${totales.subtotal}">0</td>
+      </tr>
+      <tr>
+        <td class="text-right">IVA</td>
+        <td class="text-right" th:text="${totales.iva}">0</td>
+      </tr>
+      <tr class="total-row">
+        <td class="text-right">Total</td>
+        <td class="text-right" th:text="${totales.total}">0</td>
+      </tr>
+    </table>
+
+    <div class="footer" th:text="${documento.legal}">
+      Documento generado automáticamente. Sin validez fiscal si no se valida.
+    </div>
+  </div>
+</body>
+</html>

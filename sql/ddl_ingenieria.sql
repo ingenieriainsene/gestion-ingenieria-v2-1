@@ -844,11 +844,24 @@ WHERE NOT EXISTS (
 );
 
 -- Presupuestos (jerarquía capítulos/partidas)
-TRUNCATE TABLE presupuesto_lineas, presupuestos RESTART IDENTITY CASCADE;
-
-WITH p AS (
-  INSERT INTO presupuestos (cliente_id, vivienda_id, codigo_referencia, fecha, total, total_sin_iva, total_con_iva, estado)
-  VALUES (1, 1, 'PRES-HIER-001', CURRENT_DATE, 14810.40, 12240.00, 14810.40, 'Borrador')
+WITH t AS (
+  SELECT tc.id_tramite, c.id_cliente, l.id_local
+  FROM tramites_contrato tc
+  JOIN contratos c ON tc.id_contrato = c.id_contrato
+  JOIN locales l ON c.id_local = l.id_local
+  WHERE l.cups = 'ES0021000012345678AB1F'
+    AND tc.tipo_tramite = 'Legalización'
+  LIMIT 1
+),
+p AS (
+  INSERT INTO presupuestos (
+    cliente_id, vivienda_id, codigo_referencia, fecha,
+    total, total_sin_iva, total_con_iva, estado, id_tramite
+  )
+  SELECT id_cliente, id_local, 'PRES-HIER-001', CURRENT_DATE,
+         14810.40, 12240.00, 14810.40, 'Borrador', id_tramite
+  FROM t
+  WHERE NOT EXISTS (SELECT 1 FROM presupuestos WHERE codigo_referencia = 'PRES-HIER-001')
   RETURNING id_presupuesto
 ),
 cap01 AS (
@@ -875,22 +888,160 @@ INSERT INTO presupuesto_lineas (
   presupuesto_id, orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
   importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, tipo_jerarquia, codigo_visual, padre_id
 )
-VALUES
-  ((SELECT id_presupuesto FROM p), 1, 'Redacción de Proyecto Técnico de BT', 1, 0, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, 'PARTIDA', '01.01', (SELECT id_linea FROM cap01)),
-  ((SELECT id_presupuesto FROM p), 2, 'Dirección de Obra y Coordinación CSS', 1, 0, 900.00, 1.00, 900.00, 900.00, 900.00, 189.00, 1089.00, 21, 900.00, 900.00, 'PARTIDA', '01.02', (SELECT id_linea FROM cap01)),
-  ((SELECT id_presupuesto FROM p), 3, 'Tasas Municipales (ICIO) y Gestión de Subvenciones', 1, 0, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, 'PARTIDA', '01.03', (SELECT id_linea FROM cap01)),
+SELECT
+  p.id_presupuesto, v.orden, v.concepto, v.cantidad, v.num_visitas, v.coste_unitario, v.factor_margen, v.total_coste, v.pvp_unitario, v.total_pvp,
+  v.importe_iva, v.total_final, v.iva_porcentaje, v.precio_unitario, v.total_linea, 'PARTIDA', v.codigo_visual, c.id_linea
+FROM p
+JOIN (VALUES
+  (1, 'Redacción de Proyecto Técnico de BT', 1, 0, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, '01.01', 'cap01'),
+  (2, 'Dirección de Obra y Coordinación CSS', 1, 0, 900.00, 1.00, 900.00, 900.00, 900.00, 189.00, 1089.00, 21, 900.00, 900.00, '01.02', 'cap01'),
+  (3, 'Tasas Municipales (ICIO) y Gestión de Subvenciones', 1, 0, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, '01.03', 'cap01'),
+  (4, '18x Módulo Jinko Solar Tiger Neo N-Type 475W', 18, 0, 160.00, 1.00, 2880.00, 160.00, 2880.00, 604.80, 3484.80, 21, 160.00, 2880.00, '02.01', 'cap02'),
+  (5, 'Inversor Híbrido Huawei SUN2000-6KTL-L1', 1, 0, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, '02.02', 'cap02'),
+  (6, 'Estructura Coplanar K2 Systems (Aluminio)', 1, 0, 650.00, 1.00, 650.00, 650.00, 650.00, 136.50, 786.50, 21, 650.00, 650.00, '02.03', 'cap02'),
+  (7, 'Batería Huawei LUNA2000 10kWh', 1, 0, 3400.00, 1.00, 3400.00, 3400.00, 3400.00, 714.00, 4114.00, 21, 3400.00, 3400.00, '03.01', 'cap03'),
+  (8, 'Smart Power Sensor Huawei DTSU666-H', 1, 0, 180.00, 1.00, 180.00, 180.00, 180.00, 37.80, 217.80, 21, 180.00, 180.00, '03.02', 'cap03'),
+  (9, 'Protecciones DC/AC (Sobretensiones, Diferenciales Clase A)', 1, 0, 380.00, 1.00, 380.00, 380.00, 380.00, 79.80, 459.80, 21, 380.00, 380.00, '03.03', 'cap03'),
+  (10, 'Cableado solar 6mm y canalización reforzada', 1, 0, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, '03.04', 'cap03'),
+  (11, 'Apertura de rozas y ayudas de albañilería', 1, 0, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, '04.01', 'cap04'),
+  (12, 'Bancada de hormigón para unidad exterior (si procede)', 1, 0, 300.00, 1.00, 300.00, 300.00, 300.00, 63.00, 363.00, 21, 300.00, 300.00, '04.02', 'cap04')
+) AS v(
+  orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, codigo_visual, cap
+) ON true
+JOIN (
+  SELECT id_linea, 'cap01' AS cap FROM cap01
+  UNION ALL SELECT id_linea, 'cap02' AS cap FROM cap02
+  UNION ALL SELECT id_linea, 'cap03' AS cap FROM cap03
+  UNION ALL SELECT id_linea, 'cap04' AS cap FROM cap04
+) c ON c.cap = v.cap;
 
-  ((SELECT id_presupuesto FROM p), 4, '18x Módulo Jinko Solar Tiger Neo N-Type 475W', 18, 0, 160.00, 1.00, 2880.00, 160.00, 2880.00, 604.80, 3484.80, 21, 160.00, 2880.00, 'PARTIDA', '02.01', (SELECT id_linea FROM cap02)),
-  ((SELECT id_presupuesto FROM p), 5, 'Inversor Híbrido Huawei SUN2000-6KTL-L1', 1, 0, 1200.00, 1.00, 1200.00, 1200.00, 1200.00, 252.00, 1452.00, 21, 1200.00, 1200.00, 'PARTIDA', '02.02', (SELECT id_linea FROM cap02)),
-  ((SELECT id_presupuesto FROM p), 6, 'Estructura Coplanar K2 Systems (Aluminio)', 1, 0, 650.00, 1.00, 650.00, 650.00, 650.00, 136.50, 786.50, 21, 650.00, 650.00, 'PARTIDA', '02.03', (SELECT id_linea FROM cap02)),
+-- Presupuestos asociados a intervenciones (seed)
+WITH t AS (
+  SELECT tc.id_tramite, c.id_cliente, l.id_local
+  FROM tramites_contrato tc
+  JOIN contratos c ON tc.id_contrato = c.id_contrato
+  JOIN locales l ON c.id_local = l.id_local
+  WHERE l.cups = 'ES0021000087654321AB2G'
+    AND tc.tipo_tramite = 'Instalación'
+  LIMIT 1
+),
+p AS (
+  INSERT INTO presupuestos (
+    cliente_id, vivienda_id, codigo_referencia, fecha,
+    total, total_sin_iva, total_con_iva, estado, id_tramite
+  )
+  SELECT id_cliente, id_local, 'PRES-INT-002', CURRENT_DATE - 7,
+         3872.00, 3200.00, 3872.00, 'Aceptado', id_tramite
+  FROM t
+  WHERE NOT EXISTS (SELECT 1 FROM presupuestos WHERE codigo_referencia = 'PRES-INT-002')
+  RETURNING id_presupuesto
+),
+cap AS (
+  INSERT INTO presupuesto_lineas (presupuesto_id, orden, concepto, tipo_jerarquia, codigo_visual)
+  SELECT id_presupuesto, 1, 'INSTALACIÓN FV RESIDENCIAL', 'CAPITULO', '01' FROM p
+  RETURNING id_linea
+)
+INSERT INTO presupuesto_lineas (
+  presupuesto_id, orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, tipo_jerarquia, codigo_visual, padre_id
+)
+SELECT
+  p.id_presupuesto, v.orden, v.concepto, v.cantidad, v.num_visitas, v.coste_unitario, v.factor_margen, v.total_coste, v.pvp_unitario, v.total_pvp,
+  v.importe_iva, v.total_final, v.iva_porcentaje, v.precio_unitario, v.total_linea, 'PARTIDA', v.codigo_visual, cap.id_linea
+FROM p
+JOIN cap ON true
+JOIN (VALUES
+  (1, 'Suministro e instalación de 12 módulos 550W', 12, 0, 220.00, 1.00, 2640.00, 220.00, 2640.00, 554.40, 3194.40, 21, 220.00, 2640.00, '01.01'),
+  (2, 'Inversor híbrido 6kW + protecciones', 1, 0, 560.00, 1.00, 560.00, 560.00, 560.00, 117.60, 677.60, 21, 560.00, 560.00, '01.02')
+) AS v(
+  orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, codigo_visual
+) ON true;
 
-  ((SELECT id_presupuesto FROM p), 7, 'Batería Huawei LUNA2000 10kWh', 1, 0, 3400.00, 1.00, 3400.00, 3400.00, 3400.00, 714.00, 4114.00, 21, 3400.00, 3400.00, 'PARTIDA', '03.01', (SELECT id_linea FROM cap03)),
-  ((SELECT id_presupuesto FROM p), 8, 'Smart Power Sensor Huawei DTSU666-H', 1, 0, 180.00, 1.00, 180.00, 180.00, 180.00, 37.80, 217.80, 21, 180.00, 180.00, 'PARTIDA', '03.02', (SELECT id_linea FROM cap03)),
-  ((SELECT id_presupuesto FROM p), 9, 'Protecciones DC/AC (Sobretensiones, Diferenciales Clase A)', 1, 0, 380.00, 1.00, 380.00, 380.00, 380.00, 79.80, 459.80, 21, 380.00, 380.00, 'PARTIDA', '03.03', (SELECT id_linea FROM cap03)),
-  ((SELECT id_presupuesto FROM p), 10, 'Cableado solar 6mm y canalización reforzada', 1, 0, 250.00, 1.00, 250.00, 250.00, 250.00, 52.50, 302.50, 21, 250.00, 250.00, 'PARTIDA', '03.04', (SELECT id_linea FROM cap03)),
+WITH t AS (
+  SELECT tc.id_tramite, c.id_cliente, l.id_local
+  FROM tramites_contrato tc
+  JOIN contratos c ON tc.id_contrato = c.id_contrato
+  JOIN locales l ON c.id_local = l.id_local
+  WHERE l.cups = 'ES0021000076543210AB3H'
+    AND tc.tipo_tramite = 'Mantenimiento'
+  LIMIT 1
+),
+p AS (
+  INSERT INTO presupuestos (
+    cliente_id, vivienda_id, codigo_referencia, fecha,
+    total, total_sin_iva, total_con_iva, estado, id_tramite
+  )
+  SELECT id_cliente, id_local, 'PRES-INT-003', CURRENT_DATE - 5,
+         1149.50, 950.00, 1149.50, 'Borrador', id_tramite
+  FROM t
+  WHERE NOT EXISTS (SELECT 1 FROM presupuestos WHERE codigo_referencia = 'PRES-INT-003')
+  RETURNING id_presupuesto
+),
+cap AS (
+  INSERT INTO presupuesto_lineas (presupuesto_id, orden, concepto, tipo_jerarquia, codigo_visual)
+  SELECT id_presupuesto, 1, 'MANTENIMIENTO PROGRAMADO', 'CAPITULO', '01' FROM p
+  RETURNING id_linea
+)
+INSERT INTO presupuesto_lineas (
+  presupuesto_id, orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, tipo_jerarquia, codigo_visual, padre_id
+)
+SELECT
+  p.id_presupuesto, v.orden, v.concepto, v.cantidad, v.num_visitas, v.coste_unitario, v.factor_margen, v.total_coste, v.pvp_unitario, v.total_pvp,
+  v.importe_iva, v.total_final, v.iva_porcentaje, v.precio_unitario, v.total_linea, 'PARTIDA', v.codigo_visual, cap.id_linea
+FROM p
+JOIN cap ON true
+JOIN (VALUES
+  (1, 'Revisión anual de inversores', 1, 1, 500.00, 1.00, 500.00, 500.00, 500.00, 105.00, 605.00, 21, 500.00, 500.00, '01.01'),
+  (2, 'Limpieza y termografía', 1, 1, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, '01.02')
+) AS v(
+  orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, codigo_visual
+) ON true;
 
-  ((SELECT id_presupuesto FROM p), 11, 'Apertura de rozas y ayudas de albañilería', 1, 0, 450.00, 1.00, 450.00, 450.00, 450.00, 94.50, 544.50, 21, 450.00, 450.00, 'PARTIDA', '04.01', (SELECT id_linea FROM cap04)),
-  ((SELECT id_presupuesto FROM p), 12, 'Bancada de hormigón para unidad exterior (si procede)', 1, 0, 300.00, 1.00, 300.00, 300.00, 300.00, 63.00, 363.00, 21, 300.00, 300.00, 'PARTIDA', '04.02', (SELECT id_linea FROM cap04));
+WITH t AS (
+  SELECT tc.id_tramite, c.id_cliente, l.id_local
+  FROM tramites_contrato tc
+  JOIN contratos c ON tc.id_contrato = c.id_contrato
+  JOIN locales l ON c.id_local = l.id_local
+  WHERE l.cups = 'ES0021000065432109AB4I'
+    AND tc.tipo_tramite = 'Ampliación'
+  LIMIT 1
+),
+p AS (
+  INSERT INTO presupuestos (
+    cliente_id, vivienda_id, codigo_referencia, fecha,
+    total, total_sin_iva, total_con_iva, estado, id_tramite
+  )
+  SELECT id_cliente, id_local, 'PRES-INT-004', CURRENT_DATE - 3,
+         3388.00, 2800.00, 3388.00, 'Aceptado', id_tramite
+  FROM t
+  WHERE NOT EXISTS (SELECT 1 FROM presupuestos WHERE codigo_referencia = 'PRES-INT-004')
+  RETURNING id_presupuesto
+),
+cap AS (
+  INSERT INTO presupuesto_lineas (presupuesto_id, orden, concepto, tipo_jerarquia, codigo_visual)
+  SELECT id_presupuesto, 1, 'AMPLIACIÓN DE SISTEMA', 'CAPITULO', '01' FROM p
+  RETURNING id_linea
+)
+INSERT INTO presupuesto_lineas (
+  presupuesto_id, orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, tipo_jerarquia, codigo_visual, padre_id
+)
+SELECT
+  p.id_presupuesto, v.orden, v.concepto, v.cantidad, v.num_visitas, v.coste_unitario, v.factor_margen, v.total_coste, v.pvp_unitario, v.total_pvp,
+  v.importe_iva, v.total_final, v.iva_porcentaje, v.precio_unitario, v.total_linea, 'PARTIDA', v.codigo_visual, cap.id_linea
+FROM p
+JOIN cap ON true
+JOIN (VALUES
+  (1, 'Ampliación de cuadro eléctrico', 1, 0, 1600.00, 1.00, 1600.00, 1600.00, 1600.00, 336.00, 1936.00, 21, 1600.00, 1600.00, '01.01'),
+  (2, 'Instalación de 6 módulos adicionales', 6, 0, 200.00, 1.00, 1200.00, 200.00, 1200.00, 252.00, 1452.00, 21, 200.00, 1200.00, '01.02')
+) AS v(
+  orden, concepto, cantidad, num_visitas, coste_unitario, factor_margen, total_coste, pvp_unitario, total_pvp,
+  importe_iva, total_final, iva_porcentaje, precio_unitario, total_linea, codigo_visual
+) ON true;
 
 -- ======================================================
 -- 3.2 SEED PRESUPUESTO PREVENTIVO (FV)
@@ -1209,6 +1360,83 @@ CREATE TABLE IF NOT EXISTS albaranes_proveedor (
     CONSTRAINT fk_alb_proveedor FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor) ON DELETE CASCADE,
     CONSTRAINT fk_alb_tramite FOREIGN KEY (id_tramite) REFERENCES TRAMITES_CONTRATO(id_tramite) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS albaranes_venta (
+    id_albaran BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    presupuesto_id BIGINT NOT NULL,
+    id_tramite BIGINT NULL,
+    numero_albaran VARCHAR(50) NOT NULL,
+    fecha DATE NOT NULL,
+    importe NUMERIC(12, 2) DEFAULT 0,
+    notas TEXT,
+    CONSTRAINT fk_alb_venta_presupuesto FOREIGN KEY (presupuesto_id) REFERENCES presupuestos(id_presupuesto) ON DELETE CASCADE,
+    CONSTRAINT fk_alb_venta_tramite FOREIGN KEY (id_tramite) REFERENCES TRAMITES_CONTRATO(id_tramite) ON DELETE SET NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_alb_venta_presupuesto ON albaranes_venta(presupuesto_id);
+
+CREATE TABLE IF NOT EXISTS albaranes_venta_lineas (
+    id_linea BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    albaran_id BIGINT NOT NULL,
+    orden INT NOT NULL,
+    concepto VARCHAR(255) NOT NULL,
+    cantidad NUMERIC(12, 2) DEFAULT 0,
+    precio_unitario NUMERIC(12, 2) DEFAULT 0,
+    iva_porcentaje NUMERIC(5, 2) DEFAULT 21,
+    total_linea NUMERIC(12, 2) DEFAULT 0,
+    total_iva NUMERIC(12, 2) DEFAULT 0,
+    total_con_iva NUMERIC(12, 2) DEFAULT 0,
+    CONSTRAINT fk_alb_venta_linea_albaran FOREIGN KEY (albaran_id) REFERENCES albaranes_venta(id_albaran) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_alb_venta_lineas_albaran ON albaranes_venta_lineas(albaran_id);
+
+CREATE TABLE IF NOT EXISTS facturas_venta (
+    id_factura BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    presupuesto_id BIGINT NOT NULL,
+    id_tramite BIGINT NULL,
+    numero_factura VARCHAR(50) NOT NULL,
+    fecha DATE NOT NULL,
+    importe NUMERIC(12, 2) DEFAULT 0,
+    estado VARCHAR(30) DEFAULT 'Emitida',
+    notas TEXT,
+    CONSTRAINT fk_fac_venta_presupuesto FOREIGN KEY (presupuesto_id) REFERENCES presupuestos(id_presupuesto) ON DELETE CASCADE,
+    CONSTRAINT fk_fac_venta_tramite FOREIGN KEY (id_tramite) REFERENCES TRAMITES_CONTRATO(id_tramite) ON DELETE SET NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_fac_venta_presupuesto ON facturas_venta(presupuesto_id);
+
+CREATE TABLE IF NOT EXISTS albaranes_proveedor_lineas (
+    id_linea BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    albaran_id BIGINT NOT NULL,
+    orden INT NOT NULL,
+    concepto VARCHAR(255) NOT NULL,
+    cantidad NUMERIC(12, 2) DEFAULT 0,
+    precio_unitario NUMERIC(12, 2) DEFAULT 0,
+    iva_porcentaje NUMERIC(5, 2) DEFAULT 21,
+    total_linea NUMERIC(12, 2) DEFAULT 0,
+    total_iva NUMERIC(12, 2) DEFAULT 0,
+    total_con_iva NUMERIC(12, 2) DEFAULT 0,
+    CONSTRAINT fk_alb_prov_linea_albaran FOREIGN KEY (albaran_id) REFERENCES albaranes_proveedor(id_albaran) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_alb_prov_lineas_albaran ON albaranes_proveedor_lineas(albaran_id);
+
+CREATE TABLE IF NOT EXISTS facturas_proveedor_lineas (
+    id_linea BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    factura_id BIGINT NOT NULL,
+    orden INT NOT NULL,
+    concepto VARCHAR(255) NOT NULL,
+    cantidad NUMERIC(12, 2) DEFAULT 0,
+    precio_unitario NUMERIC(12, 2) DEFAULT 0,
+    iva_porcentaje NUMERIC(5, 2) DEFAULT 21,
+    total_linea NUMERIC(12, 2) DEFAULT 0,
+    total_iva NUMERIC(12, 2) DEFAULT 0,
+    total_con_iva NUMERIC(12, 2) DEFAULT 0,
+    CONSTRAINT fk_fac_prov_linea_factura FOREIGN KEY (factura_id) REFERENCES facturas_proveedor(id_factura) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_fac_prov_lineas_factura ON facturas_proveedor_lineas(factura_id);
 
 CREATE TABLE IF NOT EXISTS facturas_proveedor (
     id_factura BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,

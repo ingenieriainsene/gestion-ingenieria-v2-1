@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
@@ -11,6 +11,9 @@ import {
   Seguimiento,
 } from '../../services/domain.services';
 import { PresupuestoService, PresupuestoListItem } from '../../services/presupuesto.service';
+import { AlbaranVentaService, AlbaranVentaDTO } from '../../services/albaran-venta.service';
+import { DocumentosService } from '../../services/documentos.service';
+import { ComprasService, CompraDocumentoDTO, CompraDocumentoCreateRequest } from '../../services/compras.service';
 import { UsuarioService as UsuarioApi, Usuario } from '../../services/usuario.service';
 import { ProveedorService, ProveedorDTO } from '../../services/proveedor.service';
 import { HttpClient } from '@angular/common/http';
@@ -44,6 +47,14 @@ export class TramiteDetalleComponent implements OnInit {
   loading = true;
   activeTab = 'general';
   presupuestos: PresupuestoListItem[] = [];
+  albaranesVenta: AlbaranVentaDTO[] = [];
+  cargandoAlbaranes = false;
+  descargandoDocs: Record<string, boolean> = {};
+  documentosCompra: CompraDocumentoDTO[] = [];
+  cargandoCompras = false;
+  totalGastos = 0;
+  totalVentas = 0;
+  margen = 0;
 
   // Provider Modal
   modalProveedorVisible = false;
@@ -53,6 +64,7 @@ export class TramiteDetalleComponent implements OnInit {
 
   formInfo: FormGroup;
   formHito: FormGroup;
+  formCompra: FormGroup;
   filesToUpload: File[] = [];
   nombreVisibleUpload = '';
   private archivosBaseUrl = `${environment.apiUrl}/archivos`;
@@ -65,6 +77,9 @@ export class TramiteDetalleComponent implements OnInit {
     private usuarioService: UsuarioApi,
     private proveedorService: ProveedorService,
     private presupuestoService: PresupuestoService,
+    private albaranVentaService: AlbaranVentaService,
+    private documentosService: DocumentosService,
+    private comprasService: ComprasService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
@@ -86,6 +101,17 @@ export class TramiteDetalleComponent implements OnInit {
       idProveedor: [null as number | null],
       proveedorLabel: [''],
     });
+    this.formCompra = this.fb.group({
+      tipo: ['ALBARAN', Validators.required],
+      idProveedor: [null, Validators.required],
+      numeroDocumento: ['', Validators.required],
+      fecha: [new Date().toISOString().slice(0, 10), Validators.required],
+      importe: [0, [Validators.min(0)]],
+      estado: ['Pendiente'],
+      notas: [''],
+      lineas: this.fb.array([])
+    });
+    this.formCompra.get('lineas')?.valueChanges.subscribe(() => this.recalcularTotalCompra());
   }
 
   ngOnInit() {
@@ -102,6 +128,8 @@ export class TramiteDetalleComponent implements OnInit {
       this.cargarProveedores();
       this.cargarArchivos();
       this.cargarPresupuestos();
+      this.cargarAlbaranesVenta();
+      this.cargarCompras();
     });
 
     // Configurar autoguardado para Información y Estado
@@ -205,13 +233,184 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
+  cargarAlbaranesVenta() {
+    if (!this.idTramite) return;
+    this.cargandoAlbaranes = true;
+    this.albaranVentaService.getByTramite(this.idTramite).subscribe({
+      next: (list) => {
+        this.albaranesVenta = list || [];
+        this.cargandoAlbaranes = false;
+        this.recalcularMargen();
+      },
+      error: () => {
+        this.albaranesVenta = [];
+        this.cargandoAlbaranes = false;
+        this.recalcularMargen();
+      }
+    });
+  }
+
+  cargarCompras() {
+    if (!this.idTramite) return;
+    this.cargandoCompras = true;
+    this.comprasService.getDocumentosByTramite(this.idTramite).subscribe({
+      next: (list) => {
+        this.documentosCompra = list || [];
+        this.cargandoCompras = false;
+        this.recalcularMargen();
+      },
+      error: () => {
+        this.documentosCompra = [];
+        this.cargandoCompras = false;
+        this.recalcularMargen();
+      }
+    });
+  }
+
+  crearAlbaranCompra() {
+    if (!this.idTramite || this.formCompra.invalid) {
+      this.formCompra.markAllAsTouched();
+      return;
+    }
+    const v = this.formCompra.value;
+    const lineas = this.lineasCompra.value || [];
+    const payload: CompraDocumentoCreateRequest = {
+      tipo: v.tipo,
+      idProveedor: Number(v.idProveedor),
+      numeroDocumento: String(v.numeroDocumento).trim(),
+      fecha: String(v.fecha),
+      importe: lineas.length ? undefined : Number(v.importe),
+      estado: v.tipo === 'FACTURA' ? (v.estado ? String(v.estado) : 'Pendiente') : null,
+      notas: v.notas ? String(v.notas).trim() : null,
+      lineas: lineas.length ? lineas : undefined
+    };
+    this.comprasService.crearDocumento(this.idTramite, payload).subscribe({
+      next: () => {
+        Swal.fire('Guardado', 'Documento de compra registrado correctamente.', 'success');
+        this.formCompra.patchValue({
+          tipo: v.tipo,
+          numeroDocumento: '',
+          fecha: new Date().toISOString().slice(0, 10),
+          importe: 0,
+          estado: 'Pendiente',
+          notas: ''
+        });
+        this.lineasCompra.clear();
+        this.cargarCompras();
+      },
+      error: (e) => {
+        let msg = 'No se pudo registrar el albarán.';
+        if (typeof e?.error === 'string') msg = e.error;
+        else if (e?.error?.message) msg = e.error.message;
+        Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
   crearPresupuesto() {
     if (!this.idTramite) return;
     this.router.navigate(['/presupuestos/nuevo'], { queryParams: { tramiteId: this.idTramite } });
   }
 
+  descargarDocumento(tipo: 'albaran' | 'factura', p: PresupuestoListItem) {
+    if (!p?.idPresupuesto) return;
+    if (p.estado !== 'Aceptado') {
+      Swal.fire('Aviso', 'Solo se pueden descargar documentos de presupuestos aceptados.', 'warning');
+      return;
+    }
+    const key = `${tipo}-${p.idPresupuesto}`;
+    if (this.descargandoDocs[key]) return;
+    this.descargandoDocs[key] = true;
+
+    const req = tipo === 'albaran'
+      ? this.documentosService.descargarAlbaran(p.idPresupuesto)
+      : this.documentosService.descargarFactura(p.idPresupuesto);
+
+    req.subscribe({
+      next: (blob) => {
+        this.descargandoDocs[key] = false;
+        const nombre = p.codigoReferencia ? p.codigoReferencia : `presupuesto_${p.idPresupuesto}`;
+        const filename = `${tipo}_${nombre}.pdf`;
+        this.descargarBlob(blob, filename);
+        this.cargarAlbaranesVenta();
+      },
+      error: (e) => {
+        this.descargandoDocs[key] = false;
+        let msg = 'No se pudo descargar el documento.';
+        if (typeof e?.error === 'string') msg = e.error;
+        else if (e?.error?.message) msg = e.error.message;
+        Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
+  private descargarBlob(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
   setTab(tab: string) {
     this.activeTab = tab;
+    if (tab === 'ventas') {
+      this.cargarAlbaranesVenta();
+    }
+    if (tab === 'compras') {
+      this.cargarCompras();
+    }
+  }
+
+  private recalcularMargen() {
+    const gastos = this.documentosCompra.reduce((acc, a) => acc + (Number(a.total) || 0), 0);
+    const ventas = this.albaranesVenta.reduce((acc, a) => acc + (Number(a.total) || 0), 0);
+    this.totalGastos = Math.round(gastos * 100) / 100;
+    this.totalVentas = Math.round(ventas * 100) / 100;
+    this.margen = Math.round((this.totalVentas - this.totalGastos) * 100) / 100;
+  }
+
+  get lineasCompra(): FormArray {
+    return this.formCompra.get('lineas') as FormArray;
+  }
+
+  agregarLineaCompra() {
+    const linea = this.fb.group({
+      concepto: ['', Validators.required],
+      cantidad: [1, [Validators.required, Validators.min(0.01)]],
+      precioUnitario: [0, [Validators.required, Validators.min(0)]],
+      ivaPorcentaje: [21, [Validators.required, Validators.min(0)]],
+      totalLinea: [0],
+      totalIva: [0],
+      totalConIva: [0]
+    });
+    this.lineasCompra.push(linea);
+    this.recalcularTotalCompra();
+  }
+
+  eliminarLineaCompra(index: number) {
+    this.lineasCompra.removeAt(index);
+    this.recalcularTotalCompra();
+  }
+
+  private recalcularTotalCompra() {
+    let total = 0;
+    for (const ctrl of this.lineasCompra.controls) {
+      const v = ctrl.value;
+      const cantidad = Number(v.cantidad || 0);
+      const precio = Number(v.precioUnitario || 0);
+      const iva = Number(v.ivaPorcentaje ?? 21);
+      const base = Math.round(cantidad * precio * 100) / 100;
+      const ivaAmt = Math.round(base * (iva / 100) * 100) / 100;
+      const totalConIva = Math.round((base + ivaAmt) * 100) / 100;
+      ctrl.patchValue(
+        { totalLinea: base, totalIva: ivaAmt, totalConIva },
+        { emitEvent: false }
+      );
+      total += totalConIva;
+    }
+    this.formCompra.patchValue({ importe: Math.round(total * 100) / 100 }, { emitEvent: false });
   }
 
   guardarInfo(silent = false) {

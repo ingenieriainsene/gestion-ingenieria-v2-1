@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface AlbaranProveedorRepository extends JpaRepository<AlbaranProveedor, Long> {
     List<AlbaranProveedor> findByProveedor_IdProveedor(Long idProveedor);
+
+    List<AlbaranProveedor> findByTramite_IdTramite(Long idTramite);
 }

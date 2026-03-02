@@ -523,6 +523,168 @@ textarea.form-control {
   filter: grayscale(0) saturate(2);
 }
 
+.btn-icon-edit:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.btn-doc {
+  border: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 0.4rem;
+}
+
+.btn-albaran {
+  background: #f59e0b;
+  color: #1f2937;
+}
+
+.btn-albaran:hover:not(:disabled) {
+  background: #d97706;
+}
+
+.btn-factura {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.btn-factura:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-doc:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.albaranes-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.albaran-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.albaran-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.albaran-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.albaran-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.albaran-meta .badge {
+  background: #e2e8f0;
+  color: #1e293b;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.albaran-meta .total {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.albaran-body {
+  margin-top: 10px;
+}
+
+.albaran-notas,
+.albaran-estado {
+  font-size: 0.85rem;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.albaran-totales {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.albaran-totales .total {
+  color: #0f172a;
+}
+
+.right {
+  text-align: right;
+}
+
+details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.metric-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.metric-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.metric-value.negative {
+  color: #b91c1c;
+}
+
+.lineas-compra {
+  margin-top: 16px;
+}
+
+.lineas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .btn-icon-delete {
   background: none;
   border: none;

@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface FacturaProveedorRepository extends JpaRepository<FacturaProveedor, Long> {
     List<FacturaProveedor> findByProveedor_IdProveedor(Long idProveedor);
+
+    List<FacturaProveedor> findByTramite_IdTramite(Long idTramite);
 }
