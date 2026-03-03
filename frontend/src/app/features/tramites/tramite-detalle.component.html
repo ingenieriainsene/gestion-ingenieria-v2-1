@@ -318,11 +318,31 @@
   <div *ngIf="activeTab === 'compras'" class="tab-content fade-in">
     <div class="form-card">
       <div class="card-header flex-between">
-        <h3>📦 Albaranes de Compra (Gastos)</h3>
+        <h3>📦 Compras</h3>
+        <div class="subtabs">
+          <button
+            type="button"
+            class="subtab-btn"
+            [class.active]="activeComprasTab === 'ALBARAN'"
+            (click)="setComprasTab('ALBARAN')">
+            Albaranes
+          </button>
+          <button
+            type="button"
+            class="subtab-btn"
+            [class.active]="activeComprasTab === 'FACTURA'"
+            (click)="setComprasTab('FACTURA')">
+            Facturas
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <form [formGroup]="formCompra" class="manual-albaran-box" (ngSubmit)="crearAlbaranCompra()">
-          <h4>Crear albarán de gasto manual</h4>
+          <h4>
+            {{ activeComprasTab === 'ALBARAN'
+              ? 'Crear albarán de gasto manual'
+              : 'Crear factura de compra manual' }}
+          </h4>
           <div class="form-grid three-cols">
             <div class="field">
               <label>Proveedor</label>
@@ -333,20 +353,27 @@
               <small class="field-hint">Selecciona el proveedor que emitió este albarán.</small>
             </div>
             <div class="field">
-              <label>Nº albarán proveedor</label>
-              <input class="input" formControlName="numeroDocumento" placeholder="Ej: ALB-2025-0012" />
-              <small class="field-hint">Introduce el número exacto del documento del proveedor.</small>
+              <label>
+                {{ activeComprasTab === 'ALBARAN' ? 'Nº albarán proveedor' : 'Nº factura proveedor' }}
+              </label>
+              <input class="input" formControlName="numeroDocumento"
+                     [placeholder]="activeComprasTab === 'ALBARAN' ? 'Ej: ALB-2025-0012' : 'Ej: FAC-2025-0012'" />
+              <small class="field-hint">
+                Introduce el número exacto del documento del proveedor.
+              </small>
             </div>
             <div class="field">
               <label>Fecha</label>
               <input class="input" type="date" formControlName="fecha" />
-              <small class="field-hint">Fecha de emisión del albarán de compra.</small>
+              <small class="field-hint">
+                Fecha de emisión de la {{ activeComprasTab === 'ALBARAN' ? 'albarán' : 'factura' }}.
+              </small>
             </div>
           </div>
 
           <div class="lineas-compra">
             <div class="lineas-header">
-              <strong>Líneas del albarán</strong>
+              <strong>Líneas de la {{ activeComprasTab === 'ALBARAN' ? 'albarán' : 'factura' }}</strong>
               <button type="button" class="btn-secondary" (click)="agregarLineaCompra()">+ Añadir línea</button>
             </div>
             <div class="linea-head-grid">
@@ -376,7 +403,9 @@
           </div>
 
           <div class="actions-row">
-            <button type="submit" class="btn-primary">Guardar albarán</button>
+            <button type="submit" class="btn-primary">
+              {{ activeComprasTab === 'ALBARAN' ? 'Guardar albarán' : 'Guardar factura' }}
+            </button>
           </div>
         </form>
 
@@ -395,9 +424,9 @@
           </div>
         </div>
 
-        <div *ngIf="cargandoCompras" class="empty-state">Cargando albaranes...</div>
+        <div *ngIf="cargandoCompras" class="empty-state">Cargando documentos de compra...</div>
         <div class="albaranes-wrapper" *ngIf="!cargandoCompras">
-          <div *ngFor="let a of documentosCompra; let i = index" class="albaran-card">
+          <div *ngFor="let a of documentosCompraFiltrados; let i = index" class="albaran-card">
             <details>
               <summary>
                 <div class="albaran-summary">
@@ -409,6 +438,14 @@
                   <div class="albaran-meta">
                     <span class="badge">{{ a.proveedorNombre }}</span>
                     <span class="total">{{ a.total | currency:'EUR' }}</span>
+                    <button
+                      *ngIf="a.tipo === 'ALBARAN'"
+                      type="button"
+                      class="btn-secondary"
+                      title="Generar factura desde este albarán"
+                      (click)="generarFacturaDesdeAlbaran(a); $event.preventDefault(); $event.stopPropagation();">
+                      → Factura
+                    </button>
                     <button
                       type="button"
                       class="btn-icon-delete"
@@ -454,8 +491,8 @@
               </div>
             </details>
           </div>
-          <div *ngIf="documentosCompra.length === 0" class="empty-state">
-            No hay documentos de compra para esta intervención.
+          <div *ngIf="documentosCompraFiltrados.length === 0" class="empty-state">
+            No hay {{ activeComprasTab === 'ALBARAN' ? 'albaranes de compra' : 'facturas de proveedor' }} para esta intervención.
           </div>
         </div>
       </div>

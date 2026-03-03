@@ -388,9 +388,9 @@ export class SidebarComponent implements OnInit {
       icon: '📊',
       items: [
         { label: 'Clientes', route: '/clientes' },
+        { label: 'Locales', route: '/locales' },
         { label: 'Presupuestos', route: '/presupuestos' },
-        { label: 'Contratos', route: '/contratos' },
-        { label: 'Locales', route: '/locales' }
+        { label: 'Contratos', route: '/contratos' }
       ]
     },
     {
@@ -398,8 +398,8 @@ export class SidebarComponent implements OnInit {
       label: 'Operaciones',
       icon: '⚙️',
       items: [
-        { label: 'Seguimientos', route: '/seguimientos' },
         { label: 'Intervenciones', route: '/intervenciones' },
+        { label: 'Seguimientos', route: '/seguimientos' },
         { label: 'Agendar citas', route: '/agendar-citas' },
         { label: 'Almacen', route: '/productos' },
         { label: 'Proveedores', route: '/proveedores' },

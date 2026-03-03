@@ -47,4 +47,13 @@ public class ComprasController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/albaran/{id}/generar-factura")
+    public ResponseEntity<?> generarFacturaDesdeAlbaran(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(compraService.generarFacturaDesdeAlbaran(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

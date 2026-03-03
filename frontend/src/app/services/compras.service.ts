@@ -55,4 +55,8 @@ export class ComprasService {
   eliminarDocumento(tipo: 'ALBARAN' | 'FACTURA', idDocumento: number): Observable<void> {
     return this.api.delete<void>(`${this.endpoint}/documento/${tipo}/${idDocumento}`);
   }
+
+  generarFacturaDesdeAlbaran(idAlbaran: number): Observable<CompraDocumentoDTO> {
+    return this.api.post<CompraDocumentoDTO>(`${this.endpoint}/albaran/${idAlbaran}/generar-factura`, {});
+  }
 }

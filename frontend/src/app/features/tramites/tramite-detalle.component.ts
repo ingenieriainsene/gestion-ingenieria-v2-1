@@ -53,6 +53,7 @@ export class TramiteDetalleComponent implements OnInit {
   documentosCompra: CompraDocumentoDTO[] = [];
   cargandoCompras = false;
   eliminandoDocsCompra: Record<string, boolean> = {};
+  activeComprasTab: 'ALBARAN' | 'FACTURA' = 'ALBARAN';
   totalGastos = 0;
   totalVentas = 0;
   margen = 0;
@@ -269,6 +270,11 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
+  setComprasTab(tab: 'ALBARAN' | 'FACTURA') {
+    this.activeComprasTab = tab;
+    this.formCompra.patchValue({ tipo: tab });
+  }
+
   crearAlbaranCompra() {
     if (!this.idTramite || this.formCompra.invalid) {
       this.formCompra.markAllAsTouched();
@@ -281,7 +287,7 @@ export class TramiteDetalleComponent implements OnInit {
     const v = this.formCompra.value;
     const lineas = this.lineasCompra.value || [];
     const payload: CompraDocumentoCreateRequest = {
-      tipo: 'ALBARAN',
+      tipo: this.activeComprasTab,
       idProveedor: Number(v.idProveedor),
       numeroDocumento: String(v.numeroDocumento).trim(),
       fecha: String(v.fecha),
@@ -292,9 +298,9 @@ export class TramiteDetalleComponent implements OnInit {
     };
     this.comprasService.crearDocumento(this.idTramite, payload).subscribe({
       next: () => {
-        Swal.fire('Guardado', 'Documento de compra registrado correctamente.', 'success');
+        Swal.fire('Guardado', `${this.activeComprasTab === 'ALBARAN' ? 'Albarán' : 'Factura'} registrada correctamente.`, 'success');
         this.formCompra.patchValue({
-          tipo: 'ALBARAN',
+          tipo: this.activeComprasTab,
           numeroDocumento: '',
           fecha: new Date().toISOString().slice(0, 10),
           importe: 0,
@@ -311,6 +317,35 @@ export class TramiteDetalleComponent implements OnInit {
         else if (e?.error?.message) msg = e.error.message;
         Swal.fire('Error', msg, 'error');
       }
+    });
+  }
+
+  generarFacturaDesdeAlbaran(doc: CompraDocumentoDTO) {
+    if (!doc?.idDocumento || doc.tipo !== 'ALBARAN') return;
+    Swal.fire({
+      title: 'Generar factura',
+      text: 'Se creará una factura con las mismas líneas y totales que este albarán.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Generar factura',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1e293b',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.comprasService.generarFacturaDesdeAlbaran(doc.idDocumento).subscribe({
+        next: (factura) => {
+          this.documentosCompra.push(factura);
+          this.recalcularMargen();
+          Swal.fire('Generada', 'Factura generada correctamente a partir del albarán.', 'success');
+          this.setComprasTab('FACTURA');
+        },
+        error: (e) => {
+          let msg = 'No se pudo generar la factura.';
+          if (typeof e?.error === 'string') msg = e.error;
+          else if (e?.error?.message) msg = e.error.message;
+          Swal.fire('Error', msg, 'error');
+        }
+      });
     });
   }
 
@@ -465,6 +500,10 @@ export class TramiteDetalleComponent implements OnInit {
 
   get lineasCompra(): FormArray {
     return this.formCompra.get('lineas') as FormArray;
+  }
+
+  get documentosCompraFiltrados(): CompraDocumentoDTO[] {
+    return this.documentosCompra.filter(d => d.tipo === this.activeComprasTab);
   }
 
   agregarLineaCompra() {

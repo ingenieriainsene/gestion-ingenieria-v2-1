@@ -130,6 +130,62 @@ public class CompraService {
         facturaProveedorRepository.delete(factura);
     }
 
+    @Transactional
+    public CompraDocumentoDTO generarFacturaDesdeAlbaran(Long idAlbaran) {
+        if (idAlbaran == null) {
+            throw new IllegalArgumentException("idAlbaran es obligatorio.");
+        }
+        AlbaranProveedor albaran = albaranProveedorRepository.findById(idAlbaran)
+                .orElseThrow(() -> new IllegalArgumentException("Albarán no encontrado."));
+
+        if (albaran.getTramite() == null || albaran.getProveedor() == null
+                || albaran.getProveedor().getIdProveedor() == null) {
+            throw new IllegalArgumentException("El albarán no tiene trámite o proveedor asociado correctamente.");
+        }
+
+        Long idTramite = albaran.getTramite().getIdTramite();
+        Long idProveedor = albaran.getProveedor().getIdProveedor();
+
+        // Recuperar TODOS los albaranes de este proveedor para este trámite
+        List<AlbaranProveedor> albaranesProveedor = albaranProveedorRepository.findByTramite_IdTramite(idTramite)
+                .stream()
+                .filter(a -> a.getProveedor() != null
+                        && idProveedor.equals(a.getProveedor().getIdProveedor()))
+                .toList();
+
+        if (albaranesProveedor.isEmpty()) {
+            throw new IllegalArgumentException("No se encontraron albaranes para generar la factura.");
+        }
+
+        // Construir una lista unificada de líneas de todos los albaranes
+        java.util.List<CompraDocumentoLineaDTO> todasLasLineas = new java.util.ArrayList<>();
+        for (AlbaranProveedor a : albaranesProveedor) {
+            List<AlbaranProveedorLinea> lineas = albaranProveedorLineaRepository
+                    .findByAlbaran_IdAlbaranOrderByOrdenAsc(a.getIdAlbaran());
+            todasLasLineas.addAll(toLineaDto(lineas));
+        }
+
+        LineasTotales totales = todasLasLineas.isEmpty() ? null : calcularTotales(todasLasLineas);
+
+        FacturaProveedor factura = new FacturaProveedor();
+        factura.setTramite(albaran.getTramite());
+        factura.setProveedor(albaran.getProveedor());
+        // De momento reutilizamos el número del albarán inicial; se podría hacer parametrizable
+        factura.setNumeroFactura(albaran.getNumeroAlbaran());
+        factura.setFecha(albaran.getFecha());
+        factura.setImporte(totales != null ? totales.total : albaran.getImporte());
+        factura.setEstado("Pendiente");
+        factura.setNotas(albaran.getNotas());
+
+        FacturaProveedor saved = facturaProveedorRepository.save(factura);
+
+        if (totales != null) {
+            guardarLineasFactura(saved, totales.lineas);
+        }
+
+        return toDto(saved, "FACTURA");
+    }
+
     private void validarRequisitos(CompraDocumentoCreateRequest req) {
         if (req.getIdProveedor() == null) {
             throw new IllegalArgumentException("idProveedor es obligatorio.");

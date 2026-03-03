@@ -743,6 +743,29 @@ details > summary::-webkit-details-marker {
   margin: 16px 0;
 }
 
+.subtabs {
+  display: flex;
+  gap: 8px;
+}
+
+.subtab-btn {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subtab-btn.active {
+  background: #1d4ed8;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+
 .metric-card {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
