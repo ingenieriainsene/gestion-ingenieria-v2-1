@@ -15,8 +15,7 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Railway inyecta la variable PORT automáticamente.
-# Usamos CMD en forma shell (sh -c) para que ${PORT} se interpole en runtime.
-# En local sin PORT, Spring Boot usará el default de application.properties (8082).
-EXPOSE 8082
+# Usamos 8080 como fallback para alinear con proxy interno.
+EXPOSE 8080
 
-CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8082}"]
+CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
