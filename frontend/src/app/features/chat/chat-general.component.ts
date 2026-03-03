@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { ChatService } from '../../services/chat.service';
-import { ChatMessage, ChatRoom } from '../../models/chat.model';
-import { UsuarioService, Usuario } from '../../services/usuario.service';
-import { Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { ChatMessage, ChatRoom, ChatUser, PrivateChatRequest } from '../../models/chat.model';
+import { Subscription, interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-chat-general',
@@ -14,11 +14,13 @@ import { map } from 'rxjs/operators';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="chat-container">
-      <!-- SIDEBAR WHATSAPP -->
       <aside class="chat-sidebar" role="navigation" aria-label="Lista de chats">
         <div class="sidebar-header">
-          <h3>Chats</h3>
-          <button class="btn-create" (click)="crearSala()" title="Nuevo Chat">+</button>
+          <h3>Mensajería Interna</h3>
+          <div class="sidebar-actions">
+            <button class="btn-create" (click)="crearSala()" title="Crear canal">+ Canal</button>
+            <button class="btn-create btn-private" (click)="solicitarChatPrivado()" title="Solicitar chat privado">+ Privado</button>
+          </div>
         </div>
         
         <div class="sidebar-scroll">
@@ -29,29 +31,49 @@ import { map } from 'rxjs/operators';
                (click)="seleccionarSala(r)"
                tabindex="0"
                (keydown.enter)="seleccionarSala(r)">
-            <div class="room-avatar">{{ r.name.charAt(0) }}</div>
+            <div class="room-avatar">{{ (r.name || '?').charAt(0) }}</div>
             <div class="room-info">
               <div class="room-name">{{ r.name }}</div>
-              <div class="room-status">en línea</div>
+              <div class="room-status">{{ r.is_group ? 'Grupo' : 'Privado' }}</div>
+            </div>
+            <button
+              *ngIf="puedeEliminarGrupo(r)"
+              type="button"
+              class="room-delete-btn"
+              title="Eliminar grupo"
+              (click)="eliminarGrupo(r, $event)">
+              🗑️
+            </button>
+          </div>
+
+          <div class="section-label" *ngIf="incomingRequests.length > 0">Solicitudes privadas</div>
+          <div class="request-item" *ngFor="let req of incomingRequests">
+            <div class="request-main">
+              <div class="request-title">{{ req.from_user_name || 'Usuario' }}</div>
+              <div class="request-subtitle">quiere abrir chat privado</div>
+            </div>
+            <div class="request-actions">
+              <button class="btn-accept" (click)="aceptarSolicitud(req)">Aceptar</button>
+              <button class="btn-reject" (click)="rechazarSolicitud(req)">Rechazar</button>
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- VENTANA DE CHAT -->
       <main class="chat-content" role="log" aria-live="polite">
         <div class="content-header" *ngIf="currentRoom">
           <div class="header-main">
             <span class="room-title">{{ currentRoom.name }}</span>
+            <small class="room-subtitle">Chat del equipo</small>
           </div>
         </div>
 
         <div class="content-body" *ngIf="currentRoom; else selectRoom">
           <div class="messages-viewport" #scrollBox>
-            <div *ngFor="let m of mensajes" class="message-row" [class.me]="m.sender_id === supabaseUserId">
+            <div *ngFor="let m of mensajes" class="message-row" [class.me]="esMio(m)">
               <div class="message-bubble">
-                <div class="message-meta" *ngIf="m.sender_id !== supabaseUserId">
-                  {{ m.sender_id.substring(0, 8) }}
+                <div class="message-meta" *ngIf="!esMio(m)">
+                  {{ nombreRemitente(m) }}
                 </div>
                 <div class="message-text">{{ m.content }}</div>
                 <div class="message-time">{{ m.created_at | date:'HH:mm' }}</div>
@@ -78,64 +100,87 @@ import { map } from 'rxjs/operators';
         <ng-template #selectRoom>
           <div class="no-selection-state">
             <div class="illustration">📱</div>
-            <h3>WhatsApp para Gestión</h3>
-            <p>Selecciona un chat para ver los mensajes y coordinar con el equipo.</p>
+            <h3>Chat de la empresa</h3>
+            <p>Selecciona un canal para empezar a conversar con tu equipo.</p>
           </div>
         </ng-template>
       </main>
     </div>
   `,
   styles: [`
-    :host { --wa-bg: #efeae2; --wa-header: #f0f2f5; --wa-chat-bg: #ffffff; --wa-bubble-me: #d9fdd3; --wa-bubble-other: #ffffff; --wa-text: #111b21; --wa-primary: #00a884; }
+    :host { --chat-bg: #f8fafc; --chat-header: #ffffff; --chat-bubble-me: #dbeafe; --chat-bubble-other: #ffffff; --chat-text: #0f172a; --chat-primary: #2563eb; }
     
-    .chat-container { display: flex; height: 700px; max-height: calc(100vh - 150px); background: var(--wa-bg); border-radius: 0; border: 1px solid #d1d7db; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.05); }
+    .chat-container { display: flex; height: 700px; max-height: calc(100vh - 150px); background: var(--chat-bg); border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06); }
     
-    /* Sidebar WhatsApp */
-    .chat-sidebar { width: 350px; background: white; border-right: 1px solid #d1d7db; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 12px 16px; background: var(--wa-header); display: flex; justify-content: space-between; align-items: center; height: 60px; }
-    .sidebar-header h3 { font-size: 1.1rem; color: var(--wa-text); }
-    .btn-create { width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent; color: #54656f; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-    .btn-create:hover { background: rgba(0,0,0,0.05); }
+    .chat-sidebar { width: 340px; background: #fff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 12px 16px; background: var(--chat-header); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; min-height: 60px; }
+    .sidebar-header h3 { font-size: 1rem; color: var(--chat-text); margin: 0; }
+    .sidebar-actions { display: flex; gap: 6px; }
+    .btn-create { border: 1px solid #dbeafe; border-radius: 8px; background: #eff6ff; color: #1d4ed8; cursor: pointer; font-size: 0.85rem; font-weight: 700; padding: 6px 10px; transition: 0.2s; }
+    .btn-create:hover { background: #dbeafe; }
+    .btn-create.btn-private { border-color: #ddd6fe; background: #f5f3ff; color: #6d28d9; }
+    .btn-create.btn-private:hover { background: #ede9fe; }
     
     .sidebar-scroll { flex: 1; overflow-y: auto; background: white; }
-    .section-label { padding: 15px 16px 8px; font-size: 0.8rem; color: var(--wa-primary); font-weight: 600; text-transform: uppercase; }
+    .section-label { padding: 15px 16px 8px; font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
     
-    .room-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f0f2f5; transition: 0.1s; }
-    .room-item:hover { background: #f5f6f6; }
-    .room-item.active { background: #ebebeb; }
-    .room-avatar { width: 48px; height: 48px; border-radius: 50%; background: #dfe5e7; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-right: 15px; flex-shrink: 0; }
+    .room-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f8fafc; transition: 0.1s; }
+    .room-item:hover { background: #f8fafc; }
+    .room-item.active { background: #eff6ff; }
+    .room-avatar { width: 40px; height: 40px; border-radius: 50%; background: #dbeafe; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-right: 12px; flex-shrink: 0; font-weight: 700; }
     .room-info { flex: 1; overflow: hidden; }
-    .room-name { font-size: 1rem; color: var(--wa-text); font-weight: 500; }
-    .room-status { font-size: 0.85rem; color: #667781; }
+    .room-name { font-size: 0.95rem; color: var(--chat-text); font-weight: 600; }
+    .room-status { font-size: 0.8rem; color: #64748b; }
+    .room-delete-btn { background: transparent; border: none; color: #ef4444; cursor: pointer; opacity: 0.75; font-size: 1rem; }
+    .room-delete-btn:hover { opacity: 1; }
+    .request-item { margin: 8px 12px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background: #f8fafc; }
+    .request-main { margin-bottom: 8px; }
+    .request-title { font-size: 0.9rem; font-weight: 700; color: #0f172a; }
+    .request-subtitle { font-size: 0.78rem; color: #64748b; }
+    .request-actions { display: flex; gap: 8px; }
+    .btn-accept, .btn-reject { flex: 1; border: none; border-radius: 8px; padding: 6px 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+    .btn-accept { background: #dcfce7; color: #15803d; }
+    .btn-accept:hover { background: #bbf7d0; }
+    .btn-reject { background: #fee2e2; color: #b91c1c; }
+    .btn-reject:hover { background: #fecaca; }
 
-    /* Ventana de Chat al estilo WhatsApp */
-    .chat-content { flex: 1; display: flex; flex-direction: column; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #efeae2; }
-    .content-header { padding: 10px 16px; background: var(--wa-header); border-bottom: 1px solid #d1d7db; display: flex; align-items: center; height: 60px; }
-    .room-title { font-weight: 500; font-size: 1rem; color: var(--wa-text); }
+    .chat-content { flex: 1; display: flex; flex-direction: column; background: #f8fafc; }
+    .content-header { padding: 10px 16px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; min-height: 60px; }
+    .header-main { display: flex; flex-direction: column; gap: 2px; }
+    .room-title { font-weight: 700; font-size: 0.98rem; color: var(--chat-text); }
+    .room-subtitle { color: #64748b; font-size: 0.75rem; }
     
     .content-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .messages-viewport { flex: 1; padding: 20px 7%; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .messages-viewport { flex: 1; padding: 16px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
     
     .message-row { display: flex; width: 100%; margin-bottom: 2px; }
     .message-row.me { justify-content: flex-end; }
     
-    .message-bubble { max-width: 65%; padding: 6px 10px 8px; border-radius: 8px; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); font-size: 0.9rem; }
-    .message-row:not(.me) .message-bubble { background: var(--wa-bubble-other); border-top-left-radius: 0; }
-    .me .message-bubble { background: var(--wa-bubble-me); border-top-right-radius: 0; }
+    .message-bubble { max-width: 72%; padding: 8px 11px; border-radius: 10px; position: relative; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); font-size: 0.9rem; border: 1px solid #e2e8f0; }
+    .message-row:not(.me) .message-bubble { background: var(--chat-bubble-other); border-top-left-radius: 3px; }
+    .me .message-bubble { background: var(--chat-bubble-me); border-top-right-radius: 3px; border-color: #bfdbfe; }
     
-    .message-meta { font-size: 0.75rem; color: #e542a3; font-weight: 600; margin-bottom: 2px; }
-    .message-text { color: var(--wa-text); line-height: 1.4; word-wrap: break-word; }
-    .message-time { font-size: 0.65rem; color: #667781; text-align: right; margin-top: 2px; }
+    .message-meta { font-size: 0.7rem; color: #7c3aed; font-weight: 700; margin-bottom: 2px; }
+    .message-text { color: var(--chat-text); line-height: 1.45; word-wrap: break-word; }
+    .message-time { font-size: 0.65rem; color: #64748b; text-align: right; margin-top: 3px; }
 
-    /* Barra de entrada mejorada */
-    .input-container { padding: 10px 16px; background: var(--wa-header); display: flex; align-items: center; gap: 10px; }
-    .input-wrapper { flex: 1; background: white; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }
-    .input-wrapper input { flex: 1; border: none; outline: none; font-size: 0.95rem; background: transparent; }
-    .btn-send { background: none; border: none; color: #54656f; cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; }
-    .btn-send:hover:not(:disabled) { color: var(--wa-primary); }
+    .input-container { padding: 10px 14px; background: #fff; border-top: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+    .input-wrapper { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; }
+    .input-wrapper input { flex: 1; border: none; outline: none; font-size: 0.92rem; background: transparent; color: #0f172a; }
+    .btn-send { border: none; background: #1d4ed8; color: white; cursor: pointer; border-radius: 10px; padding: 7px 10px; display: flex; align-items: center; justify-content: center; }
+    .btn-send:hover:not(:disabled) { background: #1e40af; }
+    .btn-send:disabled { opacity: 0.55; cursor: not-allowed; }
     
     .no-selection-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; text-align: center; padding: 40px; }
-    .illustration { font-size: 5rem; margin-bottom: 20px; }
+    .illustration { font-size: 4rem; margin-bottom: 14px; }
+
+    @media (max-width: 768px) {
+      .chat-container { height: calc(100vh - 120px); border-radius: 10px; }
+      .chat-sidebar { width: 42%; min-width: 150px; }
+      .sidebar-header { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .messages-viewport { padding: 12px; }
+      .message-bubble { max-width: 88%; }
+    }
   `]
 })
 export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked {
@@ -144,32 +189,60 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
   currentRoom: ChatRoom | null = null;
   mensajes: ChatMessage[] = [];
   texto = '';
-  usuarioActual: Usuario | null = null;
-  supabaseUserId: string = '';
+  currentUsername = '';
+  userChatId = '';
+  isAdmin = false;
   rooms: ChatRoom[] = [];
+  users: ChatUser[] = [];
+  incomingRequests: PrivateChatRequest[] = [];
 
   private shouldScroll = false;
-  private chatSubscription: Subscription | null = null;
+  private chatPollingSubscription: Subscription | null = null;
+  private identitySubscription: Subscription | null = null;
+  private roomsSubscription: Subscription | null = null;
+  private incomingRequestSubscription: Subscription | null = null;
 
-  constructor(private chat: ChatService, private usuarioService: UsuarioService) { }
+  constructor(private chat: ChatService, private auth: AuthService) { }
 
   ngOnInit(): void {
-    this.usuarioService.getAll().pipe(
-      map(users => users.find(u => u.nombreUsuario === 'jefe_admin') || users[0])
-    ).subscribe(user => {
-      this.usuarioActual = user;
-      this.chat.getMyIdentity().subscribe(id => {
-        this.supabaseUserId = id.chatId;
-      });
+    this.isAdmin = this.auth.getRole() === 'ROLE_ADMIN';
+    this.identitySubscription = this.chat.getMyIdentity().subscribe({
+      next: (id) => {
+        this.userChatId = id.chatId;
+        this.currentUsername = id.username || '';
+        this.cargarSolicitudesEntrantes();
+      },
+      error: () => {
+        this.userChatId = '';
+        this.currentUsername = '';
+      }
     });
 
-    this.chat.getRooms().subscribe(rooms => {
-      this.rooms = rooms;
+    this.refrescarSalas();
+    this.chat.getUsers().subscribe({
+      next: (users) => {
+        this.users = users || [];
+      },
+      error: () => {
+        this.users = [];
+      }
     });
+
+    this.incomingRequestSubscription = interval(5000)
+      .pipe(switchMap(() => this.chat.getIncomingPrivateRequests()))
+      .subscribe({
+        next: (requests) => {
+          this.incomingRequests = requests || [];
+        },
+        error: () => { }
+      });
   }
 
   ngOnDestroy(): void {
-    if (this.chatSubscription) this.chatSubscription.unsubscribe();
+    if (this.chatPollingSubscription) this.chatPollingSubscription.unsubscribe();
+    if (this.identitySubscription) this.identitySubscription.unsubscribe();
+    if (this.roomsSubscription) this.roomsSubscription.unsubscribe();
+    if (this.incomingRequestSubscription) this.incomingRequestSubscription.unsubscribe();
   }
 
   ngAfterViewChecked(): void {
@@ -191,30 +264,66 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.currentRoom?.id === room.id) return;
 
     this.currentRoom = room;
-    if (this.chatSubscription) this.chatSubscription.unsubscribe();
+    if (this.chatPollingSubscription) this.chatPollingSubscription.unsubscribe();
+    this.mensajes = [];
 
-    this.chatSubscription = this.chat.subscribeToRoom(room.id).subscribe(msgs => {
-      this.mensajes = msgs;
-      this.shouldScroll = true;
+    this.chatPollingSubscription = interval(2000)
+      .pipe(switchMap(() => this.chat.getMessagesByRoom(room.id)))
+      .subscribe({
+        next: (msgs) => {
+          const ordered = [...(msgs || [])].sort((a, b) =>
+            new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime()
+          );
+          const lastOld = this.mensajes.length ? this.mensajes[this.mensajes.length - 1].id : null;
+          const lastNew = ordered.length ? ordered[ordered.length - 1].id : null;
+          this.mensajes = ordered;
+          if (lastOld !== lastNew) {
+            this.shouldScroll = true;
+          }
+        },
+        error: () => { }
+      });
+
+    this.chat.getMessagesByRoom(room.id).subscribe({
+      next: (msgs) => {
+        this.mensajes = [...(msgs || [])].sort((a, b) =>
+          new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime()
+        );
+        this.shouldScroll = true;
+      },
+      error: () => {
+        this.mensajes = [];
+      }
     });
   }
 
-  async enviar() {
+  enviar() {
     if (!this.texto.trim() || !this.currentRoom) return;
 
     const textoAEnviar = this.texto.trim();
-    this.texto = ''; // Limpiamos rápido para sensación de rapidez
+    this.texto = '';
+    this.chat.sendMessage(this.currentRoom.id, textoAEnviar, this.userChatId).subscribe({
+      next: (saved) => {
+        this.mensajes = [...this.mensajes, saved];
+        this.shouldScroll = true;
+      },
+      error: (error) => {
+        console.error('Error al enviar mensaje:', error);
+        Swal.fire('Error', `No se pudo enviar el mensaje: ${error?.error || error?.message || 'Error servidor'}`, 'error');
+      }
+    });
+  }
 
-    try {
-      await this.chat.sendMessage(this.currentRoom.id, textoAEnviar, this.supabaseUserId);
-      // No necesitamos añadirlo manualmente si Realtime funciona bien, 
-      // pero si queremos "WhatsApp speed", podríamos hacer un push optimista aquí.
-      // Pero primero asegurémonos que Realtime detecte el cambio del backend.
-      this.shouldScroll = true;
-    } catch (error: any) {
-      console.error('Error al enviar mensaje:', error);
-      Swal.fire('Error', `No se pudo enviar el mensaje: ${error.message || 'Error servidor'}`, 'error');
-    }
+  esMio(m: ChatMessage): boolean {
+    if (!m?.sender_id || !this.userChatId) return false;
+    return m.sender_id === this.userChatId;
+  }
+
+  nombreRemitente(m: ChatMessage): string {
+    const nombre = (m?.sender_name || '').trim();
+    if (nombre) return nombre;
+    const id = m?.sender_id || '';
+    return id ? id.substring(0, 8) : 'Sistema';
   }
 
   crearSala() {
@@ -234,7 +343,7 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
       if (result.isConfirmed) {
         this.chat.createRoom(result.value, true).subscribe({
           next: (newRoom) => {
-            this.rooms.push(newRoom);
+            this.refrescarSalas();
             this.seleccionarSala(newRoom);
             Swal.fire('¡Creado!', `El canal "${result.value}" ha sido creado.`, 'success');
           },
@@ -245,6 +354,139 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
           }
         });
       }
+    });
+  }
+
+  private refrescarSalas() {
+    if (this.roomsSubscription) this.roomsSubscription.unsubscribe();
+    this.roomsSubscription = this.chat.getRooms().subscribe({
+      next: (rooms) => {
+        this.rooms = rooms || [];
+        if (!this.currentRoom && this.rooms.length > 0) {
+          this.seleccionarSala(this.rooms[0]);
+          return;
+        }
+        if (this.currentRoom) {
+          const found = this.rooms.find(r => r.id === this.currentRoom?.id);
+          if (!found) {
+            this.currentRoom = null;
+            this.mensajes = [];
+          }
+        }
+      },
+      error: () => {
+        this.rooms = [];
+      }
+    });
+  }
+
+  private cargarSolicitudesEntrantes() {
+    this.chat.getIncomingPrivateRequests().subscribe({
+      next: (requests) => {
+        this.incomingRequests = requests || [];
+      },
+      error: () => {
+        this.incomingRequests = [];
+      }
+    });
+  }
+
+  solicitarChatPrivado() {
+    if (!this.users.length) {
+      Swal.fire('Aviso', 'No hay usuarios disponibles para chat privado.', 'info');
+      return;
+    }
+
+    Swal.fire({
+      title: 'Solicitar chat privado',
+      input: 'select',
+      inputOptions: this.users.reduce((acc: Record<string, string>, u) => {
+        acc[String(u.id_usuario)] = u.nombre_usuario;
+        return acc;
+      }, {}),
+      inputPlaceholder: 'Selecciona usuario',
+      showCancelButton: true,
+      confirmButtonText: 'Enviar solicitud',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) return 'Selecciona un usuario.';
+        return null;
+      }
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const toUserId = Number(result.value);
+      if (!toUserId) return;
+      this.chat.createPrivateRequest(toUserId).subscribe({
+        next: () => {
+          Swal.fire('Enviada', 'Solicitud de chat privado enviada.', 'success');
+        },
+        error: (err) => {
+          const msg = err?.error || err?.error?.message || 'No se pudo enviar la solicitud.';
+          Swal.fire('Error', msg, 'error');
+        }
+      });
+    });
+  }
+
+  aceptarSolicitud(req: PrivateChatRequest) {
+    this.chat.acceptPrivateRequest(req.id).subscribe({
+      next: (room) => {
+        this.incomingRequests = this.incomingRequests.filter(r => r.id !== req.id);
+        this.refrescarSalas();
+        this.seleccionarSala(room);
+        Swal.fire('Aceptado', 'Chat privado creado correctamente.', 'success');
+      },
+      error: (err) => {
+        const msg = err?.error || err?.error?.message || 'No se pudo aceptar la solicitud.';
+        Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
+  rechazarSolicitud(req: PrivateChatRequest) {
+    this.chat.rejectPrivateRequest(req.id).subscribe({
+      next: () => {
+        this.incomingRequests = this.incomingRequests.filter(r => r.id !== req.id);
+      },
+      error: (err) => {
+        const msg = err?.error || err?.error?.message || 'No se pudo rechazar la solicitud.';
+        Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
+  puedeEliminarGrupo(room: ChatRoom): boolean {
+    return this.isAdmin && !!room?.is_group;
+  }
+
+  eliminarGrupo(room: ChatRoom, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.puedeEliminarGrupo(room) || !room?.id) return;
+    Swal.fire({
+      title: '¿Eliminar grupo?',
+      text: `Se eliminará "${room.name}" y todos sus mensajes.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#b91c1c',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.chat.deleteRoom(room.id).subscribe({
+        next: () => {
+          if (this.currentRoom?.id === room.id) {
+            this.currentRoom = null;
+            this.mensajes = [];
+          }
+          this.refrescarSalas();
+          Swal.fire('Eliminado', 'Grupo eliminado correctamente.', 'success');
+        },
+        error: (err) => {
+          const msg = err?.error || err?.error?.message || 'No se pudo eliminar el grupo.';
+          Swal.fire('Error', msg, 'error');
+        }
+      });
     });
   }
 }
