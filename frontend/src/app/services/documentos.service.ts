@@ -12,6 +12,10 @@ export class DocumentosService {
     return this.api.getBlob(`${this.endpoint}/albaran/${presupuestoId}`);
   }
 
+  descargarAlbaranVenta(albaranId: number): Observable<Blob> {
+    return this.api.getBlob(`${this.endpoint}/albaran-venta/${albaranId}`);
+  }
+
   descargarFactura(presupuestoId: number): Observable<Blob> {
     return this.api.getBlob(`${this.endpoint}/factura/${presupuestoId}`);
   }

@@ -7,29 +7,30 @@ import com.ingenieria.model.FacturaVenta;
 import com.ingenieria.model.Local;
 import com.ingenieria.model.Presupuesto;
 import com.ingenieria.model.PresupuestoLinea;
+import com.ingenieria.model.Tramite;
+import com.ingenieria.repository.AlbaranVentaRepository;
 import com.ingenieria.repository.AlbaranVentaLineaRepository;
 import com.ingenieria.repository.PresupuestoRepository;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.html.simpleparser.HTMLWorker;
-import com.lowagie.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -42,6 +43,7 @@ public class DocumentoPdfService {
     private final PresupuestoRepository presupuestoRepository;
     private final AlbaranVentaService albaranVentaService;
     private final FacturaVentaService facturaVentaService;
+    private final AlbaranVentaRepository albaranVentaRepository;
     private final AlbaranVentaLineaRepository albaranVentaLineaRepository;
 
     public byte[] generarAlbaranPdf(Long presupuestoId, String usuarioBd) {
@@ -58,8 +60,40 @@ public class DocumentoPdfService {
                 albaran.getNumeroAlbaran(),
                 formatDate(albaran.getFecha()),
                 refPresupuesto(p),
-                "Documento válido como albarán de entrega. La factura será emitida según condiciones acordadas.");
+                observacionesAlbaran(albaran.getNotas()),
+                legalGenerico(),
+                resolverContratoId(albaran, p),
+                resolverIntervencionId(albaran, p));
 
+        return renderDocumento(doc, p, lineasAlbaran);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generarAlbaranPdfPorId(Long albaranId) {
+        AlbaranVenta albaran = albaranVentaRepository.findById(albaranId)
+                .orElseThrow(() -> new IllegalArgumentException("Albarán no encontrado"));
+        List<AlbaranVentaLinea> lineasAlbaran = albaranVentaLineaRepository
+                .findByAlbaran_IdAlbaranOrderByOrdenAsc(albaran.getIdAlbaran());
+
+        Presupuesto p;
+        if (albaran.getPresupuesto() != null) {
+            Long presupuestoId = albaran.getPresupuesto().getIdPresupuesto();
+            p = presupuestoRepository.findByIdWithLineas(presupuestoId)
+                    .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
+        } else {
+            p = construirPresupuestoVirtual(albaran, lineasAlbaran);
+        }
+
+        DocumentoData doc = new DocumentoData(
+                "Albarán de venta",
+                "ALBARÁN",
+                albaran.getNumeroAlbaran(),
+                formatDate(albaran.getFecha()),
+                refAlbaran(albaran, p),
+                observacionesAlbaran(albaran.getNotas()),
+                legalGenerico(),
+                resolverContratoId(albaran, p),
+                resolverIntervencionId(albaran, p));
         return renderDocumento(doc, p, lineasAlbaran);
     }
 
@@ -74,7 +108,10 @@ public class DocumentoPdfService {
                 factura.getNumeroFactura(),
                 formatDate(factura.getFecha()),
                 refPresupuesto(p),
-                "Factura emitida conforme a la normativa vigente. El impago puede generar recargos.");
+                "Sin observaciones.",
+                "Factura emitida conforme a la normativa vigente. El impago puede generar recargos.",
+                null,
+                null);
 
         return renderDocumento(doc, p, null);
     }
@@ -94,11 +131,11 @@ public class DocumentoPdfService {
 
     private EmpresaData buildEmpresa() {
         return new EmpresaData(
-                "INSENE SOLAR",
-                "B-00000000",
-                "Av. Innovación 12, Sevilla",
-                "info@insene-solar.com",
-                "+34 900 000 000");
+                "INSENE SOLAR S.L.U",
+                "B90065483",
+                "Herreros 20-22, 41510 Mairena del Alcor, Sevilla",
+                "administracion@insene.es",
+                "954022496");
     }
 
     private ClienteData buildCliente(Cliente c, Local l) {
@@ -116,6 +153,8 @@ public class DocumentoPdfService {
                             l.getConcepto(),
                             formatDecimal(safe(l.getCantidad())),
                             formatMoney(safe(l.getPrecioUnitario())),
+                            formatPercent(BigDecimal.ZERO),
+                            formatPercent(safe(l.getIvaPorcentaje())),
                             formatMoney(safe(l.getTotalConIva()))))
                     .toList();
         }
@@ -146,6 +185,8 @@ public class DocumentoPdfService {
                     concepto,
                     formatDecimal(cantidad),
                     formatMoney(precio),
+                    formatPercent(BigDecimal.ZERO),
+                    formatPercent(safe(l.getIvaPorcentaje())),
                     formatMoney(total)));
         }
         return result;
@@ -172,14 +213,12 @@ public class DocumentoPdfService {
 
     private byte[] htmlToPdf(String html) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-            PdfWriter.getInstance(document, baos);
-            document.open();
-            HTMLWorker worker = new HTMLWorker(document);
-            worker.parse(new StringReader(html));
-            document.close();
+            ITextRenderer renderer = new ITextRenderer();
+            renderer.setDocumentFromString(html);
+            renderer.layout();
+            renderer.createPDF(baos);
             return baos.toByteArray();
-        } catch (DocumentException | java.io.IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("No se pudo generar el PDF", e);
         }
     }
@@ -215,6 +254,71 @@ public class DocumentoPdfService {
         return ref;
     }
 
+    private String refAlbaran(AlbaranVenta a, Presupuesto p) {
+        if (p != null && p.getIdPresupuesto() != null) {
+            return refPresupuesto(p);
+        }
+        if (a.getTramite() != null && a.getTramite().getIdTramite() != null) {
+            return "Intervención #" + a.getTramite().getIdTramite();
+        }
+        return "Albarán #" + a.getIdAlbaran();
+    }
+
+    private String observacionesAlbaran(String notas) {
+        if (notas == null || notas.isBlank()) {
+            return "Sin observaciones.";
+        }
+        return notas.trim();
+    }
+
+    private String legalGenerico() {
+        return "Los datos de carácter personal presentes en este documento han sido recogidos de acuerdo con lo dispuesto en la Ley Orgánica de Protección de Datos y normativa vigente. Puede ejercer sus derechos de acceso, rectificación, cancelación y oposición mediante comunicación escrita a la dirección de la empresa.";
+    }
+
+    private Presupuesto construirPresupuestoVirtual(AlbaranVenta a, List<AlbaranVentaLinea> lineas) {
+        Presupuesto p = new Presupuesto();
+        Tramite t = a.getTramite();
+        if (t != null && t.getContrato() != null) {
+            p.setCliente(t.getContrato().getCliente());
+            p.setVivienda(t.getContrato().getLocal());
+        }
+        p.setCodigoReferencia("ALB-MANUAL-" + a.getIdAlbaran());
+        p.setFecha(a.getFecha());
+        BigDecimal total = BigDecimal.ZERO;
+        for (AlbaranVentaLinea l : lineas) {
+            total = total.add(safe(l.getTotalConIva()));
+        }
+        p.setTotalConIva(round2(total));
+        p.setTotalSinIva(BigDecimal.ZERO);
+        return p;
+    }
+
+    private Long resolverIntervencionId(AlbaranVenta albaran, Presupuesto p) {
+        if (albaran != null && albaran.getTramite() != null && albaran.getTramite().getIdTramite() != null) {
+            return albaran.getTramite().getIdTramite();
+        }
+        if (p != null && p.getTramite() != null && p.getTramite().getIdTramite() != null) {
+            return p.getTramite().getIdTramite();
+        }
+        return null;
+    }
+
+    private Long resolverContratoId(AlbaranVenta albaran, Presupuesto p) {
+        if (albaran != null
+                && albaran.getTramite() != null
+                && albaran.getTramite().getContrato() != null
+                && albaran.getTramite().getContrato().getIdContrato() != null) {
+            return albaran.getTramite().getContrato().getIdContrato();
+        }
+        if (p != null
+                && p.getTramite() != null
+                && p.getTramite().getContrato() != null
+                && p.getTramite().getContrato().getIdContrato() != null) {
+            return p.getTramite().getContrato().getIdContrato();
+        }
+        return null;
+    }
+
     private BigDecimal calcularBaseLinea(PresupuestoLinea l) {
         if (l.getTotalPvp() != null) {
             return round2(l.getTotalPvp());
@@ -235,11 +339,24 @@ public class DocumentoPdfService {
     }
 
     private String formatMoney(BigDecimal value) {
-        return round2(value).toPlainString() + " €";
+        return formatNumber(value, 2) + " €";
     }
 
     private String formatDecimal(BigDecimal value) {
-        return round2(value).toPlainString();
+        return formatNumber(value, 2);
+    }
+
+    private String formatPercent(BigDecimal value) {
+        return formatNumber(value, 2) + "%";
+    }
+
+    private String formatNumber(BigDecimal value, int decimals) {
+        BigDecimal rounded = round2(value);
+        String pattern = decimals <= 0 ? "#,##0" : "#,##0." + "0".repeat(decimals);
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.forLanguageTag("es-ES"));
+        DecimalFormat fmt = new DecimalFormat(pattern, symbols);
+        fmt.setGroupingUsed(true);
+        return fmt.format(rounded);
     }
 
     private BigDecimal round2(BigDecimal value) {
@@ -263,12 +380,14 @@ public class DocumentoPdfService {
     public record ClienteData(String nombre, String dni, String direccion, String email) {
     }
 
-    public record LineaData(String concepto, String cantidad, String precioUnitario, String total) {
+    public record LineaData(String concepto, String cantidad, String precioUnitario, String descuento, String iva,
+            String total) {
     }
 
     public record TotalesData(String subtotal, String iva, String total) {
     }
 
-    public record DocumentoData(String titulo, String tipo, String numero, String fecha, String referencia, String legal) {
+    public record DocumentoData(String titulo, String tipo, String numero, String fecha, String referencia,
+            String observaciones, String legal, Long contratoId, Long intervencionId) {
     }
 }

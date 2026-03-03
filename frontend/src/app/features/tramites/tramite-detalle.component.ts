@@ -112,6 +112,7 @@ export class TramiteDetalleComponent implements OnInit {
       lineas: this.fb.array([])
     });
     this.formCompra.get('lineas')?.valueChanges.subscribe(() => this.recalcularTotalCompra());
+    this.agregarLineaCompra();
   }
 
   ngOnInit() {
@@ -272,23 +273,27 @@ export class TramiteDetalleComponent implements OnInit {
       this.formCompra.markAllAsTouched();
       return;
     }
+    if (this.lineasCompra.length === 0) {
+      Swal.fire('Aviso', 'Añade al menos una línea al albarán de compra.', 'warning');
+      return;
+    }
     const v = this.formCompra.value;
     const lineas = this.lineasCompra.value || [];
     const payload: CompraDocumentoCreateRequest = {
-      tipo: v.tipo,
+      tipo: 'ALBARAN',
       idProveedor: Number(v.idProveedor),
       numeroDocumento: String(v.numeroDocumento).trim(),
       fecha: String(v.fecha),
-      importe: lineas.length ? undefined : Number(v.importe),
-      estado: v.tipo === 'FACTURA' ? (v.estado ? String(v.estado) : 'Pendiente') : null,
+      importe: undefined,
+      estado: null,
       notas: v.notas ? String(v.notas).trim() : null,
-      lineas: lineas.length ? lineas : undefined
+      lineas
     };
     this.comprasService.crearDocumento(this.idTramite, payload).subscribe({
       next: () => {
         Swal.fire('Guardado', 'Documento de compra registrado correctamente.', 'success');
         this.formCompra.patchValue({
-          tipo: v.tipo,
+          tipo: 'ALBARAN',
           numeroDocumento: '',
           fecha: new Date().toISOString().slice(0, 10),
           importe: 0,
@@ -296,6 +301,7 @@ export class TramiteDetalleComponent implements OnInit {
           notas: ''
         });
         this.lineasCompra.clear();
+        this.agregarLineaCompra();
         this.cargarCompras();
       },
       error: (e) => {
@@ -337,6 +343,27 @@ export class TramiteDetalleComponent implements OnInit {
       error: (e) => {
         this.descargandoDocs[key] = false;
         let msg = 'No se pudo descargar el documento.';
+        if (typeof e?.error === 'string') msg = e.error;
+        else if (e?.error?.message) msg = e.error.message;
+        Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
+  descargarAlbaranVenta(a: AlbaranVentaDTO) {
+    if (!a?.idAlbaran) return;
+    const key = `albaran-venta-${a.idAlbaran}`;
+    if (this.descargandoDocs[key]) return;
+    this.descargandoDocs[key] = true;
+    this.documentosService.descargarAlbaranVenta(a.idAlbaran).subscribe({
+      next: (blob) => {
+        this.descargandoDocs[key] = false;
+        const nombre = a.numeroAlbaran ? a.numeroAlbaran.replace(/[^\w\-]/g, '_') : `albaran_${a.idAlbaran}`;
+        this.descargarBlob(blob, `${nombre}.pdf`);
+      },
+      error: (e) => {
+        this.descargandoDocs[key] = false;
+        let msg = 'No se pudo descargar el albarán.';
         if (typeof e?.error === 'string') msg = e.error;
         else if (e?.error?.message) msg = e.error.message;
         Swal.fire('Error', msg, 'error');

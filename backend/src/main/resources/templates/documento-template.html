@@ -3,117 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <title th:text="${documento.titulo}">Documento</title>
-  <style>
-    @page { size: A4; margin: 24mm; }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #1f2937; }
-    .doc { width: 100%; }
-    .header { display: flex; justify-content: space-between; align-items: center; }
-    .logo { width: 40%; }
-    .logo-box { width: 180px; height: 60px; border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
-    .logo img { max-width: 180px; max-height: 60px; }
-    .company { text-align: right; width: 60%; }
-    .company-name { font-size: 18px; font-weight: bold; }
-    .muted { color: #64748b; }
-    .section { margin-top: 18px; }
-    .section-title { font-size: 12px; font-weight: bold; color: #0f172a; margin-bottom: 6px; }
-    .grid { display: flex; gap: 16px; }
-    .card { border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 6px; width: 50%; }
-    .doc-meta { display: flex; justify-content: space-between; gap: 16px; }
-    .meta-item { width: 50%; }
-    .meta-label { font-weight: bold; color: #475569; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th { background: #0f172a; color: white; text-align: left; padding: 8px; font-size: 11px; }
-    td { border: 1px solid #e2e8f0; padding: 8px; font-size: 11px; }
-    .text-right { text-align: right; }
-    .totals { width: 45%; margin-left: auto; margin-top: 12px; }
-    .totals td { border: none; padding: 4px 8px; }
-    .totals .total-row td { border-top: 1px solid #0f172a; font-weight: bold; }
-    .footer { margin-top: 22px; font-size: 10px; color: #64748b; text-align: center; }
-  </style>
 </head>
-<body>
-  <div class="doc">
-    <div class="header">
-      <div class="logo">
-        <div th:if="${logoBase64 != null}">
-          <img th:src="'data:image/png;base64,' + ${logoBase64}" alt="Logo" />
-        </div>
-        <div th:if="${logoBase64 == null}" class="logo-box">LOGO</div>
-      </div>
-      <div class="company">
-        <div class="company-name" th:text="${empresa.nombre}">Empresa</div>
-        <div th:text="${empresa.cif}">CIF</div>
-        <div th:text="${empresa.direccion}">Dirección</div>
-        <div class="muted" th:text="${empresa.email}">email</div>
-        <div class="muted" th:text="${empresa.telefono}">teléfono</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Datos del cliente</div>
-      <div class="grid">
-        <div class="card">
-          <div><span class="meta-label">Cliente:</span> <span th:text="${cliente.nombre}">Nombre</span></div>
-          <div><span class="meta-label">DNI/CIF:</span> <span th:text="${cliente.dni}">DNI</span></div>
-          <div><span class="meta-label">Dirección:</span> <span th:text="${cliente.direccion}">Dirección</span></div>
-          <div><span class="meta-label">Email:</span> <span th:text="${cliente.email}">Email</span></div>
-        </div>
-        <div class="card">
-          <div class="doc-meta">
-            <div class="meta-item">
-              <div class="meta-label" th:text="${documento.tipo}">DOCUMENTO</div>
-              <div th:text="${documento.numero}">Nº</div>
-            </div>
-            <div class="meta-item">
-              <div class="meta-label">Fecha</div>
-              <div th:text="${documento.fecha}">Fecha</div>
-            </div>
+<body style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #111; margin: 0;">
+  <div style="width: 100%;">
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+      <tr>
+        <td style="width: 57%; vertical-align: top;">
+          <div th:if="${logoBase64 != null}">
+            <img th:src="'data:image/png;base64,' + ${logoBase64}" alt="Logo" style="max-width: 250px; max-height: 90px;" />
           </div>
-          <div style="margin-top:8px;">
-            <div class="meta-label">Referencia</div>
-            <div th:text="${documento.referencia}">Referencia</div>
-          </div>
-        </div>
-      </div>
-    </div>
+          <div th:if="${logoBase64 == null}" style="width: 220px; height: 70px; border: 1px dashed #b6b6b6; text-align: center; line-height: 68px; color: #666;">LOGO</div>
+        </td>
+        <td style="width: 43%; vertical-align: top; text-align: right; font-size: 30px; font-weight: bold;">
+          <div>Fecha: <span th:text="${documento.fecha}">01/01/2026</span></div>
+          <div>Nº factura: <span th:text="${documento.numero}">0001</span></div>
+          <div style="font-size: 10px; font-weight: normal; margin-top: 6px;">página: 1</div>
+        </td>
+      </tr>
+    </table>
 
-    <table>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+      <tr>
+        <td style="width: 52%; vertical-align: top; padding-right: 12px;">
+          <div style="font-size: 25px; font-weight: bold; border-bottom: 1px solid #1a1a1a; margin-bottom: 4px;" th:text="${empresa.nombre}">INSENE SOLAR S.L.U</div>
+          <div style="margin: 2px 0;"><strong>CIF/NIF: <span th:text="${empresa.cif}">B90065483</span></strong></div>
+          <div style="margin: 2px 0;">Herreros 20-22</div>
+          <div style="margin: 2px 0;">41510 - MAIRENA DEL ALCOR</div>
+          <div style="margin: 2px 0;">SEVILLA</div>
+          <div style="margin: 2px 0;">Telefono: <span th:text="${empresa.telefono}">954022496</span></div>
+          <div style="margin: 2px 0;">e-Mail: <span th:text="${empresa.email}">administracion@insene.es</span></div>
+        </td>
+        <td style="width: 48%; vertical-align: top;">
+          <div style="font-size: 26px; font-weight: bold; border-bottom: 1px solid #1a1a1a; margin-bottom: 4px;">Cliente</div>
+          <div style="margin: 2px 0;"><strong th:text="${cliente.nombre}">Cliente</strong></div>
+          <div style="margin: 2px 0;"><strong>CIF/NIF: <span th:text="${cliente.dni}">00000000A</span></strong></div>
+          <div style="margin: 2px 0;" th:text="${cliente.direccion}">Domicilio</div>
+          <div style="margin: 2px 0;">ESPAÑA</div>
+          <div style="margin-top: 6px; font-size: 10px;">
+            <strong>ID Contrato:</strong>
+            <span th:text="${documento.contratoId != null ? documento.contratoId : '—'}">—</span>
+            &nbsp;&nbsp;
+            <strong>ID Intervención:</strong>
+            <span th:text="${documento.intervencionId != null ? documento.intervencionId : '—'}">—</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
       <thead>
         <tr>
-          <th>Concepto</th>
-          <th class="text-right">Cantidad</th>
-          <th class="text-right">Precio unitario</th>
-          <th class="text-right">Total</th>
+          <th style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; text-align: left; font-size: 10px; padding: 3px 4px; width: 8%;">ARTÍCULO</th>
+          <th style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; text-align: right; font-size: 10px; padding: 3px 4px; width: 10%;">UNIDADES</th>
+          <th style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; text-align: left; font-size: 10px; padding: 3px 4px; width: 42%;">DESCRIPCIÓN</th>
+          <th style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; text-align: right; font-size: 10px; padding: 3px 4px; width: 12%;">PRECIO</th>
+          <th style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; text-align: right; font-size: 10px; padding: 3px 4px; width: 8%;">%Dto</th>
+          <th style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; text-align: right; font-size: 10px; padding: 3px 4px; width: 8%;">%IVA</th>
+          <th style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; text-align: right; font-size: 10px; padding: 3px 4px; width: 12%;">TOTAL</th>
         </tr>
       </thead>
       <tbody>
-        <tr th:each="l : ${lineas}">
-          <td th:text="${l.concepto}">Concepto</td>
-          <td class="text-right" th:text="${l.cantidad}">0</td>
-          <td class="text-right" th:text="${l.precioUnitario}">0</td>
-          <td class="text-right" th:text="${l.total}">0</td>
+        <tr th:each="l,iter : ${lineas}">
+          <td style="font-size: 10px; padding: 4px 4px; vertical-align: top;" th:text="${iter.index + 1}">1</td>
+          <td style="font-size: 10px; padding: 4px 4px; vertical-align: top; text-align: right;" th:text="${l.cantidad}">1,00</td>
+          <td style="font-size: 10px; padding: 4px 4px; vertical-align: top;" th:text="${l.concepto}">Concepto</td>
+          <td style="font-size: 10px; padding: 4px 4px; vertical-align: top; text-align: right;" th:text="${l.precioUnitario}">0,00 €</td>
+          <td style="font-size: 10px; padding: 4px 4px; vertical-align: top; text-align: right;" th:text="${l.descuento}">0,00%</td>
+          <td style="font-size: 10px; padding: 4px 4px; vertical-align: top; text-align: right;" th:text="${l.iva}">21,00%</td>
+          <td style="font-size: 10px; padding: 4px 4px; vertical-align: top; text-align: right;" th:text="${l.total}">0,00 €</td>
         </tr>
       </tbody>
     </table>
 
-    <table class="totals">
+    <div style="border-top: 1px solid #1a1a1a; margin-top: 8px; padding-top: 4px; min-height: 180px;">
+      <div style="font-size: 11px; font-weight: bold; text-decoration: underline;">Observaciones</div>
+      <div th:text="${documento.observaciones}">Sin observaciones.</div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
       <tr>
-        <td class="text-right">Subtotal</td>
-        <td class="text-right" th:text="${totales.subtotal}">0</td>
-      </tr>
-      <tr>
-        <td class="text-right">IVA</td>
-        <td class="text-right" th:text="${totales.iva}">0</td>
-      </tr>
-      <tr class="total-row">
-        <td class="text-right">Total</td>
-        <td class="text-right" th:text="${totales.total}">0</td>
+        <td style="width: 60%; vertical-align: top; padding-right: 8px;">
+          <div style="border: 1px solid #636363; min-height: 80px; padding: 7px 8px;">
+            <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Condiciones de pago</div>
+            <div>Forma de pago: Contado</div>
+            <div>Doc. de pago: Recibo</div>
+            <div style="margin-top: 6px;">Domic. bancaria:</div>
+          </div>
+        </td>
+        <td style="width: 40%; vertical-align: top;">
+          <div style="border: 1px solid #636363; min-height: 80px; padding: 7px 8px;">
+            <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Totales</div>
+            <div style="margin: 4px 0;">Base imponible: <strong th:text="${totales.subtotal}">0,00 €</strong></div>
+            <div style="margin: 4px 0;">IVA: <strong th:text="${totales.iva}">0,00 €</strong></div>
+            <div style="font-size: 9px;">Base <span th:text="${totales.subtotal}">0,00 €</span> - 21,00%</div>
+            <div style="margin-top: 10px; font-size: 31px; font-weight: bold;">Total: <span th:text="${totales.total}">0,00 €</span></div>
+          </div>
+        </td>
       </tr>
     </table>
 
-    <div class="footer" th:text="${documento.legal}">
-      Documento generado automáticamente. Sin validez fiscal si no se valida.
+    <div style="margin-top: 8px; border: 1px solid #636363; padding: 4px 8px; font-size: 10px;">
+      <strong>Vencimientos:</strong>
+      <span th:text="${documento.fecha}">01/01/2026</span>
+      &nbsp;&nbsp;
+      <strong th:text="${totales.total}">0,00 €</strong>
+    </div>
+
+    <div style="margin-top: 7px; font-size: 8px; line-height: 1.2; color: #3e3e3e; text-align: justify;" th:text="${documento.legal}">
+      Texto legal.
     </div>
   </div>
 </body>

@@ -90,6 +90,7 @@ public class AlbaranVentaService {
                 .collect(Collectors.toList());
     }
 
+
     private AlbaranVentaResponse toResponse(AlbaranVenta a, boolean existente) {
         Long presupuestoId = a.getPresupuesto() != null ? a.getPresupuesto().getIdPresupuesto() : null;
         Long tramiteId = a.getTramite() != null ? a.getTramite().getIdTramite() : null;

@@ -48,6 +48,22 @@ public class DocumentoController {
         }
     }
 
+    @GetMapping("/albaran-venta/{albaranId}")
+    public ResponseEntity<?> descargarAlbaranVenta(@PathVariable Long albaranId) {
+        try {
+            byte[] pdf = documentoPdfService.generarAlbaranPdfPorId(albaranId);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"albaran_venta_" + albaranId + ".pdf\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("No se pudo generar el PDF.");
+        }
+    }
+
     @GetMapping("/factura/{presupuestoId}")
     public ResponseEntity<?> descargarFactura(@PathVariable Long presupuestoId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
