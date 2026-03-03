@@ -175,11 +175,32 @@ import { AuthService } from '../../services/auth.service';
     .illustration { font-size: 4rem; margin-bottom: 14px; }
 
     @media (max-width: 768px) {
-      .chat-container { height: calc(100vh - 120px); border-radius: 10px; }
-      .chat-sidebar { width: 42%; min-width: 150px; }
-      .sidebar-header { align-items: flex-start; flex-direction: column; gap: 8px; }
-      .messages-viewport { padding: 12px; }
-      .message-bubble { max-width: 88%; }
+      .chat-container {
+        height: calc(100vh - 120px);
+        border-radius: 10px;
+        flex-direction: column;
+      }
+
+      .chat-sidebar {
+        width: 100%;
+        min-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .sidebar-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .messages-viewport {
+        padding: 12px;
+      }
+
+      .message-bubble {
+        max-width: 95%;
+      }
     }
   `]
 })
