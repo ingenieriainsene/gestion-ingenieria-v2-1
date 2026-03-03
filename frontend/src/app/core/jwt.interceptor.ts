@@ -1,6 +1,4 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
@@ -19,9 +17,12 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req).pipe(
         catchError((error) => {
             if (error?.status === 401 || error?.status === 403) {
-                // Si hay error de auth, inyectamos AuthService de forma diferida para forzar logout
-                const authService = inject(AuthService);
-                authService.forceLogout();
+                // Evita dependencia circular con AuthService dentro del interceptor.
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('authRole');
+                if (!window.location.pathname.includes('/login')) {
+                    window.location.assign('/login');
+                }
             }
             return throwError(() => error);
         })

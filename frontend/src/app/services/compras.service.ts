@@ -51,4 +51,8 @@ export class ComprasService {
   crearDocumento(tramiteId: number, payload: CompraDocumentoCreateRequest): Observable<CompraDocumentoDTO> {
     return this.api.post<CompraDocumentoDTO>(`${this.endpoint}/tramite/${tramiteId}/documento`, payload);
   }
+
+  eliminarDocumento(tipo: 'ALBARAN' | 'FACTURA', idDocumento: number): Observable<void> {
+    return this.api.delete<void>(`${this.endpoint}/documento/${tipo}/${idDocumento}`);
+  }
 }

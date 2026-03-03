@@ -302,14 +302,6 @@
                     (click)="descargarDocumento('albaran', p)">
                     ⬇️ Albarán
                   </button>
-                  <button
-                    type="button"
-                    class="btn-doc btn-factura"
-                    [disabled]="p.estado !== 'Aceptado' || descargandoDocs['factura-' + p.idPresupuesto]"
-                    [title]="p.estado === 'Aceptado' ? 'Descargar factura' : 'Solo presupuestos aceptados'"
-                    (click)="descargarDocumento('factura', p)">
-                    ⬇️ Factura
-                  </button>
                 </td>
               </tr>
               <tr *ngIf="presupuestos.length === 0">
@@ -405,7 +397,7 @@
 
         <div *ngIf="cargandoCompras" class="empty-state">Cargando albaranes...</div>
         <div class="albaranes-wrapper" *ngIf="!cargandoCompras">
-          <div *ngFor="let a of documentosCompra" class="albaran-card">
+          <div *ngFor="let a of documentosCompra; let i = index" class="albaran-card">
             <details>
               <summary>
                 <div class="albaran-summary">
@@ -417,6 +409,14 @@
                   <div class="albaran-meta">
                     <span class="badge">{{ a.proveedorNombre }}</span>
                     <span class="total">{{ a.total | currency:'EUR' }}</span>
+                    <button
+                      type="button"
+                      class="btn-icon-delete"
+                      [disabled]="eliminandoDocsCompra[(a.tipo + '-' + a.idDocumento)]"
+                      title="Eliminar documento"
+                      (click)="eliminarDocumentoCompra(a, i); $event.preventDefault(); $event.stopPropagation();">
+                      🗑️
+                    </button>
                   </div>
                 </div>
               </summary>

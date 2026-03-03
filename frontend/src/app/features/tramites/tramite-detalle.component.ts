@@ -52,6 +52,7 @@ export class TramiteDetalleComponent implements OnInit {
   descargandoDocs: Record<string, boolean> = {};
   documentosCompra: CompraDocumentoDTO[] = [];
   cargandoCompras = false;
+  eliminandoDocsCompra: Record<string, boolean> = {};
   totalGastos = 0;
   totalVentas = 0;
   margen = 0;
@@ -313,6 +314,42 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
+  eliminarDocumentoCompra(doc: CompraDocumentoDTO, index: number) {
+    if (!doc?.idDocumento || !doc?.tipo) return;
+    const tipo = String(doc.tipo).toUpperCase() as 'ALBARAN' | 'FACTURA';
+    const key = `${tipo}-${doc.idDocumento}`;
+    if (this.eliminandoDocsCompra[key]) return;
+
+    const etiqueta = tipo === 'FACTURA' ? 'factura' : 'albarán';
+    Swal.fire({
+      title: `¿Eliminar ${etiqueta}?`,
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1e293b',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.eliminandoDocsCompra[key] = true;
+      this.comprasService.eliminarDocumento(tipo, doc.idDocumento).subscribe({
+        next: () => {
+          this.eliminandoDocsCompra[key] = false;
+          this.documentosCompra.splice(index, 1);
+          this.recalcularMargen();
+          Swal.fire('Eliminado', `${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)} eliminado correctamente.`, 'success');
+        },
+        error: (e) => {
+          this.eliminandoDocsCompra[key] = false;
+          let msg = `No se pudo eliminar el ${etiqueta}.`;
+          if (typeof e?.error === 'string') msg = e.error;
+          else if (e?.error?.message) msg = e.error.message;
+          Swal.fire('Error', msg, 'error');
+        }
+      });
+    });
+  }
+
   crearPresupuesto() {
     if (!this.idTramite) return;
     this.router.navigate(['/presupuestos/nuevo'], { queryParams: { tramiteId: this.idTramite } });
@@ -337,7 +374,7 @@ export class TramiteDetalleComponent implements OnInit {
         this.descargandoDocs[key] = false;
         const nombre = p.codigoReferencia ? p.codigoReferencia : `presupuesto_${p.idPresupuesto}`;
         const filename = `${tipo}_${nombre}.pdf`;
-        this.descargarBlob(blob, filename);
+        void this.descargarBlob(blob, filename);
         this.cargarAlbaranesVenta();
       },
       error: (e) => {
@@ -359,7 +396,7 @@ export class TramiteDetalleComponent implements OnInit {
       next: (blob) => {
         this.descargandoDocs[key] = false;
         const nombre = a.numeroAlbaran ? a.numeroAlbaran.replace(/[^\w\-]/g, '_') : `albaran_${a.idAlbaran}`;
-        this.descargarBlob(blob, `${nombre}.pdf`);
+        void this.descargarBlob(blob, `${nombre}.pdf`);
       },
       error: (e) => {
         this.descargandoDocs[key] = false;
@@ -371,11 +408,39 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
-  private descargarBlob(blob: Blob, filename: string) {
+  private async descargarBlob(blob: Blob, filename: string): Promise<void> {
+    const w = window as any;
+    const safeName = (filename || 'documento.pdf').trim();
+
+    // En navegadores compatibles (Chrome/Edge), abre "Guardar como..."
+    if (typeof w.showSaveFilePicker === 'function') {
+      try {
+        const handle = await w.showSaveFilePicker({
+          suggestedName: safeName,
+          types: [
+            {
+              description: 'Documento PDF',
+              accept: { 'application/pdf': ['.pdf'] }
+            }
+          ]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err: any) {
+        // Si el usuario cancela el diálogo, no forzamos descarga.
+        if (err?.name === 'AbortError') {
+          return;
+        }
+      }
+    }
+
+    // Fallback universal: descarga normal del navegador
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
+    a.download = safeName;
     a.click();
     window.URL.revokeObjectURL(url);
   }

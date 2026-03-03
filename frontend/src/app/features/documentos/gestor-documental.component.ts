@@ -102,15 +102,36 @@ export class GestorDocumentalComponent implements OnInit {
   descargarArchivo(a: ArchivoAdjuntoDTO): void {
     this.service.descargar(a.idArchivo, true).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = a.nombreOriginal || 'archivo';
-        link.click();
-        window.URL.revokeObjectURL(url);
+        void this.guardarBlobConDialogo(blob, a.nombreOriginal || 'archivo');
       },
       error: () => Swal.fire('Error', 'No se pudo descargar el archivo.', 'error')
     });
+  }
+
+  private async guardarBlobConDialogo(blob: Blob, filename: string): Promise<void> {
+    const w = window as any;
+    const safeName = (filename || 'archivo').trim();
+
+    if (typeof w.showSaveFilePicker === 'function') {
+      try {
+        const handle = await w.showSaveFilePicker({
+          suggestedName: safeName
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = safeName;
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 
   eliminarArchivo(a: ArchivoAdjuntoDTO): void {

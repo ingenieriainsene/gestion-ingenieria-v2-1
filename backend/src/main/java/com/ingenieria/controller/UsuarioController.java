@@ -4,6 +4,7 @@ import com.ingenieria.model.Usuario;
 import com.ingenieria.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,8 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     public List<Usuario> listarUsuarios() {
@@ -37,6 +40,12 @@ public class UsuarioController {
         if (usuario.getIdUsuario() != null) {
             usuario.setIdUsuario(null);
         }
+        if (usuario.getPasswordHash() == null || usuario.getPasswordHash().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!esHashBcrypt(usuario.getPasswordHash())) {
+            usuario.setPasswordHash(passwordEncoder.encode(usuario.getPasswordHash()));
+        }
         Usuario guardado = usuarioRepository.save(usuario);
         return ResponseEntity.ok(guardado);
     }
@@ -46,12 +55,21 @@ public class UsuarioController {
         return usuarioRepository.findById(id)
                 .map(existing -> {
                     existing.setNombreUsuario(usuario.getNombreUsuario());
-                    existing.setPasswordHash(usuario.getPasswordHash());
                     existing.setEmail(usuario.getEmail());
                     existing.setRol(usuario.getRol());
+                    // Solo actualiza password si el usuario envía una nueva
+                    if (usuario.getPasswordHash() != null && !usuario.getPasswordHash().isBlank()) {
+                        String incoming = usuario.getPasswordHash();
+                        existing.setPasswordHash(esHashBcrypt(incoming) ? incoming : passwordEncoder.encode(incoming));
+                    }
                     return ResponseEntity.ok(usuarioRepository.save(existing));
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private boolean esHashBcrypt(String value) {
+        return value != null
+                && (value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$"));
     }
 
     @DeleteMapping("/{id}")

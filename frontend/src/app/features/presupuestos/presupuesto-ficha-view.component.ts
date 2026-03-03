@@ -475,17 +475,39 @@ export class PresupuestoFichaViewComponent implements OnInit {
     if (!this.presupuesto?.idPresupuesto) return;
     this.service.downloadPdf(this.presupuesto.idPresupuesto).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `presupuesto_${this.presupuesto!.idPresupuesto}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+        void this.guardarBlobConDialogo(blob, `presupuesto_${this.presupuesto!.idPresupuesto}.pdf`);
       },
       error: () => {
         Swal.fire('Error', 'No se pudo descargar el PDF.', 'error');
       }
     });
+  }
+
+  private async guardarBlobConDialogo(blob: Blob, filename: string): Promise<void> {
+    const w = window as any;
+    const safeName = (filename || 'documento.pdf').trim();
+
+    if (typeof w.showSaveFilePicker === 'function') {
+      try {
+        const handle = await w.showSaveFilePicker({
+          suggestedName: safeName,
+          types: [{ description: 'Documento PDF', accept: { 'application/pdf': ['.pdf'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeName;
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 
   private recalcularTotales(): void {

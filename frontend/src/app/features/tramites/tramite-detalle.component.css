@@ -790,6 +790,12 @@ details > summary::-webkit-details-marker {
   filter: grayscale(0) saturate(2);
 }
 
+.btn-icon-delete:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  filter: none;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem;

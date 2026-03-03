@@ -98,6 +98,38 @@ public class CompraService {
         return toDto(saved, "ALBARAN");
     }
 
+    @Transactional
+    public void eliminarDocumento(String tipoRaw, Long idDocumento) {
+        if (idDocumento == null) {
+            throw new IllegalArgumentException("idDocumento es obligatorio.");
+        }
+        String tipo = tipoRaw != null ? tipoRaw.trim().toUpperCase() : "";
+        if (!tipo.equals("ALBARAN") && !tipo.equals("FACTURA")) {
+            throw new IllegalArgumentException("tipo debe ser ALBARAN o FACTURA.");
+        }
+
+        if (tipo.equals("ALBARAN")) {
+            AlbaranProveedor albaran = albaranProveedorRepository.findById(idDocumento)
+                    .orElseThrow(() -> new IllegalArgumentException("Albarán no encontrado."));
+            List<AlbaranProveedorLinea> lineas = albaranProveedorLineaRepository
+                    .findByAlbaran_IdAlbaranOrderByOrdenAsc(albaran.getIdAlbaran());
+            if (!lineas.isEmpty()) {
+                albaranProveedorLineaRepository.deleteAll(lineas);
+            }
+            albaranProveedorRepository.delete(albaran);
+            return;
+        }
+
+        FacturaProveedor factura = facturaProveedorRepository.findById(idDocumento)
+                .orElseThrow(() -> new IllegalArgumentException("Factura no encontrada."));
+        List<FacturaProveedorLinea> lineas = facturaProveedorLineaRepository
+                .findByFactura_IdFacturaOrderByOrdenAsc(factura.getIdFactura());
+        if (!lineas.isEmpty()) {
+            facturaProveedorLineaRepository.deleteAll(lineas);
+        }
+        facturaProveedorRepository.delete(factura);
+    }
+
     private void validarRequisitos(CompraDocumentoCreateRequest req) {
         if (req.getIdProveedor() == null) {
             throw new IllegalArgumentException("idProveedor es obligatorio.");

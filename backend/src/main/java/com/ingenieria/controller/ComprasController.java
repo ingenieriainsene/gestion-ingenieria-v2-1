@@ -5,6 +5,7 @@ import com.ingenieria.dto.CompraDocumentoDTO;
 import com.ingenieria.service.CompraService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +31,18 @@ public class ComprasController {
     public ResponseEntity<?> crearDocumento(@PathVariable Long id, @RequestBody CompraDocumentoCreateRequest req) {
         try {
             return ResponseEntity.ok(compraService.crearDocumento(id, req));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/documento/{tipo}/{idDocumento}")
+    public ResponseEntity<?> eliminarDocumento(
+            @PathVariable String tipo,
+            @PathVariable Long idDocumento) {
+        try {
+            compraService.eliminarDocumento(tipo, idDocumento);
+            return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
