@@ -13,7 +13,9 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="chat-container">
+    <div class="chat-container"
+         [ngClass]="{'mobile-view-list': isMobile && activeMobileView === 'list',
+                     'mobile-view-chat': isMobile && activeMobileView === 'chat'}">
       <aside class="chat-sidebar" role="navigation" aria-label="Lista de chats">
         <div class="sidebar-header">
           <h3>Mensajería Interna</h3>
@@ -62,6 +64,7 @@ import { AuthService } from '../../services/auth.service';
 
       <main class="chat-content" role="log" aria-live="polite">
         <div class="content-header" *ngIf="currentRoom">
+          <button *ngIf="isMobile" class="mobile-back-btn" (click)="volverAListado()">←</button>
           <div class="header-main">
             <span class="room-title">{{ currentRoom.name }}</span>
             <small class="room-subtitle">Chat del equipo</small>
@@ -149,6 +152,17 @@ import { AuthService } from '../../services/auth.service';
     .header-main { display: flex; flex-direction: column; gap: 2px; }
     .room-title { font-weight: 700; font-size: 0.98rem; color: var(--chat-text); }
     .room-subtitle { color: #64748b; font-size: 0.75rem; }
+    .mobile-back-btn {
+      margin-right: 10px;
+      border: none;
+      background: transparent;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: #64748b;
+    }
+    .mobile-back-btn:hover {
+      color: #1e293b;
+    }
     
     .content-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .messages-viewport { flex: 1; padding: 16px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
@@ -188,6 +202,11 @@ import { AuthService } from '../../services/auth.service';
         border-bottom: 1px solid #e2e8f0;
       }
 
+      .chat-content {
+        width: 100%;
+        min-width: 100%;
+      }
+
       .sidebar-header {
         align-items: flex-start;
         flex-direction: column;
@@ -201,6 +220,22 @@ import { AuthService } from '../../services/auth.service';
       .message-bubble {
         max-width: 95%;
       }
+
+      .chat-container.mobile-view-list .chat-sidebar {
+        display: flex;
+      }
+
+      .chat-container.mobile-view-list .chat-content {
+        display: none;
+      }
+
+      .chat-container.mobile-view-chat .chat-sidebar {
+        display: none;
+      }
+
+      .chat-container.mobile-view-chat .chat-content {
+        display: flex;
+      }
     }
   `]
 })
@@ -213,6 +248,9 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
   currentUsername = '';
   userChatId = '';
   isAdmin = false;
+   // Estado responsive
+  isMobile = false;
+  activeMobileView: 'list' | 'chat' = 'chat';
   rooms: ChatRoom[] = [];
   users: ChatUser[] = [];
   incomingRequests: PrivateChatRequest[] = [];
@@ -227,6 +265,10 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
 
   ngOnInit(): void {
     this.isAdmin = this.auth.getRole() === 'ROLE_ADMIN';
+    this.checkMobileLayout();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.onResize);
+    }
     this.identitySubscription = this.chat.getMyIdentity().subscribe({
       next: (id) => {
         this.userChatId = id.chatId;
@@ -264,6 +306,9 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.identitySubscription) this.identitySubscription.unsubscribe();
     if (this.roomsSubscription) this.roomsSubscription.unsubscribe();
     if (this.incomingRequestSubscription) this.incomingRequestSubscription.unsubscribe();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.onResize);
+    }
   }
 
   ngAfterViewChecked(): void {
@@ -285,6 +330,9 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.currentRoom?.id === room.id) return;
 
     this.currentRoom = room;
+    if (this.isMobile) {
+      this.activeMobileView = 'chat';
+    }
     if (this.chatPollingSubscription) this.chatPollingSubscription.unsubscribe();
     this.mensajes = [];
 
@@ -376,6 +424,30 @@ export class ChatGeneralComponent implements OnInit, OnDestroy, AfterViewChecked
         });
       }
     });
+  }
+
+  private checkMobileLayout() {
+    if (typeof window === 'undefined') {
+      this.isMobile = false;
+      this.activeMobileView = 'chat';
+      return;
+    }
+    this.isMobile = window.innerWidth <= 768;
+    if (!this.isMobile) {
+      this.activeMobileView = 'chat';
+    } else if (!this.currentRoom) {
+      this.activeMobileView = 'list';
+    }
+  }
+
+  private onResize = () => {
+    this.checkMobileLayout();
+  };
+
+  volverAListado() {
+    if (this.isMobile) {
+      this.activeMobileView = 'list';
+    }
   }
 
   private refrescarSalas() {
