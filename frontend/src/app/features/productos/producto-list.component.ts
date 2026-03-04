@@ -42,7 +42,7 @@ import { ProductoService } from '../../services/producto.service';
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of filtrados">
+        <tr *ngFor="let p of filtrados" class="row-card">
           <td data-label="ID"><strong>#{{ p.id }}</strong></td>
           <td data-label="Código"><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">{{ p.codRef }}</code></td>
           <td data-label="Descripción">{{ p.descripcion }}</td>

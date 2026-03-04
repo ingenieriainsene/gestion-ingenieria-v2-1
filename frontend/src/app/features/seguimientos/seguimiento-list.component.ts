@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { SeguimientoService, Seguimiento } from '../../services/domain.services';
 import { UsuarioService, Usuario } from '../../services/usuario.service';
 import { ProveedorService } from '../../services/proveedor.service';
@@ -36,64 +36,111 @@ import { ProveedorService } from '../../services/proveedor.service';
           {{ mostrarFiltrosAvanzados ? 'Ocultar Filtros' : 'Filtros Avanzados' }}
         </button>
       </div>
-
-      <!-- Filtros Avanzados -->
-      <div class="advanced-filters" *ngIf="mostrarFiltrosAvanzados">
-        <div class="filter-group">
-          <label>Técnico</label>
-          <select [(ngModel)]="filtroTecnico" (change)="aplicarFiltro()" class="form-select">
-            <option [ngValue]="null">-- Todos --</option>
-            <option *ngFor="let t of tecnicos" [ngValue]="t.idUsuario">{{ t.nombreUsuario }}</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Proveedor</label>
-          <select [(ngModel)]="filtroProveedor" (change)="aplicarFiltro()" class="form-select">
-            <option [ngValue]="null">-- Todos --</option>
-            <option *ngFor="let p of proveedores" [ngValue]="p.idProveedor ?? p.id">{{ p.nombreComercial }}</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Desde</label>
-          <input type="date" [(ngModel)]="fechaInicio" (change)="aplicarFiltro()" class="form-input">
-        </div>
-        <div class="filter-group">
-          <label>Hasta</label>
-          <input type="date" [(ngModel)]="fechaFin" (change)="aplicarFiltro()" class="form-input">
-        </div>
-        <div class="filter-group checkbox-group">
-          <label>
-            <input type="checkbox" [(ngModel)]="soloUrgentes" (change)="aplicarFiltro()">
-            Solo Urgentes
-          </label>
-        </div>
-        <div class="filter-actions">
-           <button class="btn-clear" (click)="limpiarFiltros()">Limpiar Filtros</button>
-        </div>
-      </div>
     </div>
 
     <table class="table-card">
       <thead>
         <tr>
           <th>FECHA REGISTRO</th>
-          <th>TRÁMITE</th>
+          <th>INTERVENCIÓN</th>
           <th>COMENTARIO</th>
           <th class="col-tecnico">TÉCNICO</th>
           <th>PROVEEDOR</th>
           <th>PRÓX. SEGUIMIENTO</th>
           <th style="text-align:center;">URG</th>
           <th>ESTADO</th>
-          <th style="text-align:right;">ACCIONES</th>
+        </tr>
+        <tr *ngIf="mostrarFiltrosAvanzados" class="filter-row">
+          <th>
+            <div class="header-date-range">
+              <input
+                type="date"
+                [(ngModel)]="fechaInicio"
+                (change)="aplicarFiltro()"
+                class="header-input"
+              />
+              <input
+                type="date"
+                [(ngModel)]="fechaFin"
+                (change)="aplicarFiltro()"
+                class="header-input"
+              />
+            </div>
+          </th>
+          <th>
+            <input
+              type="text"
+              [(ngModel)]="filtroTramite"
+              (ngModelChange)="aplicarFiltro()"
+              class="header-input"
+              placeholder="# intervención"
+            />
+          </th>
+          <th>
+            <input
+              type="text"
+              [(ngModel)]="filtroComentario"
+              (ngModelChange)="aplicarFiltro()"
+              class="header-input"
+              placeholder="Comentario"
+            />
+          </th>
+          <th>
+            <select
+              [(ngModel)]="filtroTecnico"
+              (change)="aplicarFiltro()"
+              class="header-input"
+            >
+              <option [ngValue]="null">Todos</option>
+              <option *ngFor="let t of tecnicos" [ngValue]="t.idUsuario">
+                {{ t.nombreUsuario }}
+              </option>
+            </select>
+          </th>
+          <th>
+            <select
+              [(ngModel)]="filtroProveedor"
+              (change)="aplicarFiltro()"
+              class="header-input"
+            >
+              <option [ngValue]="null">Todos</option>
+              <option *ngFor="let p of proveedores" [ngValue]="p.idProveedor ?? p.id">
+                {{ p.nombreComercial }}
+              </option>
+            </select>
+          </th>
+          <th>
+            <input
+              type="date"
+              [(ngModel)]="filtroFechaProx"
+              (change)="aplicarFiltro()"
+              class="header-input"
+            />
+          </th>
+          <th style="text-align:center;">
+            <label class="urg-filter-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="soloUrgentes"
+                (change)="aplicarFiltro()"
+              />
+              URG
+            </label>
+          </th>
+          <th style="text-align:right;">
+            <button class="btn-clear small" type="button" (click)="limpiarFiltros()">
+              Limpiar
+            </button>
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let s of filtrados">
+        <tr *ngFor="let s of filtrados" class="row-card" (click)="verTramite(s)" style="cursor:pointer;">
           <td data-label="Fecha registro">
             <strong>{{ s.fechaRegistro | date:'dd/MM/yyyy' }}</strong><br />
             <small>{{ s.fechaRegistro | date:'HH:mm' }}</small>
           </td>
-          <td data-label="Trámite">
+          <td data-label="Intervención">
             <a *ngIf="s.idTramite" [routerLink]="['/tramite-detalle', s.idTramite]" class="maps-link" style="font-weight:700;">
               #{{ s.idTramite }}
             </a>
@@ -108,15 +155,6 @@ import { ProveedorService } from '../../services/proveedor.service';
           </td>
           <td data-label="Estado">
             <span class="status-badge" [ngClass]="s.estado?.toLowerCase()">{{ s.estado || '—' }}</span>
-          </td>
-          <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space: nowrap;">
-            <a
-              *ngIf="s.idTramite"
-              [routerLink]="['/tramite-detalle', s.idTramite]"
-              class="action-badge"
-              style="background:#3498db;"
-              title="Ver trámite"
-            >👁️</a>
           </td>
         </tr>
         <tr *ngIf="filtrados.length === 0">
@@ -178,31 +216,33 @@ import { ProveedorService } from '../../services/proveedor.service';
     }
     .btn-toggle-filters:hover { background: #f1f5f9; color: #1e293b; }
 
-    /* Advanced filters */
-    .advanced-filters {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      animation: slideDown 0.2s ease-out;
+    .filter-row th {
+      padding: 6px 8px;
+      background-color: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
     }
-    @keyframes slideDown { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
-
-    .filter-group { display: flex; flex-direction: column; gap: 4px; }
-    .filter-group label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
-    .form-select, .form-input {
-      padding: 8px 12px;
-      border: 1px solid #cbd5e1;
+    .header-input {
+      width: 100%;
+      padding: 4px 6px;
       border-radius: 6px;
-      min-width: 150px;
-      font-size: 0.9rem;
+      border: 1px solid #cbd5e1;
+      font-size: 0.8rem;
+      font-family: inherit;
+      background-color: #ffffff;
     }
-    .checkbox-group { flex-direction: row; align-items: center; padding-bottom: 8px; }
-    .checkbox-group label { font-size: 0.9rem; text-transform: none; color: #1e293b; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    
+    .header-date-range {
+      display: flex;
+      gap: 4px;
+    }
+    .urg-filter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #334155;
+      cursor: pointer;
+    }
+
     .btn-clear {
       background: #ef4444;
       color: white;
@@ -213,8 +253,11 @@ import { ProveedorService } from '../../services/proveedor.service';
       cursor: pointer;
       font-size: 0.85rem;
     }
+    .btn-clear.small {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+    }
     .btn-clear:hover { background: #dc2626; }
-    .filter-actions { margin-left: auto; }
 
     .col-tecnico { width: 140px; }
 
@@ -267,16 +310,8 @@ import { ProveedorService } from '../../services/proveedor.service';
         width: 100%;
       }
 
-      .advanced-filters {
-        grid-template-columns: 1fr;
-      }
-
-      .filter-actions {
-        margin-left: 0;
-      }
-
-      .filter-actions .btn-clear {
-        width: 100%;
+      .header-date-range {
+        flex-direction: column;
       }
     }
   `],
@@ -299,11 +334,15 @@ export class SeguimientoListComponent implements OnInit {
   fechaInicio: string = '';
   fechaFin: string = '';
   soloUrgentes = false;
+  filtroTramite: string = '';
+  filtroComentario: string = '';
+  filtroFechaProx: string = '';
 
   constructor(
     private seguimientoService: SeguimientoService,
     private usuarioService: UsuarioService,
-    private proveedorService: ProveedorService
+    private proveedorService: ProveedorService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -339,18 +378,6 @@ export class SeguimientoListComponent implements OnInit {
   aplicarFiltro(): void {
     let res = [...this.seguimientos];
 
-    // Texto
-    const term = this.busqueda.trim().toLowerCase();
-    if (term) {
-      res = res.filter((s) => {
-        const comentario = s.comentario?.toLowerCase() ?? '';
-        const tecnico = s.nombreAsignado?.toLowerCase() ?? '';
-        const proveedor = s.nombreProveedor?.toLowerCase() ?? '';
-        const tramite = s.idTramite ? String(s.idTramite) : '';
-        return comentario.includes(term) || tecnico.includes(term) || proveedor.includes(term) || tramite.includes(term);
-      });
-    }
-
     // Técnico
     if (this.filtroTecnico) {
       res = res.filter(s => s.idUsuarioAsignado === this.filtroTecnico);
@@ -377,6 +404,36 @@ export class SeguimientoListComponent implements OnInit {
       res = res.filter(s => s.fechaRegistro && new Date(s.fechaRegistro).setHours(0, 0, 0, 0) <= f2);
     }
 
+    // Filtro por intervención (idTramite)
+    const tramTerm = this.filtroTramite.trim();
+    if (tramTerm) {
+      res = res.filter(s => (s.idTramite ? String(s.idTramite) : '').includes(tramTerm));
+    }
+
+    // Filtro por comentario
+    const comentarioTerm = this.filtroComentario.trim().toLowerCase();
+    if (comentarioTerm) {
+      res = res.filter(s => (s.comentario || '').toLowerCase().includes(comentarioTerm));
+    }
+
+    // Filtro por próxima fecha de seguimiento exacta
+    if (this.filtroFechaProx) {
+      const fProx = new Date(this.filtroFechaProx).setHours(0, 0, 0, 0);
+      res = res.filter(s => s.fechaSeguimiento && new Date(s.fechaSeguimiento).setHours(0, 0, 0, 0) === fProx);
+    }
+
+    // Texto global (buscador superior)
+    const term = this.busqueda.trim().toLowerCase();
+    if (term) {
+      res = res.filter((s) => {
+        const comentario = s.comentario?.toLowerCase() ?? '';
+        const tecnico = s.nombreAsignado?.toLowerCase() ?? '';
+        const proveedor = s.nombreProveedor?.toLowerCase() ?? '';
+        const tramite = s.idTramite ? String(s.idTramite) : '';
+        return comentario.includes(term) || tecnico.includes(term) || proveedor.includes(term) || tramite.includes(term);
+      });
+    }
+
     this.filtrados = res;
   }
 
@@ -387,6 +444,16 @@ export class SeguimientoListComponent implements OnInit {
     this.fechaInicio = '';
     this.fechaFin = '';
     this.soloUrgentes = false;
+    this.filtroTramite = '';
+    this.filtroComentario = '';
+    this.filtroFechaProx = '';
     this.aplicarFiltro();
+  }
+
+  verTramite(s: Seguimiento): void {
+    if (!s.idTramite) {
+      return;
+    }
+    this.router.navigate(['/tramite-detalle', s.idTramite]);
   }
 }

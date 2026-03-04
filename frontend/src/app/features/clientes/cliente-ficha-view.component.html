@@ -82,22 +82,23 @@
               <th>DIRECCIÓN</th>
               <th>TITULAR REGISTRADO</th>
               <th>CONTRATOS</th>
-              <th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let l of locales">
+            <tr
+              *ngFor="let l of locales"
+              class="row-card"
+              (click)="irALocal(l)"
+              style="cursor:pointer;"
+            >
               <td data-label="Dirección">{{ l.direccionCompleta || '—' }}</td>
               <td data-label="Titular">{{ l.nombreTitular }} {{ l.apellido1Titular }}{{ l.apellido2Titular ? ' ' + l.apellido2Titular : '' }}
               </td>
               <td data-label="Contratos">
                 <div *ngFor="let c of getContratosPorLocal(l.idLocal!)" class="mini-badge">
-                  <a [routerLink]="['/contratos', c.idContrato]">#{{ c.idContrato }} ({{ c.tipoContrato }})</a>
+                  <a [routerLink]="['/contratos', c.idContrato]" (click)="$event.stopPropagation()">#{{ c.idContrato }} ({{ c.tipoContrato }})</a>
                 </div>
                 <span *ngIf="getContratosPorLocal(l.idLocal!).length === 0" class="empty-text">Sin contratos</span>
-              </td>
-              <td data-label="Acciones" class="actions-cell">
-                <a [routerLink]="['/locales', l.idLocal]" class="badge-ver" title="Ver detalle">👁️ Ver Detalle</a>
               </td>
             </tr>
             <tr *ngIf="locales.length === 0">
@@ -124,15 +125,19 @@
               <th>TITULAR</th>
               <th>VENCIMIENTO</th>
               <th>ESTADO</th>
-              <th>GESTIÓN</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let c of contratos">
+            <tr
+              *ngFor="let c of contratos"
+              class="row-card"
+              (click)="irAContrato(c)"
+              style="cursor:pointer;"
+            >
               <td data-label="ID"><strong>#{{ c.idContrato }}</strong></td>
               <td data-label="Tipo">{{ c.tipoContrato || '—' }}</td>
               <td data-label="Local">
-                <a *ngIf="localIdContrato(c)" [routerLink]="['/locales', localIdContrato(c)]" class="direct-link">
+                <a *ngIf="localIdContrato(c)" [routerLink]="['/locales', localIdContrato(c)]" class="direct-link" (click)="$event.stopPropagation()">
                   {{ direccionLocalContrato(c) }}
                 </a>
                 <span *ngIf="!localIdContrato(c)" class="error-text">⚠️ Sin local vinculado</span>
@@ -143,10 +148,6 @@
                 <span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">
                   {{ vigente(c) ? 'Vigente' : 'Vencido' }}
                 </span>
-              </td>
-              <td data-label="Gestión" class="actions-cell">
-                <a [routerLink]="['/contratos', c.idContrato]" class="badge-ver" title="Ver gestion del contrato">👁️
-                  Ver</a>
               </td>
             </tr>
             <tr *ngIf="contratos.length === 0">
@@ -172,11 +173,15 @@
               <th>ESTADO</th>
               <th>TIPO</th>
               <th>TOTAL</th>
-              <th>GESTIÓN</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let p of presupuestos">
+            <tr
+              *ngFor="let p of presupuestos"
+              class="row-card"
+              (click)="irAPresupuesto(p)"
+              style="cursor:pointer;"
+            >
               <td data-label="ID / Ref">
                 <strong>#{{ p.idPresupuesto }}</strong>
                 <div *ngIf="p.codigoReferencia" class="sub-text">{{ p.codigoReferencia }}</div>
@@ -190,10 +195,6 @@
               </td>
               <td data-label="Tipo">{{ p.tipoPresupuesto || '—' }}</td>
               <td data-label="Total"><strong>{{ p.total | number:'1.2-2' }} €</strong></td>
-              <td data-label="Gestión" class="actions-cell">
-                <a [routerLink]="['/presupuestos', p.idPresupuesto]" class="badge-ver"
-                  title="Ver detalle del presupuesto">👁️ Ver</a>
-              </td>
             </tr>
             <tr *ngIf="presupuestos.length === 0">
               <td colspan="6" class="empty-cell">No se han encontrado presupuestos para este cliente.</td>

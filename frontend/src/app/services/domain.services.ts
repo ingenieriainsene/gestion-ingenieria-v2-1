@@ -435,3 +435,4 @@ export class LocalAreaService {
         return this.api.delete<void>(`${this.endpoint}/ubicaciones/${id}`);
     }
 }
+

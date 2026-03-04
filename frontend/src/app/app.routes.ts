@@ -26,6 +26,7 @@ import { ProductoListComponent } from './features/productos/producto-list.compon
 import { ProductoFormComponent } from './features/productos/producto-form.component';
 import { SeguimientoListComponent } from './features/seguimientos/seguimiento-list.component';
 import { PlanificacionIntervencionesComponent } from './features/contratos/planificacion-intervenciones.component';
+import { VentasPendientesComponent } from './features/tramites/ventas-pendientes.component';
 
 import { adminGuard } from './core/admin.guard';
 
@@ -72,6 +73,7 @@ export const routes: Routes = [
 
             { path: 'auditoria', component: AuditoriaComponent, canActivate: [adminGuard] },
             { path: 'seguimientos', component: SeguimientoListComponent },
+            { path: 'ventas-pendientes', component: VentasPendientesComponent },
             { path: 'intervenciones', loadComponent: () => import('./features/tramites/intervencion-list.component').then(m => m.IntervencionListComponent) },
             { path: 'agendar-citas', loadComponent: () => import('./features/citas/agendar-citas.component').then(m => m.AgendarCitasComponent) },
             { path: 'chat', loadComponent: () => import('./features/chat/chat-general.component').then(m => m.ChatGeneralComponent) },

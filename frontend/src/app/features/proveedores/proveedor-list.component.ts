@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProveedorService, ProveedorCreateRequest } from '../../services/proveedor.service';
 import Swal from 'sweetalert2';
@@ -51,7 +51,7 @@ interface ProveedorRow {
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of filtrados">
+        <tr *ngFor="let p of filtrados" class="row-card" (click)="irAFicha(p)" style="cursor:pointer;">
           <td data-label="ID"><strong>#{{ p.id }}</strong></td>
           <td data-label="Nombre">{{ p.nombreComercial }}</td>
           <td data-label="CIF"><code style="background:#f1f5f9; padding:2px 5px; border-radius:4px;">{{ p.cif }}</code></td>
@@ -69,9 +69,8 @@ interface ProveedorRow {
             <ng-template #sinContactos>—</ng-template>
           </td>
           <td data-label="Acciones" class="actions-cell" style="text-align: right; white-space: nowrap;">
-            <a [routerLink]="['/proveedores', p.id]" class="action-badge" style="background:#3498db; cursor: pointer;" title="Ver ficha">👁️</a>
-            <a [routerLink]="['/proveedores', p.id, 'editar']" class="action-badge badge-edit" title="Editar">✏️</a>
-            <button class="action-badge badge-delete" style="border:none; cursor:pointer;" title="Eliminar" (click)="eliminar(p)">🗑️</button>
+            <a [routerLink]="['/proveedores', p.id, 'editar']" class="action-badge badge-edit" title="Editar" (click)="$event.stopPropagation()">✏️</a>
+            <button class="action-badge badge-delete" style="border:none; cursor:pointer;" title="Eliminar" (click)="eliminar(p); $event.stopPropagation()">🗑️</button>
           </td>
         </tr>
         <tr *ngIf="filtrados.length === 0">
@@ -193,7 +192,11 @@ export class ProveedorListComponent implements OnInit {
   guardando = false;
   formModal: FormGroup;
 
-  constructor(private service: ProveedorService, private fb: FormBuilder) {
+  constructor(
+    private service: ProveedorService,
+    private fb: FormBuilder,
+    private router: Router
+  ) {
     this.formModal = this.fb.group({
       nombreComercial: ['', Validators.required],
       cif: ['', Validators.required],
@@ -343,5 +346,12 @@ export class ProveedorListComponent implements OnInit {
         },
       });
     });
+  }
+
+  irAFicha(p: ProveedorRow): void {
+    if (!p.id) {
+      return;
+    }
+    this.router.navigate(['/proveedores', p.id]);
   }
 }

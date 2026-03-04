@@ -13,7 +13,7 @@
 
 .ficha-container {
   background: #fff;
-  padding: 0 0 35px;
+  padding: 0 0 24px;
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
@@ -26,7 +26,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 15px;
-  padding: 25px 35px;
+  padding: 18px 24px;
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
 }
@@ -62,8 +62,8 @@
 /* --- NUEVO LAYOUT DE DOS COLUMNAS --- */
 .ficha-body-flex {
   display: flex;
-  gap: 30px;
-  padding: 30px 35px;
+  gap: 20px;
+  padding: 18px 24px;
   align-items: flex-start;
 }
 
@@ -72,7 +72,7 @@
   /* Más ancho para datos principales */
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 20px;
 }
 
 .side-column {
@@ -94,20 +94,20 @@
 
 .info-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .info-card {
   background: #f8fafc;
-  padding: 20px;
+  padding: 14px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   border-top: 4px solid #3498db;
 }
 
 .info-card-wide {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .info-card h3 {
@@ -128,7 +128,7 @@
 
 /* HISTORIAL Y TABLAS */
 .ficha-section {
-  padding: 0 35px 30px;
+  padding: 0 24px 20px;
 }
 
 .section-header {
@@ -238,10 +238,12 @@
 
 /* Areas Container Animation */
 .areas-container {
-  margin: 0 35px 30px;
-  padding-top: 20px;
+  margin: 0 24px 20px;
+  padding-top: 16px;
   border-top: 1px solid #e2e8f0;
   animation: slideDown 0.3s ease-out;
+  max-height: 420px;
+  overflow-y: auto;
 }
 
 @keyframes slideDown {
@@ -311,5 +313,7 @@
 
   .areas-container {
     margin: 0 16px 24px;
+    max-height: none;
+    overflow-y: visible;
   }
 }

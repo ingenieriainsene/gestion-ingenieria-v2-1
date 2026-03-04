@@ -443,11 +443,41 @@ textarea.form-control {
 }
 
 .modern-table td {
-  padding: 1rem;
+  padding: 0.75rem 0.9rem;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
   font-size: 0.9rem;
   vertical-align: top;
+}
+
+/* Inline editable cells in historial de seguimiento */
+.inline-input {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  border-radius: 6px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modern-table td[data-label="Comentario"] .inline-input {
+  width: 100%;
+}
+
+.modern-table td[data-label="Asignado"] .inline-input,
+.modern-table td[data-label="Proveedor"] .inline-input {
+  min-width: 0;
+}
+
+.modern-table td[data-label="Próx. seg."] .inline-input {
+  min-width: 0;
+}
+
+.comentario-textarea {
+  resize: none;
+  overflow: hidden;
+  line-height: 1.3;
+  min-height: 38px;
 }
 
 .modern-table tr:last-child td {

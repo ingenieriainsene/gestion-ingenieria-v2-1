@@ -122,4 +122,25 @@ export class ClienteFichaViewComponent implements OnInit {
   setTab(tab: 'locales' | 'contratos' | 'presupuestos'): void {
     this.activeTab = tab;
   }
+
+  irALocal(l: Local): void {
+    if (!l.idLocal) {
+      return;
+    }
+    this.router.navigate(['/locales', l.idLocal]);
+  }
+
+  irAContrato(c: Contrato): void {
+    if (!c.idContrato) {
+      return;
+    }
+    this.router.navigate(['/contratos', c.idContrato]);
+  }
+
+  irAPresupuesto(p: PresupuestoListItem): void {
+    if (!p.idPresupuesto) {
+      return;
+    }
+    this.router.navigate(['/presupuestos', p.idPresupuesto]);
+  }
 }

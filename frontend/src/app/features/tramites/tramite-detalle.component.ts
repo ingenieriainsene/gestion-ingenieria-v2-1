@@ -741,6 +741,69 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
+  private hitoSaveTimers: Record<number, any> = {};
+
+  programarGuardadoHito(h: Seguimiento) {
+    if (!h.idSeguimiento) {
+      return;
+    }
+    const id = h.idSeguimiento;
+    if (this.hitoSaveTimers[id]) {
+      clearTimeout(this.hitoSaveTimers[id]);
+    }
+    this.hitoSaveTimers[id] = setTimeout(() => {
+      this.guardarHitoInline(h);
+    }, 600);
+  }
+
+  autoResize(event: Event) {
+    const textarea = event.target as HTMLTextAreaElement;
+    if (!textarea) {
+      return;
+    }
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+
+  guardarHitoInline(h: Seguimiento) {
+    if (!h.idSeguimiento || !this.idTramite) {
+      return;
+    }
+
+    const fechaSeg =
+      h.fechaSeguimiento
+        ? (typeof h.fechaSeguimiento === 'string'
+            ? h.fechaSeguimiento
+            : new Date(h.fechaSeguimiento).toISOString().slice(0, 10))
+        : new Date().toISOString().slice(0, 10);
+
+    const payload: Partial<Seguimiento> = {
+      idTramite: this.idTramite,
+      comentario: h.comentario,
+      fechaSeguimiento: fechaSeg,
+      estado: h.estado || 'Pendiente',
+      esUrgente: !!h.esUrgente,
+      idUsuarioAsignado: h.idUsuarioAsignado ?? undefined,
+      idProveedor: h.idProveedor ?? undefined,
+    };
+
+    this.seguimientoService.update(h.idSeguimiento, payload).subscribe({
+      next: () => {
+        Swal.fire({
+          title: 'Guardado',
+          text: 'Seguimiento actualizado correctamente.',
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        this.cargarHitos();
+      },
+      error: (e) => this.handleHitoError(e),
+    });
+  }
+
   onFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
     this.filesToUpload = input.files ? Array.from(input.files) : [];

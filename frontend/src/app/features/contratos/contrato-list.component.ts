@@ -79,7 +79,7 @@ import Swal from 'sweetalert2';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of filteredContratos">
+          <tr *ngFor="let c of filteredContratos" class="row-card" (click)="verContrato(c)" style="cursor:pointer;">
             <td data-label="ID"><strong>#{{ c.idContrato }}</strong></td>
             <td data-label="Cliente">
               <a
@@ -114,20 +114,15 @@ import Swal from 'sweetalert2';
             </td>
             <td data-label="Acciones" class="actions-cell">
               <a
-                [routerLink]="['/contratos', c.idContrato]"
-                class="action-btn view"
-                title="Ver Gestión del Contrato"
-              >👁️</a>
-              
-              <a
                 [routerLink]="['/contratos', c.idContrato, 'editar']"
                 class="action-btn edit"
                 title="Editar Datos del Contrato"
+                (click)="$event.stopPropagation()"
               >✏️</a>
 
               <button
                 class="action-btn delete"
-                (click)="eliminar(c)"
+                (click)="eliminar(c); $event.stopPropagation()"
                 title="Eliminar contrato"
               >🗑️</button>
             </td>
@@ -477,6 +472,13 @@ export class ContratoListComponent implements OnInit, OnDestroy {
       tipo: '',
       estado: ''
     });
+  }
+
+  verContrato(c: Contrato) {
+    if (!c.idContrato) {
+      return;
+    }
+    this.router.navigate(['/contratos', c.idContrato]);
   }
 
   eliminar(c: Contrato) {

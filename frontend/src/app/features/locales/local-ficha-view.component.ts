@@ -91,9 +91,14 @@ export class LocalFichaViewComponent implements OnInit {
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(direccion || '');
   }
 
-  buildCatastroUrl(fullRc: string): string {
-    const rc14 = fullRc.substring(0, 14);
-    return `https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx?refcat=${encodeURIComponent(rc14)}&RCCompleta=${encodeURIComponent(fullRc)}&from=OVCBusqueda&pest=rc`;
+  abrirCatastro(rc: string): void {
+    const normalized = (rc || '').replace(/\s+/g, '').toUpperCase();
+    if (!normalized) {
+      return;
+    }
+    const rc14 = encodeURIComponent(normalized.substring(0, Math.min(14, normalized.length)));
+    const url = `https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx?buscar=S&refcat=${rc14}`;
+    window.open(url, '_blank');
   }
 
   idCliente(): number | null {
@@ -103,6 +108,13 @@ export class LocalFichaViewComponent implements OnInit {
 
   toggleAreasFuncionales(): void {
     this.areasFuncionalesVisible = !this.areasFuncionalesVisible;
+  }
+
+  irAContrato(c: Contrato): void {
+    if (!c.idContrato) {
+      return;
+    }
+    this.router.navigate(['/contratos', c.idContrato]);
   }
 
 }

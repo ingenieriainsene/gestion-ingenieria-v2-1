@@ -65,7 +65,7 @@ import Swal from 'sweetalert2';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of filteredPresupuestos" (click)="verFicha(p)" style="cursor:pointer;">
+          <tr *ngFor="let p of filteredPresupuestos" class="row-card" (click)="verFicha(p)" style="cursor:pointer;">
             <td data-label="ID">
               <strong [title]="p.idPresupuesto">{{ formatId(p.idPresupuesto) }}</strong>
             </td>
@@ -80,13 +80,6 @@ import Swal from 'sweetalert2';
             </td>
             <td data-label="Tipo">{{ p.tipoPresupuesto || 'Obra' }}</td>
             <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space:nowrap;">
-              <a
-                [routerLink]="['/presupuestos', p.idPresupuesto]"
-                class="action-badge"
-                style="background:#3498db;"
-                title="Ver presupuesto"
-                (click)="$event.stopPropagation()"
-              >👁️</a>
               <a [routerLink]="['/presupuestos', p.idPresupuesto, 'editar']" class="action-badge badge-edit" title="Editar" (click)="$event.stopPropagation()">✏️</a>
               <button class="action-badge badge-delete" style="border:none; cursor:pointer;" (click)="eliminar(p); $event.stopPropagation()" title="Eliminar">🗑️</button>
             </td>

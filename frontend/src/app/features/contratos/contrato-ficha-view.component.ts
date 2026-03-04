@@ -20,6 +20,10 @@ import Swal from 'sweetalert2';
           <div>
             <h1>CONTRATO #{{ contrato.idContrato }}</h1>
             <p>Seguimiento Tecnico y Expediente</p>
+            <p class="contract-dates">
+              <span><strong>Inicio:</strong> {{ contrato.fechaInicio | date:'dd/MM/yyyy' }}</span>
+              <span><strong>Vencimiento:</strong> {{ contrato.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+            </p>
           </div>
           <div class="header-badge-wrap">
             <span class="header-label">SERVICIO:</span>
@@ -188,6 +192,13 @@ import Swal from 'sweetalert2';
     }
     .info-header h1 { color: #f1c40f; margin: 0; font-size: 1.25rem; }
     .info-header p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
+    .contract-dates {
+      margin-top: 6px;
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
     .header-badge-wrap { text-align: right; }
     .header-label { font-size: 0.7rem; font-weight: bold; opacity: 0.8; display: block; margin-bottom: 5px; }
     .badge-tipo {

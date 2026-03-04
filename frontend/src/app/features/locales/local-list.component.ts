@@ -49,7 +49,7 @@ import Swal from 'sweetalert2';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let l of filtrados">
+          <tr *ngFor="let l of filtrados" class="row-card" (click)="irAFicha(l)" style="cursor:pointer;">
             <td data-label="ID"><strong>#{{ l.idLocal }}</strong></td>
             <td data-label="Dirección">
               <small>
@@ -67,8 +67,8 @@ import Swal from 'sweetalert2';
               <ng-container *ngIf="l.referenciaCatastral; else noRc">
                 <a
                   class="catastro-link code-pill"
-                  target="_blank"
-                  [href]="buildCatastroUrl(l.referenciaCatastral!)"
+                  href="javascript:void(0)"
+                  (click)="abrirCatastro(l.referenciaCatastral!)"
                 >
                   📑 {{ l.referenciaCatastral }}
                 </a>
@@ -82,19 +82,15 @@ import Swal from 'sweetalert2';
             <td data-label="Fecha alta"><small>{{ l.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
             <td data-label="Acciones" class="actions-cell">
               <a
-                [routerLink]="['/locales', l.idLocal]"
-                class="action-ghost"
-                title="Ver ficha técnica"
-              >👁️</a>
-              <a
                 [routerLink]="['/locales', l.idLocal, 'editar']"
                 class="action-ghost edit"
                 title="Editar local"
+                (click)="$event.stopPropagation()"
               >✏️</a>
               <button
                 class="action-ghost danger"
                 title="Eliminar"
-                (click)="eliminar(l)"
+                (click)="eliminar(l); $event.stopPropagation()"
               >🗑️</button>
             </td>
           </tr>
@@ -588,12 +584,35 @@ export class LocalListComponent implements OnInit {
     });
   }
 
+  irAFicha(l: Local) {
+    if (!l.idLocal) {
+      return;
+    }
+    this.router.navigate(['/locales', l.idLocal]);
+  }
+
   buildCatastroUrl(fullRc: string): string {
-    const rc14 = fullRc.substring(0, 14);
-    return `https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx?refcat=${encodeURIComponent(rc14)}&RCCompleta=${encodeURIComponent(fullRc)}&from=OVCBusqueda&pest=rc`;
+    const clean = (fullRc || '').replace(/\s+/g, '').toUpperCase();
+    if (!clean) {
+      return '#';
+    }
+    const rc = encodeURIComponent(clean);
+    // URL completa clonando el patrón oficial de la Sede del Catastro
+    return `https://www1.sedecatastro.gob.es/CYCBienInmueble/OVCConCiud.aspx?UrbRus=U&RefC=${rc}&esBice=&RCBice1=&RCBice2=&DenoBice=&from=OVCBusqueda&pest=rc&RCCompleta=${rc}&final=&del=41&mun=69`;
   }
 
   buildMapsUrl(direccion: string): string {
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(direccion || '');
   }
+
+  abrirCatastro(rc: string): void {
+    const normalized = (rc || '').replace(/\s+/g, '').toUpperCase();
+    if (!normalized) {
+      return;
+    }
+    const rc14 = encodeURIComponent(normalized.substring(0, Math.min(14, normalized.length)));
+    const url = `https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx?buscar=S&refcat=${rc14}`;
+    window.open(url, '_blank');
+  }
+
 }

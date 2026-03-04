@@ -42,7 +42,7 @@ import Swal from 'sweetalert2';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of filtrados" (click)="irAFicha(c)" style="cursor:pointer;">
+          <tr *ngFor="let c of filtrados" class="row-card" (click)="irAFicha(c)" style="cursor:pointer;">
             <td data-label="ID"><strong>#{{ c.idCliente }}</strong></td>
             <td data-label="Cliente">
               <div class="client-name-cell">
@@ -54,12 +54,6 @@ import Swal from 'sweetalert2';
             <td data-label="Dirección fiscal"><small>{{ c.direccionFiscalCompleta || '—' }}</small></td>
             <td data-label="Fecha alta"><small>{{ c.fechaAlta | date:'dd/MM/yyyy' }}</small></td>
             <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space:nowrap;">
-               <a 
-                 class="action-badge" 
-                 style="background:#3498db;" 
-                 title="Ver ficha" 
-                 (click)="$event.stopPropagation(); irAFicha(c)"
-               >👁️</a>
                <a 
                  class="action-badge badge-edit" 
                  title="Editar" 

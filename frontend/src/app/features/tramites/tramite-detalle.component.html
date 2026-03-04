@@ -1,4 +1,4 @@
-<div *ngIf="detalle" class="ficha-wrapper">
+<div *ngIf="detalle" class="ficha-wrapper" [formGroup]="formInfo">
 
   <!-- Header -->
   <div class="detalle-wrapper" *ngIf="detalle">
@@ -39,6 +39,43 @@
               }}</a>
           </div>
         </div>
+
+        <!-- Estado intervención en cabecera -->
+        <div class="form-row-inline" style="margin-top: 12px;">
+          <div class="form-group mb-0 flex-grow">
+            <label class="form-label">Estado</label>
+            <div class="input-wrapper small-input">
+              <span class="input-icon">📊</span>
+              <select class="form-control" formControlName="estado">
+                <option value="Pendiente">🔴 Pendiente</option>
+                <option value="En proceso">🟠 En proceso</option>
+                <option value="Terminado">🟢 Terminado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group mb-0 flex-grow">
+            <label class="form-label">Fecha Finalización</label>
+            <div class="input-wrapper small-input">
+              <span class="input-icon">📅</span>
+              <input type="date" class="form-control" formControlName="fechaSeguimiento" />
+            </div>
+          </div>
+
+          <div class="form-group mb-0 checkbox-group">
+            <label class="checkbox-wrapper warning small-check">
+              <input type="checkbox" formControlName="esUrgente" />
+              <span class="checkbox-label">⚠️ URGENTE</span>
+            </label>
+          </div>
+
+          <div class="form-group mb-0 checkbox-group">
+            <label class="checkbox-wrapper success small-check">
+              <input type="checkbox" formControlName="facturado" />
+              <span class="checkbox-label">💰 FACTURADO</span>
+            </label>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -68,46 +105,8 @@
         <h3>📋 Información y Estado</h3>
       </div>
       <div class="card-body compact-body">
-        <form [formGroup]="formInfo" class="compact-form inline-form">
-
-          <!-- Row 1: Status, Date, Urgent, Facturado -->
-          <div class="form-row-inline">
-            <div class="form-group mb-0 flex-grow">
-              <label class="form-label">Estado</label>
-              <div class="input-wrapper small-input">
-                <span class="input-icon">📊</span>
-                <select class="form-control" formControlName="estado">
-                  <option value="Pendiente">🔴 Pendiente</option>
-                  <option value="En proceso">🟠 En proceso</option>
-                  <option value="Terminado">🟢 Terminado</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group mb-0 flex-grow">
-              <label class="form-label">Fecha Finalización</label>
-              <div class="input-wrapper small-input">
-                <span class="input-icon">📅</span>
-                <input type="date" class="form-control" formControlName="fechaSeguimiento" />
-              </div>
-            </div>
-
-            <div class="form-group mb-0 checkbox-group">
-              <label class="checkbox-wrapper warning small-check">
-                <input type="checkbox" formControlName="esUrgente" />
-                <span class="checkbox-label">⚠️ URGENTE</span>
-              </label>
-            </div>
-
-            <div class="form-group mb-0 checkbox-group">
-              <label class="checkbox-wrapper success small-check">
-                <input type="checkbox" formControlName="facturado" />
-                <span class="checkbox-label">💰 FACTURADO</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Row 2: Observations -->
+        <div class="compact-form inline-form">
+          <!-- Notas Técnicas -->
           <div class="form-row-inline align-end mt-2">
             <div class="form-group flex-grow mb-0">
               <label class="form-label">Notas Técnicas</label>
@@ -116,7 +115,7 @@
             </div>
           </div>
 
-        </form>
+        </div>
       </div>
     </div>
 
@@ -125,7 +124,7 @@
       <div class="card-header flex-between">
         <h3>📜 Historial de Seguimiento</h3>
         <button type="button" class="btn-create-small" (click)="toggleNuevoHito()">
-          + Nuevo Hito
+          + Nuevo Seguimiento
         </button>
       </div>
 
@@ -193,8 +192,9 @@
               <th>Asignado</th>
               <th>Proveedor</th>
               <th>Próx. Seg.</th>
+              <th style="text-align:center;">URG</th>
               <th>Estado</th>
-              <th style="width: 60px;"></th>
+              <th style="width: 80px;"></th>
             </tr>
           </thead>
           <tbody>
@@ -203,28 +203,90 @@
                 <div class="date-cell">
                   <strong>{{ h.fechaRegistro | date:'dd/MM/yyyy' }}</strong>
                   <small>{{ h.fechaRegistro | date:'HH:mm' }}</small>
+                  <div class="sub-text">Creado por: {{ h.nombreCreador || 'Sistema' }}</div>
                 </div>
               </td>
               <td data-label="Comentario">
-                <div class="comment-text">{{ h.comentario }}</div>
-                <div class="sub-text">Por: {{ h.nombreCreador || 'Sistema' }}</div>
-                <span *ngIf="h.esUrgente" class="badge-urgente">URGENTE</span>
+                <textarea
+                  class="form-control inline-input comentario-textarea"
+                  [(ngModel)]="h.comentario"
+                  (ngModelChange)="programarGuardadoHito(h)"
+                  (input)="autoResize($event)"
+                  name="comentario-{{h.idSeguimiento}}"
+                  placeholder="Comentario..."
+                  rows="1"
+                ></textarea>
               </td>
-              <td data-label="Asignado">{{ h.nombreAsignado || '—' }}</td>
-              <td data-label="Proveedor">{{ h.nombreProveedor || '—' }}</td>
-              <td data-label="Próx. seg.">{{ h.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Asignado">
+                <select
+                  class="form-control inline-input"
+                  [(ngModel)]="h.idUsuarioAsignado"
+                  (ngModelChange)="programarGuardadoHito(h)"
+                  name="tecnico-{{h.idSeguimiento}}"
+                >
+                  <option [ngValue]="null">— Sin asignar —</option>
+                  <option *ngFor="let u of tecnicos" [ngValue]="u.idUsuario">
+                    {{ u.nombreUsuario }}
+                  </option>
+                </select>
+              </td>
+              <td data-label="Proveedor">
+                <select
+                  class="form-control inline-input"
+                  [(ngModel)]="h.idProveedor"
+                  (ngModelChange)="programarGuardadoHito(h)"
+                  name="proveedor-{{h.idSeguimiento}}"
+                >
+                  <option [ngValue]="null">— Sin proveedor —</option>
+                  <option *ngFor="let p of proveedores" [ngValue]="p.id">
+                    {{ p.nombre }}
+                  </option>
+                </select>
+              </td>
+              <td data-label="Próx. seg.">
+                <input
+                  type="date"
+                  class="form-control inline-input"
+                  [ngModel]="h.fechaSeguimiento | date:'yyyy-MM-dd'"
+                  (ngModelChange)="h.fechaSeguimiento = $event; programarGuardadoHito(h)"
+                  name="fechaSeg-{{h.idSeguimiento}}"
+                />
+              </td>
+              <td data-label="Urg." style="text-align:center;">
+                <label class="checkbox-wrapper warning small-check">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="h.esUrgente"
+                    (ngModelChange)="programarGuardadoHito(h)"
+                    name="urgente-{{h.idSeguimiento}}"
+                  />
+                  <span class="checkbox-label">URG</span>
+                </label>
+              </td>
               <td data-label="Estado">
-                <span class="status-badge" [ngClass]="h.estado === 'Terminado' ? 'done' : 'pending'">
-                  {{ h.estado }}
-                </span>
+                <select
+                  class="form-control inline-input"
+                  [(ngModel)]="h.estado"
+                  (ngModelChange)="programarGuardadoHito(h)"
+                  name="estado-{{h.idSeguimiento}}"
+                >
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Terminado">Terminado</option>
+                </select>
               </td>
               <td data-label="Acciones" class="actions-cell center">
-                <button type="button" class="btn-icon-edit" (click)="editarHito(h)" title="Editar">✏️</button>
-                <button type="button" class="btn-icon-delete" (click)="eliminarHito(h, i)" title="Eliminar">🗑️</button>
+                <button
+                  type="button"
+                  class="btn-icon-delete"
+                  (click)="eliminarHito(h, i)"
+                  title="Eliminar"
+                >
+                  🗑️
+                </button>
               </td>
             </tr>
             <tr *ngIf="hitos.length === 0">
-              <td colspan="7" class="empty-state">No hay hitos registrados.</td>
+              <td colspan="8" class="empty-state">No hay seguimientos registrados.</td>
             </tr>
           </tbody>
         </table>

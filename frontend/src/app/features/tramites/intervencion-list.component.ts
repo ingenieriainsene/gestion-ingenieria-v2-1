@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TramiteService, TramiteListResponse } from '../../services/domain.services';
 import { UsuarioService, Usuario } from '../../services/usuario.service';
 
@@ -36,33 +36,6 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
           {{ mostrarFiltrosAvanzados ? 'Ocultar Filtros' : 'Filtros Avanzados' }}
         </button>
       </div>
-
-      <div class="advanced-filters" *ngIf="mostrarFiltrosAvanzados">
-        <div class="filter-group">
-          <label>Técnico</label>
-          <select [(ngModel)]="filtroTecnico" (change)="aplicarFiltro()" class="form-select">
-            <option [ngValue]="null">-- Todos --</option>
-            <option *ngFor="let t of tecnicos" [ngValue]="t.idUsuario">{{ t.nombreUsuario }}</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Desde</label>
-          <input type="date" [(ngModel)]="fechaInicio" (change)="aplicarFiltro()" class="form-input">
-        </div>
-        <div class="filter-group">
-          <label>Hasta</label>
-          <input type="date" [(ngModel)]="fechaFin" (change)="aplicarFiltro()" class="form-input">
-        </div>
-        <div class="filter-group checkbox-group">
-          <label>
-            <input type="checkbox" [(ngModel)]="soloUrgentes" (change)="aplicarFiltro()">
-            Solo Urgentes
-          </label>
-        </div>
-        <div class="filter-actions">
-          <button class="btn-clear" (click)="limpiarFiltros()">Limpiar Filtros</button>
-        </div>
-      </div>
     </div>
 
     <table class="table-card">
@@ -77,9 +50,93 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
           <th>ESTADO</th>
           <th style="text-align:right;">ACCIONES</th>
         </tr>
+        <tr *ngIf="mostrarFiltrosAvanzados" class="filter-row">
+          <th>
+            <div class="header-date-range">
+              <input
+                type="date"
+                [(ngModel)]="fechaInicio"
+                (change)="aplicarFiltro()"
+                class="header-input"
+              />
+              <input
+                type="date"
+                [(ngModel)]="fechaFin"
+                (change)="aplicarFiltro()"
+                class="header-input"
+              />
+            </div>
+          </th>
+          <th>
+            <input
+              type="text"
+              [(ngModel)]="filtroContratoCliente"
+              (ngModelChange)="aplicarFiltro()"
+              class="header-input"
+              placeholder="Contrato / cliente"
+            />
+          </th>
+          <th>
+            <input
+              type="text"
+              [(ngModel)]="filtroTipo"
+              (ngModelChange)="aplicarFiltro()"
+              class="header-input"
+              placeholder="Tipo"
+            />
+          </th>
+          <th>
+            <input
+              type="text"
+              [(ngModel)]="filtroDetalle"
+              (ngModelChange)="aplicarFiltro()"
+              class="header-input"
+              placeholder="Detalle"
+            />
+          </th>
+          <th>
+            <select
+              [(ngModel)]="filtroTecnico"
+              (change)="aplicarFiltro()"
+              class="header-input"
+            >
+              <option [ngValue]="null">Todos</option>
+              <option *ngFor="let t of tecnicos" [ngValue]="t.idUsuario">
+                {{ t.nombreUsuario }}
+              </option>
+            </select>
+          </th>
+          <th style="text-align:center;">
+            <label class="urg-filter-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="soloUrgentes"
+                (change)="aplicarFiltro()"
+              />
+              URG
+            </label>
+          </th>
+          <th>
+            <select
+              [(ngModel)]="filtroEstado"
+              (change)="aplicarFiltro()"
+              class="header-input"
+            >
+              <option [ngValue]="null">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="En proceso">En proceso</option>
+              <option value="Terminado">Terminado</option>
+            </select>
+          </th>
+          <th style="text-align:right;">
+            <button class="btn-clear small" type="button" (click)="limpiarFiltros()">
+              Limpiar
+            </button>
+          </th>
+        </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let t of filtrados">
+        <tr *ngFor="let t of filtrados" class="row-card" (click)="verTramite(t)" style="cursor:pointer;">
           <td data-label="Fecha">
             <strong>{{ t.fechaSeguimiento | date:'dd/MM/yyyy' }}</strong>
           </td>
@@ -106,14 +163,6 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
                   [class.terminado]="t.estado === 'Terminado'">
               {{ t.estado || '—' }}
             </span>
-          </td>
-          <td data-label="Acciones" class="actions-cell" style="text-align:right; white-space: nowrap;">
-            <a
-              [routerLink]="['/tramite-detalle', t.idTramite]"
-              class="action-badge"
-              style="background:#3498db;"
-              title="Ver detalle"
-            >👁️</a>
           </td>
         </tr>
         <tr *ngIf="filtrados.length === 0">
@@ -172,28 +221,32 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
       color: #475569;
     }
     .btn-toggle-filters:hover { background: #f1f5f9; color: #1e293b; }
-    .advanced-filters {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      animation: slideDown 0.2s ease-out;
+    .filter-row th {
+      padding: 6px 8px;
+      background-color: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
     }
-    @keyframes slideDown { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
-    .filter-group { display: flex; flex-direction: column; gap: 4px; }
-    .filter-group label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
-    .form-select, .form-input {
-      padding: 8px 12px;
-      border: 1px solid #cbd5e1;
+    .header-input {
+      width: 100%;
+      padding: 4px 6px;
       border-radius: 6px;
-      min-width: 150px;
-      font-size: 0.9rem;
+      border: 1px solid #cbd5e1;
+      font-size: 0.8rem;
+      font-family: inherit;
+      background-color: #ffffff;
     }
-    .checkbox-group { flex-direction: row; align-items: center; padding-bottom: 8px; }
-    .checkbox-group label { font-size: 0.9rem; text-transform: none; color: #1e293b; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .header-date-range {
+      display: flex;
+      gap: 4px;
+    }
+    .urg-filter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #334155;
+      cursor: pointer;
+    }
     .btn-clear {
       background: #ef4444;
       color: white;
@@ -204,8 +257,11 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
       cursor: pointer;
       font-size: 0.85rem;
     }
+    .btn-clear.small {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+    }
     .btn-clear:hover { background: #dc2626; }
-    .filter-actions { margin-left: auto; }
     .urg-badge {
       display: inline-block;
       background: #dc2626;
@@ -243,16 +299,8 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
         flex-wrap: wrap;
       }
 
-      .advanced-filters {
-        grid-template-columns: 1fr;
-      }
-
-      .filter-actions {
-        margin-left: 0;
-      }
-
-      .filter-actions .btn-clear {
-        width: 100%;
+      .header-date-range {
+        flex-direction: column;
       }
     }
   `]
@@ -268,10 +316,15 @@ export class IntervencionListComponent implements OnInit {
   fechaInicio: string = '';
   fechaFin: string = '';
   soloUrgentes = false;
+  filtroContratoCliente: string = '';
+  filtroTipo: string = '';
+  filtroDetalle: string = '';
+  filtroEstado: string | null = null;
 
   constructor(
     private tramiteService: TramiteService,
-    private usuarioService: UsuarioService
+    private usuarioService: UsuarioService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -305,9 +358,10 @@ export class IntervencionListComponent implements OnInit {
   aplicarFiltro(): void {
     let temp = [...this.tramites];
 
-    // Filter by State
-    if (this.estadoFiltro) {
-      temp = temp.filter(t => t.estado === this.estadoFiltro);
+    // Filter by State (tabs tienen prioridad; si no hay tab seleccionada, usa filtroEstado de cabecera)
+    const estadoActivo = this.estadoFiltro || this.filtroEstado;
+    if (estadoActivo) {
+      temp = temp.filter(t => t.estado === estadoActivo);
     }
 
     // Filter by Date Range
@@ -342,7 +396,27 @@ export class IntervencionListComponent implements OnInit {
       temp = temp.filter(t => !!t.esUrgente);
     }
 
-    // Filter by Search Term
+    // Filtros específicos por columna
+    const contratoClienteTerm = this.filtroContratoCliente.trim().toLowerCase();
+    if (contratoClienteTerm) {
+      temp = temp.filter(t => {
+        const contrato = t.idContrato ? String(t.idContrato) : '';
+        const cliente = t.nombreCliente?.toLowerCase() ?? '';
+        return contrato.includes(contratoClienteTerm) || cliente.includes(contratoClienteTerm);
+      });
+    }
+
+    const tipoTerm = this.filtroTipo.trim().toLowerCase();
+    if (tipoTerm) {
+      temp = temp.filter(t => (t.tipoTramite || '').toLowerCase().includes(tipoTerm));
+    }
+
+    const detalleTerm = this.filtroDetalle.trim().toLowerCase();
+    if (detalleTerm) {
+      temp = temp.filter(t => (t.detalleSeguimiento || '').toLowerCase().includes(detalleTerm));
+    }
+
+    // Filter by general Search Term
     const term = this.busqueda.trim().toLowerCase();
     if (term) {
       temp = temp.filter((t) => {
@@ -364,6 +438,17 @@ export class IntervencionListComponent implements OnInit {
     this.fechaInicio = '';
     this.fechaFin = '';
     this.soloUrgentes = false;
+    this.filtroContratoCliente = '';
+    this.filtroTipo = '';
+    this.filtroDetalle = '';
+    this.filtroEstado = null;
     this.aplicarFiltro();
+  }
+
+  verTramite(t: TramiteListResponse): void {
+    if (!t.idTramite) {
+      return;
+    }
+    this.router.navigate(['/tramite-detalle', t.idTramite]);
   }
 }
