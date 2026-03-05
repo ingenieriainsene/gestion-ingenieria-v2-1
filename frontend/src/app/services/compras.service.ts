@@ -24,6 +24,7 @@ export interface CompraDocumentoDTO {
   total: number;
   estado?: string | null;
   notas?: string | null;
+  facturaId?: number | null;
   lineas: CompraDocumentoLineaDTO[];
 }
 

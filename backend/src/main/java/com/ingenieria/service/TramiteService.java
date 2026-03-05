@@ -178,7 +178,8 @@ public class TramiteService {
                             t.getTecnicoAsignado(),
                             cliente,
                             local,
-                            t.getDetalleSeguimiento());
+                            t.getDetalleSeguimiento(),
+                            t.getFacturado());
                 })
                 .collect(Collectors.toList());
     }
@@ -234,6 +235,8 @@ public class TramiteService {
         }
         if (body.getEsUrgente() != null)
             t.setEsUrgente(body.getEsUrgente());
+        if (body.getFacturado() != null)
+            t.setFacturado(body.getFacturado());
         if (body.getDetalleSeguimiento() != null)
             t.setDetalleSeguimiento(body.getDetalleSeguimiento());
         if (body.getFechaSeguimiento() != null)

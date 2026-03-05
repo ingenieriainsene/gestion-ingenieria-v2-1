@@ -21,4 +21,5 @@ public class TramiteListResponse {
     private String nombreCliente;
     private String direccionLocal;
     private String detalleSeguimiento;
+    private Boolean facturado;
 }

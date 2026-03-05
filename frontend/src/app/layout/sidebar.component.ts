@@ -401,6 +401,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Intervenciones', route: '/intervenciones' },
         { label: 'Seguimientos', route: '/seguimientos' },
         { label: 'Ventas pendientes', route: '/ventas-pendientes' },
+        { label: 'Contabilidad', route: '/operaciones/contabilidad' },
         { label: 'Agendar citas', route: '/agendar-citas' },
         { label: 'Almacen', route: '/productos' },
         { label: 'Proveedores', route: '/proveedores' },

@@ -22,5 +22,10 @@ public class CompraDocumentoDTO {
     private BigDecimal total;
     private String estado; // solo facturas
     private String notas;
+    /**
+     * Para albaranes: id de la factura asociada (si existe).
+     * Para facturas: normalmente null.
+     */
+    private Long facturaId;
     private java.util.List<CompraDocumentoLineaDTO> lineas;
 }

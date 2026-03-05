@@ -207,23 +207,13 @@
                 </div>
               </td>
               <td data-label="Comentario">
-                <textarea
-                  class="form-control inline-input comentario-textarea"
-                  [(ngModel)]="h.comentario"
-                  (ngModelChange)="programarGuardadoHito(h)"
-                  (input)="autoResize($event)"
-                  name="comentario-{{h.idSeguimiento}}"
-                  placeholder="Comentario..."
-                  rows="1"
-                ></textarea>
+                <textarea class="form-control inline-input comentario-textarea" [(ngModel)]="h.comentario"
+                  (ngModelChange)="programarGuardadoHito(h)" (input)="autoResize($event)"
+                  name="comentario-{{h.idSeguimiento}}" placeholder="Comentario..." rows="1"></textarea>
               </td>
               <td data-label="Asignado">
-                <select
-                  class="form-control inline-input"
-                  [(ngModel)]="h.idUsuarioAsignado"
-                  (ngModelChange)="programarGuardadoHito(h)"
-                  name="tecnico-{{h.idSeguimiento}}"
-                >
+                <select class="form-control inline-input" [(ngModel)]="h.idUsuarioAsignado"
+                  (ngModelChange)="programarGuardadoHito(h)" name="tecnico-{{h.idSeguimiento}}">
                   <option [ngValue]="null">— Sin asignar —</option>
                   <option *ngFor="let u of tecnicos" [ngValue]="u.idUsuario">
                     {{ u.nombreUsuario }}
@@ -231,12 +221,8 @@
                 </select>
               </td>
               <td data-label="Proveedor">
-                <select
-                  class="form-control inline-input"
-                  [(ngModel)]="h.idProveedor"
-                  (ngModelChange)="programarGuardadoHito(h)"
-                  name="proveedor-{{h.idSeguimiento}}"
-                >
+                <select class="form-control inline-input" [(ngModel)]="h.idProveedor"
+                  (ngModelChange)="programarGuardadoHito(h)" name="proveedor-{{h.idSeguimiento}}">
                   <option [ngValue]="null">— Sin proveedor —</option>
                   <option *ngFor="let p of proveedores" [ngValue]="p.id">
                     {{ p.nombre }}
@@ -244,43 +230,26 @@
                 </select>
               </td>
               <td data-label="Próx. seg.">
-                <input
-                  type="date"
-                  class="form-control inline-input"
-                  [ngModel]="h.fechaSeguimiento | date:'yyyy-MM-dd'"
+                <input type="date" class="form-control inline-input" [ngModel]="h.fechaSeguimiento | date:'yyyy-MM-dd'"
                   (ngModelChange)="h.fechaSeguimiento = $event; programarGuardadoHito(h)"
-                  name="fechaSeg-{{h.idSeguimiento}}"
-                />
+                  name="fechaSeg-{{h.idSeguimiento}}" />
               </td>
               <td data-label="Urg." style="text-align:center;">
                 <label class="checkbox-wrapper warning small-check">
-                  <input
-                    type="checkbox"
-                    [(ngModel)]="h.esUrgente"
-                    (ngModelChange)="programarGuardadoHito(h)"
-                    name="urgente-{{h.idSeguimiento}}"
-                  />
+                  <input type="checkbox" [(ngModel)]="h.esUrgente" (ngModelChange)="programarGuardadoHito(h)"
+                    name="urgente-{{h.idSeguimiento}}" />
                   <span class="checkbox-label">URG</span>
                 </label>
               </td>
               <td data-label="Estado">
-                <select
-                  class="form-control inline-input"
-                  [(ngModel)]="h.estado"
-                  (ngModelChange)="programarGuardadoHito(h)"
-                  name="estado-{{h.idSeguimiento}}"
-                >
+                <select class="form-control inline-input" [(ngModel)]="h.estado"
+                  (ngModelChange)="programarGuardadoHito(h)" name="estado-{{h.idSeguimiento}}">
                   <option value="Pendiente">Pendiente</option>
                   <option value="Terminado">Terminado</option>
                 </select>
               </td>
               <td data-label="Acciones" class="actions-cell center">
-                <button
-                  type="button"
-                  class="btn-icon-delete"
-                  (click)="eliminarHito(h, i)"
-                  title="Eliminar"
-                >
+                <button type="button" class="btn-icon-delete" (click)="eliminarHito(h, i)" title="Eliminar">
                   🗑️
                 </button>
               </td>
@@ -356,9 +325,7 @@
                 <td data-label="Total">{{ p.total | currency:'EUR' }}</td>
                 <td data-label="Acciones" class="actions-cell">
                   <a [routerLink]="['/presupuestos', p.idPresupuesto]" class="btn-icon-edit" title="Ver">👁️</a>
-                  <button
-                    type="button"
-                    class="btn-doc btn-albaran"
+                  <button type="button" class="btn-doc btn-albaran"
                     [disabled]="p.estado !== 'Aceptado' || descargandoDocs['albaran-' + p.idPresupuesto]"
                     [title]="p.estado === 'Aceptado' ? 'Descargar albarán' : 'Solo presupuestos aceptados'"
                     (click)="descargarDocumento('albaran', p)">
@@ -382,17 +349,11 @@
       <div class="card-header flex-between">
         <h3>📦 Compras</h3>
         <div class="subtabs">
-          <button
-            type="button"
-            class="subtab-btn"
-            [class.active]="activeComprasTab === 'ALBARAN'"
+          <button type="button" class="subtab-btn" [class.active]="activeComprasTab === 'ALBARAN'"
             (click)="setComprasTab('ALBARAN')">
             Albaranes
           </button>
-          <button
-            type="button"
-            class="subtab-btn"
-            [class.active]="activeComprasTab === 'FACTURA'"
+          <button type="button" class="subtab-btn" [class.active]="activeComprasTab === 'FACTURA'"
             (click)="setComprasTab('FACTURA')">
             Facturas
           </button>
@@ -402,8 +363,8 @@
         <form [formGroup]="formCompra" class="manual-albaran-box" (ngSubmit)="crearAlbaranCompra()">
           <h4>
             {{ activeComprasTab === 'ALBARAN'
-              ? 'Crear albarán de gasto manual'
-              : 'Crear factura de compra manual' }}
+            ? 'Crear albarán de gasto manual'
+            : 'Crear factura de compra manual' }}
           </h4>
           <div class="form-grid three-cols">
             <div class="field">
@@ -419,7 +380,7 @@
                 {{ activeComprasTab === 'ALBARAN' ? 'Nº albarán proveedor' : 'Nº factura proveedor' }}
               </label>
               <input class="input" formControlName="numeroDocumento"
-                     [placeholder]="activeComprasTab === 'ALBARAN' ? 'Ej: ALB-2025-0012' : 'Ej: FAC-2025-0012'" />
+                [placeholder]="activeComprasTab === 'ALBARAN' ? 'Ej: ALB-2025-0012' : 'Ej: FAC-2025-0012'" />
               <small class="field-hint">
                 Introduce el número exacto del documento del proveedor.
               </small>
@@ -449,9 +410,12 @@
             <div formArrayName="lineas">
               <div class="linea-row" *ngFor="let l of lineasCompra.controls; let i = index" [formGroupName]="i">
                 <input class="input" formControlName="concepto" placeholder="Descripción" />
-                <input class="input" type="number" min="0.01" step="0.01" formControlName="cantidad" placeholder="Cantidad" />
-                <input class="input" type="number" min="0" step="0.01" formControlName="precioUnitario" placeholder="P. unitario" />
-                <input class="input" type="number" min="0" step="0.01" formControlName="ivaPorcentaje" placeholder="IVA %" />
+                <input class="input" type="number" min="0.01" step="0.01" formControlName="cantidad"
+                  placeholder="Cantidad" />
+                <input class="input" type="number" min="0" step="0.01" formControlName="precioUnitario"
+                  placeholder="P. unitario" />
+                <input class="input" type="number" min="0" step="0.01" formControlName="ivaPorcentaje"
+                  placeholder="IVA %" />
                 <input class="input" type="number" formControlName="totalConIva" readonly />
                 <button type="button" class="btn-icon-delete" (click)="eliminarLineaCompra(i)">🗑️</button>
               </div>
@@ -471,20 +435,6 @@
           </div>
         </form>
 
-        <div class="metrics-row">
-          <div class="metric-card">
-            <div class="metric-label">Gastos</div>
-            <div class="metric-value">{{ totalGastos | currency:'EUR' }}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Ventas</div>
-            <div class="metric-value">{{ totalVentas | currency:'EUR' }}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Margen</div>
-            <div class="metric-value" [class.negative]="margen < 0">{{ margen | currency:'EUR' }}</div>
-          </div>
-        </div>
 
         <div *ngIf="cargandoCompras" class="empty-state">Cargando documentos de compra...</div>
         <div class="albaranes-wrapper" *ngIf="!cargandoCompras">
@@ -500,19 +450,8 @@
                   <div class="albaran-meta">
                     <span class="badge">{{ a.proveedorNombre }}</span>
                     <span class="total">{{ a.total | currency:'EUR' }}</span>
-                    <button
-                      *ngIf="a.tipo === 'ALBARAN'"
-                      type="button"
-                      class="btn-secondary"
-                      title="Generar factura desde este albarán"
-                      (click)="generarFacturaDesdeAlbaran(a); $event.preventDefault(); $event.stopPropagation();">
-                      → Factura
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-icon-delete"
-                      [disabled]="eliminandoDocsCompra[(a.tipo + '-' + a.idDocumento)]"
-                      title="Eliminar documento"
+                    <button type="button" class="btn-icon-delete"
+                      [disabled]="eliminandoDocsCompra[(a.tipo + '-' + a.idDocumento)]" title="Eliminar documento"
                       (click)="eliminarDocumentoCompra(a, i); $event.preventDefault(); $event.stopPropagation();">
                       🗑️
                     </button>
@@ -554,7 +493,13 @@
             </details>
           </div>
           <div *ngIf="documentosCompraFiltrados.length === 0" class="empty-state">
-            No hay {{ activeComprasTab === 'ALBARAN' ? 'albaranes de compra' : 'facturas de proveedor' }} para esta intervención.
+            No hay {{ activeComprasTab === 'ALBARAN' ? 'albaranes de compra' : 'facturas de proveedor' }} para esta
+            intervención.
+          </div>
+          <div *ngIf="activeComprasTab === 'ALBARAN' && documentosCompraFiltrados.length > 0" class="acciones-globales">
+            <button type="button" class="btn-primary" (click)="generarFacturaGlobalAlbaranes()">
+              Generar factura agrupando todos los albaranes
+            </button>
           </div>
         </div>
       </div>
@@ -570,7 +515,8 @@
       <div class="card-body">
         <div class="manual-albaran-box">
           <h4>Albarán de venta</h4>
-          <p class="muted" style="margin: 0 0 10px;">Genera y descarga el albarán directamente desde un presupuesto en estado <strong>Aceptado</strong>.</p>
+          <p class="muted" style="margin: 0 0 10px;">Genera y descarga el albarán directamente desde un presupuesto en
+            estado <strong>Aceptado</strong>.</p>
           <div class="table-responsive">
             <table class="modern-table table-card">
               <thead>
@@ -589,9 +535,7 @@
                   <td data-label="Estado">{{ p.estado || '—' }}</td>
                   <td data-label="Total" class="right">{{ p.total | currency:'EUR' }}</td>
                   <td data-label="Acción" class="right">
-                    <button
-                      type="button"
-                      class="btn-doc btn-albaran"
+                    <button type="button" class="btn-doc btn-albaran"
                       [disabled]="p.estado !== 'Aceptado' || descargandoDocs['albaran-' + p.idPresupuesto]"
                       (click)="descargarDocumento('albaran', p)">
                       Generar/Descargar
@@ -619,9 +563,7 @@
                   <div class="albaran-meta">
                     <span class="badge">Presupuesto #{{ a.presupuestoId }}</span>
                     <span class="total">{{ a.total | currency:'EUR' }}</span>
-                    <button
-                      type="button"
-                      class="btn-secondary"
+                    <button type="button" class="btn-secondary"
                       (click)="descargarAlbaranVenta(a); $event.preventDefault(); $event.stopPropagation();">
                       PDF
                     </button>

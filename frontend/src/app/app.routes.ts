@@ -90,6 +90,15 @@ export const routes: Routes = [
                     .then(m => m.GestorDocumentalComponent)
             },
 
+            // Contabilidad (Operaciones → Contabilidad)
+            {
+                path: 'operaciones/contabilidad',
+                loadComponent: () =>
+                    import('./features/contabilidad/contabilidad.component').then(
+                        m => m.ContabilidadComponent
+                    )
+            },
+
             // Módulo Análisis de Datos (Operaciones → Análisis de Datos)
             {
                 path: 'operaciones/analisis-datos',

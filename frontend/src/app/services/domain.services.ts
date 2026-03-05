@@ -307,6 +307,7 @@ export interface TramiteListResponse {
     nombreCliente?: string;
     direccionLocal?: string;
     detalleSeguimiento?: string;
+    facturado?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

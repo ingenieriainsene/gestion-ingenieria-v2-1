@@ -146,6 +146,10 @@ public class CompraService {
         Long idTramite = albaran.getTramite().getIdTramite();
         Long idProveedor = albaran.getProveedor().getIdProveedor();
 
+        // Comprobar si ya existe una factura para este trámite y proveedor
+        java.util.Optional<FacturaProveedor> existenteOpt = facturaProveedorRepository
+                .findByTramite_IdTramiteAndProveedor_IdProveedor(idTramite, idProveedor);
+
         // Recuperar TODOS los albaranes de este proveedor para este trámite
         List<AlbaranProveedor> albaranesProveedor = albaranProveedorRepository.findByTramite_IdTramite(idTramite)
                 .stream()
@@ -167,23 +171,54 @@ public class CompraService {
 
         LineasTotales totales = todasLasLineas.isEmpty() ? null : calcularTotales(todasLasLineas);
 
-        FacturaProveedor factura = new FacturaProveedor();
-        factura.setTramite(albaran.getTramite());
-        factura.setProveedor(albaran.getProveedor());
-        // De momento reutilizamos el número del albarán inicial; se podría hacer parametrizable
-        factura.setNumeroFactura(albaran.getNumeroAlbaran());
-        factura.setFecha(albaran.getFecha());
-        factura.setImporte(totales != null ? totales.total : albaran.getImporte());
-        factura.setEstado("Pendiente");
-        factura.setNotas(albaran.getNotas());
+        FacturaProveedor factura;
+        if (existenteOpt.isPresent()) {
+            // Reutilizar y recalcular factura existente (no crear más de una)
+            factura = existenteOpt.get();
 
-        FacturaProveedor saved = facturaProveedorRepository.save(factura);
+            // Borrar líneas antiguas de la factura y recrearlas con todos los albaranes
+            List<FacturaProveedorLinea> lineasExistentes = facturaProveedorLineaRepository
+                    .findByFactura_IdFacturaOrderByOrdenAsc(factura.getIdFactura());
+            if (!lineasExistentes.isEmpty()) {
+                facturaProveedorLineaRepository.deleteAll(lineasExistentes);
+            }
 
-        if (totales != null) {
-            guardarLineasFactura(saved, totales.lineas);
+            if (totales != null) {
+                factura.setImporte(totales.total);
+                guardarLineasFactura(factura, totales.lineas);
+            } else {
+                factura.setImporte(albaran.getImporte());
+            }
+
+            facturaProveedorRepository.save(factura);
+        } else {
+            // Crear nueva factura agrupada
+            factura = new FacturaProveedor();
+            factura.setTramite(albaran.getTramite());
+            factura.setProveedor(albaran.getProveedor());
+            // De momento reutilizamos el número del albarán inicial; se podría hacer
+            // parametrizable
+            factura.setNumeroFactura(albaran.getNumeroAlbaran());
+            factura.setFecha(albaran.getFecha());
+            factura.setImporte(totales != null ? totales.total : albaran.getImporte());
+            factura.setEstado("Pendiente");
+            factura.setNotas(albaran.getNotas());
+
+            FacturaProveedor saved = facturaProveedorRepository.save(factura);
+            factura = saved;
+
+            if (totales != null) {
+                guardarLineasFactura(factura, totales.lineas);
+            }
         }
 
-        return toDto(saved, "FACTURA");
+        // Vincular todos los albaranes a la factura (nueva o existente)
+        for (AlbaranProveedor a : albaranesProveedor) {
+            a.setFactura(factura);
+            albaranProveedorRepository.save(a);
+        }
+
+        return toDto(factura, "FACTURA");
     }
 
     private void validarRequisitos(CompraDocumentoCreateRequest req) {
@@ -198,7 +233,8 @@ public class CompraService {
         }
     }
 
-    private CompraDocumentoDTO toDto(AlbaranProveedor a, String tipo) {
+    // Expuesto para otros servicios (Contabilidad)
+    public CompraDocumentoDTO toDto(AlbaranProveedor a, String tipo) {
         Long idProveedor = a.getProveedor() != null ? a.getProveedor().getIdProveedor() : null;
         String proveedorNombre = a.getProveedor() != null
                 ? (a.getProveedor().getNombreComercial() != null ? a.getProveedor().getNombreComercial()
@@ -220,10 +256,12 @@ public class CompraService {
                 totales.total != null ? totales.total : a.getImporte(),
                 null,
                 a.getNotas(),
+                null,
                 mapped);
     }
 
-    private CompraDocumentoDTO toDto(FacturaProveedor f, String tipo) {
+    // Expuesto para otros servicios (Contabilidad)
+    public CompraDocumentoDTO toDto(FacturaProveedor f, String tipo) {
         Long idProveedor = f.getProveedor() != null ? f.getProveedor().getIdProveedor() : null;
         String proveedorNombre = f.getProveedor() != null
                 ? (f.getProveedor().getNombreComercial() != null ? f.getProveedor().getNombreComercial()
@@ -245,6 +283,7 @@ public class CompraService {
                 totales.total != null ? totales.total : f.getImporte(),
                 f.getEstado(),
                 f.getNotas(),
+                null, // facturaId (solo aplica a albaranes)
                 mapped);
     }
 
@@ -319,9 +358,11 @@ public class CompraService {
             }
             java.math.BigDecimal cantidad = safe(l.getCantidad());
             java.math.BigDecimal precio = safe(l.getPrecioUnitario());
-            java.math.BigDecimal ivaPct = l.getIvaPorcentaje() != null ? l.getIvaPorcentaje() : java.math.BigDecimal.valueOf(21);
+            java.math.BigDecimal ivaPct = l.getIvaPorcentaje() != null ? l.getIvaPorcentaje()
+                    : java.math.BigDecimal.valueOf(21);
             java.math.BigDecimal base = round2(cantidad.multiply(precio));
-            java.math.BigDecimal iva = round2(base.multiply(ivaPct).divide(java.math.BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
+            java.math.BigDecimal iva = round2(
+                    base.multiply(ivaPct).divide(java.math.BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
             java.math.BigDecimal total = round2(base.add(iva));
             normalized.add(new CompraDocumentoLineaDTO(
                     l.getConcepto().trim(),
@@ -359,7 +400,8 @@ public class CompraService {
     }
 
     private java.math.BigDecimal round2(java.math.BigDecimal v) {
-        if (v == null) return java.math.BigDecimal.ZERO;
+        if (v == null)
+            return java.math.BigDecimal.ZERO;
         return v.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 

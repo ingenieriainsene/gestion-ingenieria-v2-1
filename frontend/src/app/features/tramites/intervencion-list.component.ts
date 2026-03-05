@@ -46,6 +46,7 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
           <th>INTERVENCIÓN</th>
           <th>DETALLE / TAREA</th>
           <th>TÉCNICO</th>
+          <th>FACTURADA</th>
           <th style="text-align:center;">URG</th>
           <th>ESTADO</th>
           <th style="text-align:right;">ACCIONES</th>
@@ -106,6 +107,17 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
               </option>
             </select>
           </th>
+          <th>
+            <select
+              [(ngModel)]="filtroFacturada"
+              (change)="aplicarFiltro()"
+              class="header-input"
+            >
+              <option [ngValue]="null">Todas</option>
+              <option value="SI">Sí</option>
+              <option value="NO">No</option>
+            </select>
+          </th>
           <th style="text-align:center;">
             <label class="urg-filter-label">
               <input
@@ -153,6 +165,11 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
             {{ t.detalleSeguimiento || '—' }}
           </td>
           <td data-label="Técnico">{{ t.tecnicoAsignado || '—' }}</td>
+          <td data-label="Facturada">
+            <span class="status-badge" [class.terminado]="t.facturado" [class.pendiente]="!t.facturado">
+              {{ t.facturado ? 'Sí' : 'No' }}
+            </span>
+          </td>
           <td data-label="Urg." style="text-align:center;">
             <span *ngIf="t.esUrgente" class="urg-badge">URG</span>
           </td>
@@ -166,7 +183,7 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
           </td>
         </tr>
         <tr *ngIf="filtrados.length === 0">
-          <td colspan="8" style="text-align:center; padding:40px; color:#64748b;">
+          <td colspan="9" style="text-align:center; padding:40px; color:#64748b;">
             No hay intervenciones para el filtro seleccionado.
           </td>
         </tr>
@@ -320,6 +337,7 @@ export class IntervencionListComponent implements OnInit {
   filtroTipo: string = '';
   filtroDetalle: string = '';
   filtroEstado: string | null = null;
+  filtroFacturada: string | null = null;
 
   constructor(
     private tramiteService: TramiteService,
@@ -396,6 +414,12 @@ export class IntervencionListComponent implements OnInit {
       temp = temp.filter(t => !!t.esUrgente);
     }
 
+    if (this.filtroFacturada === 'SI') {
+      temp = temp.filter(t => !!t.facturado);
+    } else if (this.filtroFacturada === 'NO') {
+      temp = temp.filter(t => !t.facturado);
+    }
+
     // Filtros específicos por columna
     const contratoClienteTerm = this.filtroContratoCliente.trim().toLowerCase();
     if (contratoClienteTerm) {
@@ -442,6 +466,7 @@ export class IntervencionListComponent implements OnInit {
     this.filtroTipo = '';
     this.filtroDetalle = '';
     this.filtroEstado = null;
+    this.filtroFacturada = null;
     this.aplicarFiltro();
   }
 

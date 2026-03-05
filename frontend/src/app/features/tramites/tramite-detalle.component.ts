@@ -54,9 +54,6 @@ export class TramiteDetalleComponent implements OnInit {
   cargandoCompras = false;
   eliminandoDocsCompra: Record<string, boolean> = {};
   activeComprasTab: 'ALBARAN' | 'FACTURA' = 'ALBARAN';
-  totalGastos = 0;
-  totalVentas = 0;
-  margen = 0;
 
   // Provider Modal
   modalProveedorVisible = false;
@@ -243,12 +240,10 @@ export class TramiteDetalleComponent implements OnInit {
       next: (list) => {
         this.albaranesVenta = list || [];
         this.cargandoAlbaranes = false;
-        this.recalcularMargen();
       },
       error: () => {
         this.albaranesVenta = [];
         this.cargandoAlbaranes = false;
-        this.recalcularMargen();
       }
     });
   }
@@ -260,12 +255,10 @@ export class TramiteDetalleComponent implements OnInit {
       next: (list) => {
         this.documentosCompra = list || [];
         this.cargandoCompras = false;
-        this.recalcularMargen();
       },
       error: () => {
         this.documentosCompra = [];
         this.cargandoCompras = false;
-        this.recalcularMargen();
       }
     });
   }
@@ -324,7 +317,7 @@ export class TramiteDetalleComponent implements OnInit {
     if (!doc?.idDocumento || doc.tipo !== 'ALBARAN') return;
     Swal.fire({
       title: 'Generar factura',
-      text: 'Se creará una factura con las mismas líneas y totales que este albarán.',
+      text: 'Se generará una única factura que agrupará todos los albaranes de este proveedor en este trámite.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Generar factura',
@@ -335,7 +328,6 @@ export class TramiteDetalleComponent implements OnInit {
       this.comprasService.generarFacturaDesdeAlbaran(doc.idDocumento).subscribe({
         next: (factura) => {
           this.documentosCompra.push(factura);
-          this.recalcularMargen();
           Swal.fire('Generada', 'Factura generada correctamente a partir del albarán.', 'success');
           this.setComprasTab('FACTURA');
         },
@@ -346,6 +338,96 @@ export class TramiteDetalleComponent implements OnInit {
           Swal.fire('Error', msg, 'error');
         }
       });
+    });
+  }
+
+  generarFacturaGlobalAlbaranes() {
+    // Solo trabajamos con albaranes que aún no tienen factura asociada
+    const albaranes = this.documentosCompra.filter(d => d.tipo === 'ALBARAN' && !d.facturaId);
+    if (!albaranes.length) {
+      Swal.fire('Aviso', 'Todos los albaranes ya están facturados para esta intervención.', 'info');
+      return;
+    }
+
+    // Agrupar por proveedor
+    const proveedoresMap = new Map<number, string>();
+    for (const a of albaranes) {
+      if (a.idProveedor != null) {
+        proveedoresMap.set(a.idProveedor, a.proveedorNombre || `Proveedor #${a.idProveedor}`);
+      }
+    }
+
+    const proveedores = Array.from(proveedoresMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+
+    if (!proveedores.length) {
+      Swal.fire('Aviso', 'Los albaranes no tienen proveedor asociado correctamente.', 'warning');
+      return;
+    }
+
+    const generarParaProveedor = (idProveedor: number) => {
+      const albaranBase = albaranes.find(a => a.idProveedor === idProveedor);
+      if (!albaranBase) {
+        Swal.fire('Aviso', 'No se ha encontrado un albarán válido para el proveedor seleccionado.', 'warning');
+        return;
+      }
+
+      Swal.fire({
+        title: 'Generar factura agrupada',
+        text: 'Se generará una única factura que agrupará todos los albaranes de este proveedor en este trámite.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Generar factura',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1e293b',
+      }).then((res) => {
+        if (!res.isConfirmed) return;
+        this.comprasService.generarFacturaDesdeAlbaran(albaranBase.idDocumento).subscribe({
+          next: (factura) => {
+            this.documentosCompra.push(factura);
+            Swal.fire('Generada', 'Factura generada correctamente agrupando todos los albaranes del proveedor.', 'success');
+            this.setComprasTab('FACTURA');
+            this.cargarCompras();
+          },
+          error: (e) => {
+            let msg = 'No se pudo generar la factura.';
+            if (typeof e?.error === 'string') msg = e.error;
+            else if (e?.error?.message) msg = e.error.message;
+            Swal.fire('Error', msg, 'error');
+          }
+        });
+      });
+    };
+
+    // Si solo hay un proveedor, no pedimos selección
+    if (proveedores.length === 1) {
+      generarParaProveedor(proveedores[0].id);
+      return;
+    }
+
+    // Varios proveedores: preguntamos por cuál queremos facturar
+    const inputOptions = proveedores.reduce((acc: Record<string, string>, p) => {
+      acc[String(p.id)] = p.nombre;
+      return acc;
+    }, {});
+
+    Swal.fire({
+      title: 'Seleccionar proveedor',
+      text: 'Elige el proveedor para generar la factura agrupando todos sus albaranes en este trámite.',
+      input: 'select',
+      inputOptions,
+      inputPlaceholder: 'Selecciona proveedor',
+      showCancelButton: true,
+      confirmButtonText: 'Continuar',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) return 'Debes seleccionar un proveedor.';
+        return null;
+      }
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const idProveedor = Number(result.value);
+      if (!idProveedor) return;
+      generarParaProveedor(idProveedor);
     });
   }
 
@@ -371,7 +453,6 @@ export class TramiteDetalleComponent implements OnInit {
         next: () => {
           this.eliminandoDocsCompra[key] = false;
           this.documentosCompra.splice(index, 1);
-          this.recalcularMargen();
           Swal.fire('Eliminado', `${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)} eliminado correctamente.`, 'success');
         },
         error: (e) => {
@@ -491,11 +572,7 @@ export class TramiteDetalleComponent implements OnInit {
   }
 
   private recalcularMargen() {
-    const gastos = this.documentosCompra.reduce((acc, a) => acc + (Number(a.total) || 0), 0);
-    const ventas = this.albaranesVenta.reduce((acc, a) => acc + (Number(a.total) || 0), 0);
-    this.totalGastos = Math.round(gastos * 100) / 100;
-    this.totalVentas = Math.round(ventas * 100) / 100;
-    this.margen = Math.round((this.totalVentas - this.totalGastos) * 100) / 100;
+    // Gastos, Ventas and Margen logic removed
   }
 
   get lineasCompra(): FormArray {
@@ -773,8 +850,8 @@ export class TramiteDetalleComponent implements OnInit {
     const fechaSeg =
       h.fechaSeguimiento
         ? (typeof h.fechaSeguimiento === 'string'
-            ? h.fechaSeguimiento
-            : new Date(h.fechaSeguimiento).toISOString().slice(0, 10))
+          ? h.fechaSeguimiento
+          : new Date(h.fechaSeguimiento).toISOString().slice(0, 10))
         : new Date().toISOString().slice(0, 10);
 
     const payload: Partial<Seguimiento> = {
