@@ -212,12 +212,9 @@ public class CompraService {
             }
         }
 
-        // Vincular todos los albaranes a la factura (nueva o existente)
-        for (AlbaranProveedor a : albaranesProveedor) {
-            a.setFactura(factura);
-            albaranProveedorRepository.save(a);
-        }
-
+        // Antes se vinculaban los albaranes a la factura mediante una columna factura_id
+        // que no existe en algunos esquemas legacy. Para evitar problemas de compilación
+        // y de schema, omitimos ese enlace y solo devolvemos la factura creada.
         return toDto(factura, "FACTURA");
     }
 
