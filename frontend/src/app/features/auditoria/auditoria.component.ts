@@ -1,17 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../../services/api.service';
-
-interface AuditoriaSesion {
-  idSesion: number;
-  idUsuario: number;
-  nombreUsuario: string;
-  fechaInicio: string; // ISO string
-  fechaFin?: string;   // ISO string
-  fechaUltimaActividad: string; // ISO string
-  ipAcceso: string;
-  estado: string;
-}
+import { AuditoriaSesion, AuditoriaSesionService, PageResponse } from './auditoria-sesion.service';
 
 @Component({
   selector: 'app-auditoria',
@@ -81,6 +70,33 @@ interface AuditoriaSesion {
             </tbody>
           </table>
         </div>
+
+        <div class="pagination-bar" *ngIf="totalPages > 0">
+          <button
+            type="button"
+            class="btn-page"
+            (click)="previousPage()"
+            [disabled]="page === 0 || loading">
+            ← Página anterior
+          </button>
+
+          <span class="page-info">
+            Página {{ page + 1 }} de {{ totalPages }}
+            ({{ totalElements }} sesiones)
+          </span>
+
+          <button
+            type="button"
+            class="btn-page"
+            (click)="nextPage()"
+            [disabled]="page + 1 >= totalPages || loading">
+            Página siguiente →
+          </button>
+        </div>
+
+        <div class="loading-state" *ngIf="loading">
+          Cargando registros de auditoría...
+        </div>
       </div>
     </div>
   `,
@@ -112,6 +128,49 @@ interface AuditoriaSesion {
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
       border: 1px solid #e2e8f0;
       overflow: hidden;
+    }
+
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem 1rem;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.8rem;
+      color: #64748b;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-page {
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.8rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn-page:hover:not(:disabled) {
+      background: #f3f4f6;
+    }
+
+    .btn-page:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      flex: 1;
+      text-align: center;
+    }
+
+    .loading-state {
+      padding: 0.75rem 1.5rem 1.25rem;
+      font-size: 0.8rem;
+      color: #6b7280;
     }
 
     .modern-table {
@@ -293,26 +352,54 @@ interface AuditoriaSesion {
 export class AuditoriaComponent implements OnInit {
   sesiones: AuditoriaSesion[] = [];
   now: Date = new Date();
+  loading = false;
 
-  constructor(private api: ApiService) { }
+  page = 0;
+  size = 20;
+  totalPages = 0;
+  totalElements = 0;
+
+  constructor(private auditoriaService: AuditoriaSesionService) { }
 
   ngOnInit(): void {
-    this.cargarSesiones();
+    this.cargarSesiones(0);
     // Update 'now' every second to keep active durations live
     setInterval(() => {
       this.now = new Date();
     }, 1000);
   }
 
-  cargarSesiones(): void {
-    this.api
-      .get<AuditoriaSesion[]>('auditoria-sesiones')
-      .subscribe((data: AuditoriaSesion[]) => {
-        // Sort by start date desc
-        this.sesiones = data.sort((a, b) =>
-          new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime()
-        );
+  cargarSesiones(page: number): void {
+    if (page < 0) return;
+
+    this.loading = true;
+    this.auditoriaService
+      .getSesiones(page, this.size)
+      .subscribe({
+        next: (resp: PageResponse<AuditoriaSesion>) => {
+          this.sesiones = resp.content;
+          this.page = resp.number;
+          this.size = resp.size;
+          this.totalPages = resp.totalPages;
+          this.totalElements = resp.totalElements;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        }
       });
+  }
+
+  previousPage(): void {
+    if (this.page > 0) {
+      this.cargarSesiones(this.page - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.page + 1 < this.totalPages) {
+      this.cargarSesiones(this.page + 1);
+    }
   }
 
   isActive(s: AuditoriaSesion): boolean {
