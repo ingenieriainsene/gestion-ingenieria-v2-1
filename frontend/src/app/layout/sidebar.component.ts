@@ -6,6 +6,7 @@ import { AuthService } from '../services/auth.service';
 interface NavItem {
   label: string;
   route: string;
+  icon: string;
 }
 
 interface NavCategory {
@@ -48,7 +49,8 @@ interface NavCategory {
                 [routerLink]="item.route"
                 routerLinkActive="active"
               >
-                <span>{{ item.label }}</span>
+                <span class="item-icon">{{ item.icon }}</span>
+                <span class="item-label">{{ item.label }}</span>
               </a>
             </div>
           </div>
@@ -237,6 +239,19 @@ interface NavCategory {
       border-left: 3px solid transparent;
     }
 
+    .item-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      width: 22px;
+      text-align: center;
+    }
+
+    .item-label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .sidebar.collapsed .side-item {
       padding-left: 23px;
       justify-content: center;
@@ -387,10 +402,10 @@ export class SidebarComponent implements OnInit {
       label: 'Comercial',
       icon: '📊',
       items: [
-        { label: 'Clientes', route: '/clientes' },
-        { label: 'Locales', route: '/locales' },
-        { label: 'Presupuestos', route: '/presupuestos' },
-        { label: 'Contratos', route: '/contratos' }
+        { label: 'Clientes', route: '/clientes', icon: '👥' },
+        { label: 'Locales', route: '/locales', icon: '🏢' },
+        { label: 'Presupuestos', route: '/presupuestos', icon: '📑' },
+        { label: 'Contratos', route: '/contratos', icon: '📃' }
       ]
     },
     {
@@ -398,14 +413,14 @@ export class SidebarComponent implements OnInit {
       label: 'Operaciones',
       icon: '⚙️',
       items: [
-        { label: 'Intervenciones', route: '/intervenciones' },
-        { label: 'Seguimientos', route: '/seguimientos' },
-        { label: 'Ventas pendientes', route: '/ventas-pendientes' },
-        { label: 'Contabilidad', route: '/operaciones/contabilidad' },
-        { label: 'Agendar citas', route: '/agendar-citas' },
-        { label: 'Almacen', route: '/productos' },
-        { label: 'Proveedores', route: '/proveedores' },
-        { label: 'Análisis de Datos', route: '/operaciones/analisis-datos' }
+        { label: 'Intervenciones', route: '/intervenciones', icon: '🛠️' },
+        { label: 'Seguimientos', route: '/seguimientos', icon: '📋' },
+        { label: 'Ventas pendientes', route: '/ventas-pendientes', icon: '🧾' },
+        { label: 'Contabilidad', route: '/operaciones/contabilidad', icon: '💹' },
+        { label: 'Agendar citas', route: '/agendar-citas', icon: '📅' },
+        { label: 'Almacen', route: '/productos', icon: '📦' },
+        { label: 'Proveedores', route: '/proveedores', icon: '🤝' },
+        { label: 'Análisis de Datos', route: '/operaciones/analisis-datos', icon: '📊' }
       ]
     },
     {
@@ -413,9 +428,9 @@ export class SidebarComponent implements OnInit {
       label: 'Admin',
       icon: '👥',
       items: [
-        { label: 'Usuarios', route: '/usuarios' },
-        { label: 'Instaladores', route: '/tecnicos-instaladores' },
-        { label: 'Auditoría', route: '/auditoria' }
+        { label: 'Usuarios', route: '/usuarios', icon: '👤' },
+        { label: 'Instaladores', route: '/tecnicos-instaladores', icon: '🛠️' },
+        { label: 'Auditoría', route: '/auditoria', icon: '🔍' }
       ]
     },
     {
@@ -423,7 +438,7 @@ export class SidebarComponent implements OnInit {
       label: 'Comunicación',
       icon: '💬',
       items: [
-        { label: 'Chat', route: '/chat' }
+        { label: 'Chat', route: '/chat', icon: '💬' }
       ]
     }
   ];
