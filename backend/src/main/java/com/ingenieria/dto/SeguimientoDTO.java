@@ -14,6 +14,8 @@ public class SeguimientoDTO {
     private LocalDate fechaSeguimiento;
     private Boolean esUrgente;
     private String estado;
+    private java.util.List<Long> idsTecnicosInstaladores;
+    private java.util.List<Long> idsUsuariosAsignados;
 
     // Read-only fields for UI
     private String nombreTramite;

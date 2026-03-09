@@ -119,82 +119,105 @@
       </div>
     </div>
 
-    <!-- Historial de Seguimientos -->
-    <div class="form-card mt-4">
-      <div class="card-header flex-between">
-        <h3>📜 Historial de Seguimiento</h3>
-        <button type="button" class="btn-create-small" (click)="toggleNuevoHito()">
-          + Nuevo Seguimiento
-        </button>
+    <!-- Timeline Header -->
+    <div class="section-header d-flex justify-content-between align-items-center mb-4 mt-5">
+      <div>
+        <h3 class="section-title">📜 HISTORIAL DE SEGUIMIENTO</h3>
+        <p class="section-subtitle">Línea de tiempo de acciones y objetivos</p>
       </div>
+      <button type="button" class="btn-primary-premium" (click)="toggleNuevoHito()">
+        <span class="icon">{{ showNuevoHito ? '✕' : '+' }}</span>
+        {{ showNuevoHito ? 'Cerrar' : 'Nuevo Seguimiento' }}
+      </button>
+    </div>
 
-      <!-- Formulario Nuevo Hito -->
-      <div *ngIf="showNuevoHito" class="new-item-form slide-down">
-        <form [formGroup]="formHito" (ngSubmit)="guardarHito()">
-          <div class="form-grid">
-            <div class="form-group full-width">
-              <label class="form-label">Comentario <span class="required">*</span></label>
-              <textarea class="form-control" formControlName="comentario" rows="2"
-                placeholder="Describe la acción..."></textarea>
+    <!-- Formulario Nuevo Hito (Premium) -->
+    <div *ngIf="showNuevoHito" class="form-card-premium mb-5">
+      <form [formGroup]="formHito" (ngSubmit)="guardarHito()">
+        <div class="form-grid">
+          <div class="form-field full-width">
+            <label>Comentario / Avance</label>
+            <textarea formControlName="comentario" placeholder="Describe la acción realizada..." rows="2"></textarea>
+          </div>
+
+          <div class="form-field">
+            <label>Próximo Seguimiento</label>
+            <input type="date" formControlName="fechaSeguimiento">
+          </div>
+
+          <div class="form-field">
+            <label>Estado</label>
+            <select formControlName="estado">
+              <option value="Pendiente">🔴 Pendiente</option>
+              <option value="Terminado">🟢 Terminado</option>
+            </select>
+          </div>
+
+          <div class="form-field" style="align-self: center;">
+            <label class="checkbox-label-premium">
+              <input type="checkbox" formControlName="esUrgente">
+              <span class="urgent-text">🔥 ¿URGENTE?</span>
+            </label>
+          </div>
+
+          <div class="form-field">
+            <label>Proveedor (Opcional)</label>
+            <div class="input-wrapper has-micro-btn">
+              <input type="text" class="form-control" formControlName="proveedorLabel" list="proveedores-list-form"
+                placeholder="Busca proveedor..." (input)="onProveedorInput()" />
+              <button type="button" class="btn-micro-search-form" (click)="abrirProveedorModal()"
+                title="Búsqueda avanzada">🔍</button>
+              <datalist id="proveedores-list-form">
+                <option *ngFor="let p of proveedores" [value]="p.nombre"></option>
+              </datalist>
             </div>
-            <div class="form-group">
-              <label class="form-label">Próximo Seg.</label>
-              <input type="date" class="form-control" formControlName="fechaSeguimiento" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Asignar Técnico</label>
-              <select class="form-control" formControlName="idUsuarioAsignado">
-                <option [ngValue]="null">-- Sin asignar --</option>
-                <option *ngFor="let u of tecnicos" [ngValue]="u.idUsuario">{{ u.nombreUsuario }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Proveedor</label>
-              <div class="input-wrapper has-micro-btn">
-                <input type="text" class="form-control" formControlName="proveedorLabel" list="proveedores-list"
-                  placeholder="Busca proveedor..." (input)="onProveedorInput()" />
-                <button type="button" class="btn-micro-search-form" (click)="abrirProveedorModal()"
-                  title="Búsqueda avanzada">🔍</button>
-                <datalist id="proveedores-list">
-                  <option *ngFor="let p of proveedores" [value]="p.nombre"></option>
-                </datalist>
+          </div>
+
+          <div class="form-field full-width">
+            <label>Técnicos Internos (Asignar)</label>
+            <div class="multi-select-box-premium">
+              <div *ngFor="let u of tecnicos" class="select-item-premium">
+                <input type="checkbox" (change)="toggleSelection('idsUsuariosAsignados', u.idUsuario!)"
+                  [checked]="formHito.get('idsUsuariosAsignados')?.value.includes(u.idUsuario)">
+                <span>{{ u.nombreUsuario }}</span>
               </div>
             </div>
-            <div class="form-group checkbox-group" style="align-self: flex-end; padding-bottom: 10px;">
-              <label class="checkbox-wrapper warning small-check">
-                <input type="checkbox" formControlName="esUrgente" />
-                <span class="checkbox-label">⚠️ URGENTE</span>
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Estado Hito</label>
-              <select class="form-control" formControlName="estado">
-                <option value="Pendiente">🔴 Pendiente</option>
-                <option value="Terminado">🟢 Terminado</option>
-              </select>
-            </div>
           </div>
-          <div class="form-actions small">
-            <button type="button" class="btn-cancel" (click)="toggleNuevoHito()">Cancelar</button>
-            <button type="submit" class="btn-save" [disabled]="formHito.invalid">
-              {{ editingHitoId ? 'Guardar Cambios' : 'Añadir Hito' }}
-            </button>
-          </div>
-        </form>
-      </div>
 
+          <div class="form-field full-width">
+            <label>Instaladores Externos (Asignar)</label>
+            <div class="multi-select-box-premium">
+              <div *ngFor="let t of instaladores" class="select-item-premium">
+                <input type="checkbox" (change)="toggleSelection('idsTecnicosInstaladores', t.idTecnicoInstalador!)"
+                  [checked]="formHito.get('idsTecnicosInstaladores')?.value.includes(t.idTecnicoInstalador)">
+                <span>{{ t.nombre }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions-premium mt-4">
+          <button type="submit" class="btn-save-premium" [disabled]="formHito.invalid">
+            💾 {{ editingHitoId ? 'Guardar Cambios' : 'Añadir Seguimiento' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Vista de historial en tabla compacta (lectura + acciones) -->
+    <div class="form-card mt-3">
       <div class="table-responsive">
-        <table class="modern-table table-card">
+        <table class="modern-table table-card historial-table">
           <thead>
             <tr>
-              <th style="width: 140px;">Fecha</th>
-              <th>Comentario</th>
-              <th>Asignado</th>
-              <th>Proveedor</th>
-              <th>Próx. Seg.</th>
+              <th>FECHA</th>
+              <th>COMENTARIO</th>
+              <th>ASIGNADO</th>
+              <th>INSTALADORES</th>
+              <th>PROVEEDOR</th>
+              <th>PRÓX. SEG.</th>
               <th style="text-align:center;">URG</th>
-              <th>Estado</th>
-              <th style="width: 80px;"></th>
+              <th>ESTADO</th>
+              <th style="width: 60px;"></th>
             </tr>
           </thead>
           <tbody>
@@ -207,89 +230,81 @@
                 </div>
               </td>
               <td data-label="Comentario">
-                <textarea class="form-control inline-input comentario-textarea" [(ngModel)]="h.comentario"
-                  (ngModelChange)="programarGuardadoHito(h)" (input)="autoResize($event)"
-                  name="comentario-{{h.idSeguimiento}}" placeholder="Comentario..." rows="1"></textarea>
+                <div class="comment-text">{{ h.comentario || '—' }}</div>
               </td>
               <td data-label="Asignado">
-                <select class="form-control inline-input" [(ngModel)]="h.idUsuarioAsignado"
-                  (ngModelChange)="programarGuardadoHito(h)" name="tecnico-{{h.idSeguimiento}}">
-                  <option [ngValue]="null">— Sin asignar —</option>
-                  <option *ngFor="let u of tecnicos" [ngValue]="u.idUsuario">
-                    {{ u.nombreUsuario }}
-                  </option>
-                </select>
+                {{ h.nombreAsignado || '—' }}
+              </td>
+              <td data-label="Instaladores">
+                <span *ngIf="h.nombresTecnicosInstaladores?.length; else sinInst">
+                  {{ (h.nombresTecnicosInstaladores || []).join(', ') }}
+                </span>
+                <ng-template #sinInst>
+                  <span class="sub-text">— Sin instaladores —</span>
+                </ng-template>
               </td>
               <td data-label="Proveedor">
-                <select class="form-control inline-input" [(ngModel)]="h.idProveedor"
-                  (ngModelChange)="programarGuardadoHito(h)" name="proveedor-{{h.idSeguimiento}}">
-                  <option [ngValue]="null">— Sin proveedor —</option>
-                  <option *ngFor="let p of proveedores" [ngValue]="p.id">
-                    {{ p.nombre }}
-                  </option>
-                </select>
+                {{ h.nombreProveedor || '—' }}
               </td>
               <td data-label="Próx. seg.">
-                <input type="date" class="form-control inline-input" [ngModel]="h.fechaSeguimiento | date:'yyyy-MM-dd'"
-                  (ngModelChange)="h.fechaSeguimiento = $event; programarGuardadoHito(h)"
-                  name="fechaSeg-{{h.idSeguimiento}}" />
+                {{ h.fechaSeguimiento ? (h.fechaSeguimiento | date:'dd/MM/yyyy') : '—' }}
               </td>
               <td data-label="Urg." style="text-align:center;">
-                <label class="checkbox-wrapper warning small-check">
-                  <input type="checkbox" [(ngModel)]="h.esUrgente" (ngModelChange)="programarGuardadoHito(h)"
-                    name="urgente-{{h.idSeguimiento}}" />
-                  <span class="checkbox-label">URG</span>
-                </label>
+                <span *ngIf="h.esUrgente" class="urg-badge">URG</span>
               </td>
               <td data-label="Estado">
-                <select class="form-control inline-input" [(ngModel)]="h.estado"
-                  (ngModelChange)="programarGuardadoHito(h)" name="estado-{{h.idSeguimiento}}">
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="Terminado">Terminado</option>
-                </select>
+                <span class="status-badge" [ngClass]="h.estado === 'Terminado' ? 'done' : 'pending'">
+                  {{ h.estado || 'Pendiente' }}
+                </span>
               </td>
               <td data-label="Acciones" class="actions-cell center">
-                <button type="button" class="btn-icon-delete" (click)="eliminarHito(h, i)" title="Eliminar">
-                  🗑️
-                </button>
+                <button type="button" class="btn-icon-edit" (click)="editarHito(h)" title="Editar">✏️</button>
+                <button type="button" class="btn-icon-delete" (click)="eliminarHito(h, i)" title="Eliminar">🗑️</button>
               </td>
             </tr>
             <tr *ngIf="hitos.length === 0">
-              <td colspan="8" class="empty-state">No hay seguimientos registrados.</td>
+              <td colspan="9" class="empty-state">No hay seguimientos registrados.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Gestión de Archivos -->
-    <div class="form-card mt-4">
-      <div class="card-header">
-        <h3>📁 Documentación Adjunta</h3>
-      </div>
-      <div class="card-body">
-        <div class="upload-area">
-          <input type="text" [(ngModel)]="nombreVisibleUpload" [ngModelOptions]="{standalone: true}"
-            placeholder="Nombre descriptivo para el archivo..." class="form-control input-name" />
-          <div class="file-select-wrapper">
-            <input type="file" (change)="onFileChange($event)" multiple id="fileInput" class="hidden-file" />
-            <label for="fileInput" class="btn-secondary">Seleccionar Archivo</label>
-            <span class="file-count" *ngIf="filesToUpload.length">{{ filesToUpload.length }} archivo(s)</span>
-          </div>
-          <button type="button" class="btn-primary" (click)="subirArchivos()" [disabled]="!filesToUpload.length">
-            ⬆️ Subir
-          </button>
-        </div>
+    <!-- Gestión de Archivos (Modernized) -->
+    <div class="section-header mt-5 mb-4">
+      <h3 class="section-title">📁 DOCUMENTACIÓN ADJUNTA</h3>
+      <p class="section-subtitle">Archivos y documentos técnicos compartidos</p>
+    </div>
 
-        <div class="files-grid">
-          <div *ngFor="let f of archivos" class="file-card">
-            <div class="file-icon">{{ getIconoArchivo(f) }}</div>
-            <div class="file-name">{{ f.nombreVisible }}</div>
-          </div>
-          <div *ngIf="archivos.length === 0" class="empty-files">
-            No hay documentos adjuntos.
-          </div>
+    <div class="upload-zone-premium">
+      <form (ngSubmit)="subirArchivos()" #uploadForm="ngForm" class="upload-form-premium">
+        <input type="text" [(ngModel)]="nombreVisibleUpload" [ngModelOptions]="{standalone: true}"
+          placeholder="Etiqueta para los archivos..." class="form-control-premium" required />
+        <div class="file-input-wrapper-premium">
+          <input type="file" (change)="onFileChange($event)" multiple id="fileInputRedesigned"
+            class="hidden-file-premium" />
+          <label for="fileInputRedesigned" class="btn-select-premium">📁 Seleccionar</label>
+          <span class="file-count-premium" *ngIf="filesToUpload.length">{{ filesToUpload.length }} seleccionados</span>
         </div>
+        <button type="submit" class="btn-upload-premium" [disabled]="!filesToUpload.length || !uploadForm.form.valid">
+          ⬆️ Subir documentos
+        </button>
+      </form>
+    </div>
+
+    <div class="files-grid-premium-revamped mt-4">
+      <div *ngFor="let f of archivos" class="file-card-premium-revamped">
+        <div class="file-icon-bg-premium">
+          <span class="file-icon-large-premium">{{ getIconoArchivo(f) }}</span>
+        </div>
+        <div class="file-info-premium-revamped">
+          <span class="file-name-premium">{{ f.nombreVisible }}</span>
+          <span class="file-date-premium">{{ f.fechaSubida | date:'shortDate' }}</span>
+        </div>
+      </div>
+      <div *ngIf="archivos.length === 0" class="empty-files-premium">
+        <div class="empty-icon-sub">📂</div>
+        <p>No hay documentos adjuntos en esta intervención.</p>
       </div>
     </div>
   </div>
@@ -304,8 +319,8 @@
         </button>
       </div>
       <div class="card-body">
-        <div class="table-responsive">
-          <table class="modern-table table-card">
+      <div class="table-responsive">
+        <table class="modern-table table-card historial-table">
             <thead>
               <tr>
                 <th>Referencia</th>

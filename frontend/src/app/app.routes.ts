@@ -27,6 +27,8 @@ import { ProductoFormComponent } from './features/productos/producto-form.compon
 import { SeguimientoListComponent } from './features/seguimientos/seguimiento-list.component';
 import { PlanificacionIntervencionesComponent } from './features/contratos/planificacion-intervenciones.component';
 import { VentasPendientesComponent } from './features/tramites/ventas-pendientes.component';
+import { TecnicoInstaladorListComponent } from './features/tecnicos-instaladores/tecnico-instalador-list.component';
+import { TecnicoInstaladorFichaComponent } from './features/tecnicos-instaladores/tecnico-instalador-ficha.component';
 
 import { adminGuard } from './core/admin.guard';
 
@@ -70,6 +72,10 @@ export const routes: Routes = [
             { path: 'usuarios', component: UsuarioListComponent, canActivate: [adminGuard] },
             { path: 'usuarios/nuevo', component: UsuarioFichaComponent, canActivate: [adminGuard] },
             { path: 'usuarios/:id', component: UsuarioFichaComponent, canActivate: [adminGuard] },
+
+            { path: 'tecnicos-instaladores', component: TecnicoInstaladorListComponent, canActivate: [adminGuard] },
+            { path: 'tecnicos-instaladores/nuevo', component: TecnicoInstaladorFichaComponent, canActivate: [adminGuard] },
+            { path: 'tecnicos-instaladores/:id', component: TecnicoInstaladorFichaComponent, canActivate: [adminGuard] },
 
             { path: 'auditoria', component: AuditoriaComponent, canActivate: [adminGuard] },
             { path: 'seguimientos', component: SeguimientoListComponent },

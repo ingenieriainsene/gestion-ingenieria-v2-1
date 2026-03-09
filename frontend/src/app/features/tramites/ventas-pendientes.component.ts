@@ -338,10 +338,10 @@ export class VentasPendientesComponent implements OnInit {
   }
 
   irADetalle(t: any): void {
-    if (!t.idTramite) {
+    if (!t.idContrato) {
       return;
     }
-    this.router.navigate(['/tramite-detalle', t.idTramite]);
+    this.router.navigate(['/contratos', t.idContrato]);
   }
 
   generar(t: any, event: Event): void {

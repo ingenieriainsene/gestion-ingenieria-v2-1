@@ -414,6 +414,7 @@ export class SidebarComponent implements OnInit {
       icon: '👥',
       items: [
         { label: 'Usuarios', route: '/usuarios' },
+        { label: 'Instaladores', route: '/tecnicos-instaladores' },
         { label: 'Auditoría', route: '/auditoria' }
       ]
     },

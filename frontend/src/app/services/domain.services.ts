@@ -122,6 +122,10 @@ export interface Seguimiento {
     fechaRegistro?: string;
     modificadoPor?: string;
     fechaModificacion?: string;
+    idsTecnicosInstaladores?: number[];
+    nombresTecnicosInstaladores?: string[];
+    idsUsuariosAsignados?: number[];
+    nombresUsuariosAsignados?: string[];
 }
 
 export interface Cita {

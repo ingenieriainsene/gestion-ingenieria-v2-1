@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TramiteService, SeguimientoService, Tramite, Seguimiento } from '../../services/domain.services';
+import { UsuarioService } from '../../services/usuario.service';
+import { TecnicoInstalador, TecnicoInstaladorService } from '../../services/tecnico-instalador.service';
 import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environments';
@@ -79,150 +81,294 @@ interface ArchivoTramite {
     </div>
 
     <!-- CUERPO: Seguimientos + Archivos -->
-    <div class="table-section" style="padding:25px;">
-      <!-- Historial de seguimientos -->
-      <div
-        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h3
-          style="font-size:0.9rem; text-transform:uppercase; color:#64748b; margin:0; font-weight:bold;">
-          📜 Historial de Seguimientos
-        </h3>
-        <button type="button" class="btn btn-success btn-sm" (click)="toggleNuevoHito()">
-          + Nuevo seguimiento
+    <div class="content-section" style="padding:25px;">
+      
+      <!-- Timeline Header -->
+      <div class="section-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="section-title">📜 HISTORIAL DE SEGUIMIENTO</h3>
+          <p class="section-subtitle">Línea de tiempo de acciones y objetivos</p>
+        </div>
+        <button type="button" class="btn-primary-premium" (click)="toggleNuevoHito()">
+          <span class="icon">{{ showNuevoHito ? '✕' : '+' }}</span>
+          {{ showNuevoHito ? 'Cerrar' : 'Nuevo Seguimiento' }}
         </button>
       </div>
 
-      <!-- Nuevo hito -->
-      <div *ngIf="showNuevoHito"
-           style="background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:20px;">
+      <!-- Formulario Nuevo Hito (Premium) -->
+      <div *ngIf="showNuevoHito" class="form-card-premium mb-5">
         <form [formGroup]="form" (ngSubmit)="addHito()">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label style="font-size:0.7rem; font-weight:bold;">COMENTARIO / AVANCE:</label>
-              <textarea class="form-control" rows="2" formControlName="comentario"
-                        placeholder="Describe la acción realizada..."></textarea>
+          <div class="form-grid">
+            <div class="form-field full-width">
+              <label>Comentario / Avance</label>
+              <textarea formControlName="comentario" placeholder="Describe la acción realizada..." rows="2"></textarea>
             </div>
-            <div class="col-md-3">
-              <label style="font-size:0.7rem; font-weight:bold;">PRÓXIMO SEG.:</label>
-              <input type="date" class="form-control" formControlName="fechaSeguimiento" />
+            
+            <div class="form-field">
+              <label>Próximo Seguimiento</label>
+              <input type="date" formControlName="fechaSeguimiento">
             </div>
-            <div class="col-md-2">
-              <label style="font-size:0.7rem; font-weight:bold;">ESTADO:</label>
-              <select class="form-select" formControlName="estado">
+
+            <div class="form-field">
+              <label>Estado</label>
+              <select formControlName="estado">
                 <option value="Pendiente">🔴 Pendiente</option>
                 <option value="Terminado">🟢 Terminado</option>
               </select>
             </div>
-            <div class="col-md-1 d-flex flex-column justify-content-end gap-1">
-              <button type="submit" class="btn btn-success btn-sm" [disabled]="form.invalid">
-                Guardar
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" (click)="toggleNuevoHito()">
-                Cancelar
-              </button>
+
+            <div class="form-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="esUrgente">
+                <span class="urgent-text">¿MARCAR COMO URGENTE?</span>
+              </label>
             </div>
+
+            <div class="form-field full-width">
+               <label>Técnicos Internos (Asignar)</label>
+               <div class="multi-select-box">
+                  <div *ngFor="let u of tecnicosDisponibles" class="select-item">
+                    <input type="checkbox" (change)="toggleSelection('idsUsuariosAsignados', u.idUsuario!)" 
+                           [checked]="form.get('idsUsuariosAsignados')?.value.includes(u.idUsuario)">
+                    <span>{{ u.nombreUsuario }}</span>
+                  </div>
+               </div>
+            </div>
+
+            <div class="form-field full-width">
+               <label>Instaladores Externos (Asignar)</label>
+               <div class="multi-select-box">
+                  <div *ngFor="let t of instaladoresDisponibles" class="select-item">
+                    <input type="checkbox" (change)="toggleSelection('idsTecnicosInstaladores', t.idTecnicoInstalador!)"
+                           [checked]="form.get('idsTecnicosInstaladores')?.value.includes(t.idTecnicoInstalador)">
+                    <span>{{ t.nombre }}</span>
+                  </div>
+               </div>
+            </div>
+          </div>
+          <div class="form-actions mt-3">
+            <button type="submit" class="btn-save-premium" [disabled]="form.invalid">💾 Guardar Seguimiento</button>
           </div>
         </form>
       </div>
 
-      <!-- Tabla de hitos -->
-      <div class="table-scroll-container"
-           style="max-height:350px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
-        <table class="table table-sm align-middle mb-0" style="font-size:0.85rem;">
-          <thead style="background:#ebf2f7; position:sticky; top:0; z-index:10;">
-            <tr>
-              <th style="width:140px;">Fecha Registro</th>
-              <th>Comentario</th>
-              <th style="width:130px;">Próximo Seg.</th>
-              <th style="width:60px; text-align:center;">Urg.</th>
-              <th style="width:120px;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of seguimientos; let i = index">
-              <td style="padding:10px; background:#f8fafc; vertical-align:top;">
-                <strong>{{ s.fechaSeguimiento | date:'dd/MM/yyyy' }}</strong>
-              </td>
-              <td>{{ s.comentario }}</td>
-              <td>{{ s.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
-              <td style="text-align:center;">
-                <span *ngIf="s.esUrgente" class="badge bg-danger">URG</span>
-              </td>
-              <td>
-                <span class="badge me-2"
-                      [ngClass]="{
-                        'bg-danger': s.estado === 'Pendiente',
-                        'bg-success': s.estado === 'Terminado'
-                      }">
-                  {{ s.estado }}
-                </span>
-                <button type="button"
-                        class="btn btn-sm btn-outline-danger"
-                        title="Eliminar hito"
-                        (click)="eliminarHito(s, i)">
-                  🗑️
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="seguimientos.length === 0">
-              <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">
-                No hay hitos registrados.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Timeline View -->
+      <div class="timeline-container">
+        <div class="timeline-line"></div>
+        
+        <div *ngFor="let s of seguimientos; let i = index" class="timeline-item" [class.urgent]="s.esUrgente">
+          <div class="timeline-dot" [class.done]="s.estado === 'Terminado'"></div>
+          
+          <div class="timeline-card">
+            <div class="card-header-flex">
+              <div class="date-badge">
+                <span class="day">{{ s.fechaSeguimiento | date:'dd' }}</span>
+                <span class="month">{{ s.fechaSeguimiento | date:'MMM' | uppercase }}</span>
+              </div>
+              <div class="card-title-area">
+                <div class="card-meta">
+                  <span class="badge-status" [class.status-pending]="s.estado === 'Pendiente'" [class.status-done]="s.estado === 'Terminado'">
+                    {{ s.estado | uppercase }}
+                  </span>
+                  <span *ngIf="s.esUrgente" class="badge-urgent">🔥 URGENTE</span>
+                  <span class="reg-date">Registrado: {{ s.fechaRegistro | date:'short' }}</span>
+                </div>
+                <p class="comment-text">{{ s.comentario }}</p>
+              </div>
+              <div class="card-actions-top">
+                <button (click)="eliminarHito(s, i)" class="btn-delete-icon" title="Eliminar">🗑️</button>
+              </div>
+            </div>
+
+            <div class="card-footer-info">
+              <div class="assignment-group" *ngIf="s.nombresUsuariosAsignados?.length || s.nombresTecnicosInstaladores?.length">
+                <div class="assign-col" *ngIf="s.nombresUsuariosAsignados?.length">
+                   <span class="assign-label">👤 Técnicos:</span>
+                   <span class="assign-names">{{ s.nombresUsuariosAsignados?.join(', ') }}</span>
+                </div>
+                <div class="assign-col" *ngIf="s.nombresTecnicosInstaladores?.length">
+                   <span class="assign-label">🛠️ Instaladores:</span>
+                   <span class="assign-names">{{ s.nombresTecnicosInstaladores?.join(', ') }}</span>
+                </div>
+              </div>
+              <div class="creator-info">
+                Por: <strong>{{ s.nombreCreador || 'Sistema' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="seguimientos.length === 0" class="empty-timeline">
+          <div class="empty-icon">📂</div>
+          <p>No hay hitos registrados en la línea de tiempo.</p>
+        </div>
       </div>
 
-      <!-- Documentación de la intervención -->
-      <div style="margin-top:30px; border-top:2px solid #f1c40f; padding-top:20px;">
-        <h3
-          style="color:#1e293b; font-size:0.85rem; text-transform:uppercase; margin-bottom:15px; border-bottom:2px solid #3498db; display:inline-block;">
-          📁 Documentación de la intervención
-        </h3>
-
-        <!-- Subida -->
-        <div
-          style="background:#f8fafc; padding:20px; border-radius:12px; border:1px dashed #cbd5e1; margin-bottom:25px;">
-          <form (ngSubmit)="subirArchivos()" #uploadForm="ngForm">
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <input type="text" class="form-control"
-                     placeholder="Nombre descriptivo (se usará para todos los ficheros seleccionados)"
-                     [(ngModel)]="nombreVisibleUpload" name="nombreVisible" required
-                     style="flex:1; min-width:220px;">
-              <input type="file" (change)="onFileChange($event)" multiple>
-              <button type="submit" class="btn btn-primary btn-sm" [disabled]="!filesToUpload.length || !uploadForm.form.valid">
-                ⬆️ Subir
-              </button>
+      <!-- Documentación Section (Modernized) -->
+      <div class="docs-section mt-5">
+        <h3 class="section-title">📁 DOCUMENTACIÓN ADJUNTA</h3>
+        <div class="upload-zone-premium">
+          <form (ngSubmit)="subirArchivos()" #uploadForm="ngForm" class="upload-form">
+            <input type="text" placeholder="Etiqueta para los archivos..." [(ngModel)]="nombreVisibleUpload" name="nombreVisible" required>
+            <div class="file-input-wrapper">
+              <input type="file" (change)="onFileChange($event)" multiple id="fileUpload">
+              <label for="fileUpload">📁 Seleccionar archivos</label>
+              <span class="file-count" *ngIf="filesToUpload.length">{{ filesToUpload.length }} seleccionados</span>
             </div>
+            <button type="submit" class="btn-upload" [disabled]="!filesToUpload.length || !uploadForm.form.valid">
+              ⬆️ Subir documentos
+            </button>
           </form>
         </div>
 
-        <!-- Grid de archivos -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
-          <div *ngFor="let f of archivos"
-               style="background:white; border:1px solid #e2e8f0; padding:12px; border-radius:10px;">
-            <div
-              style="height:100px; display:flex; align-items:center; justify-content:center; background:#f1f5f9; border-radius:8px; margin-bottom:8px;">
-              <span style="font-size:2rem;">
-                {{ getIconoArchivo(f) }}
-              </span>
+        <div class="files-grid-premium mt-4">
+          <div *ngFor="let f of archivos" class="file-card-premium">
+            <div class="file-icon-bg">
+              <span class="file-icon-large">{{ getIconoArchivo(f) }}</span>
             </div>
-            <strong style="font-size:0.75rem; display:block; text-align:center;">
-              {{ f.nombreVisible }}
-            </strong>
+            <div class="file-info-premium">
+              <span class="file-name">{{ f.nombreVisible }}</span>
+              <span class="file-date">{{ f.fechaSubida | date:'shortDate' }}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div style="margin-top:20px; text-align:right;">
-        <a [routerLink]="['/contratos', tramite.idContrato]"
-           style="text-decoration:none; color:#64748b; font-weight:700;">
-          ← Volver al contrato
+      <div class="footer-nav mt-5">
+        <a [routerLink]="['/contratos', tramite.idContrato]" class="btn-link-back">
+          ← Volver al Contrato principal
         </a>
       </div>
     </div>
   </div>
-  `
+  `,
+  styles: [`
+    .master-container { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    
+    .section-title { font-size: 1.1rem; font-weight: 800; color: #334155; margin: 0; }
+    .section-subtitle { font-size: 0.85rem; color: #64748b; margin: 0; }
+
+    /* Forms */
+    .form-card-premium { 
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 25px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); animation: slideDown 0.3s ease-out;
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .full-width { grid-column: 1 / -1; }
+    .form-field label { display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase; }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem;
+      transition: all 0.2s; background: white;
+    }
+    .form-field input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    
+    .multi-select-box {
+      background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px;
+      max-height: 120px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;
+    }
+    .select-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #1e293b; }
+
+    .btn-primary-premium {
+      background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 10px;
+      font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px;
+    }
+    .btn-primary-premium:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+    .btn-save-premium {
+       background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 10px;
+       font-weight: 700; cursor: pointer; transition: all 0.2s; width: 100%;
+    }
+    .btn-save-premium:hover { background: #059669; }
+
+    /* Timeline */
+    .timeline-container { position: relative; padding-left: 60px; margin-top: 40px; }
+    .timeline-line { 
+      position: absolute; left: 25px; top: 0; bottom: 0; width: 4px; 
+      background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%); border-radius: 2px;
+    }
+    .timeline-item { position: relative; margin-bottom: 40px; }
+    .timeline-dot {
+      position: absolute; left: -42px; top: 12px; width: 18px; height: 18px;
+      border-radius: 50%; background: white; border: 4px solid #cbd5e1; z-index: 2;
+    }
+    .timeline-dot.done { border-color: #10b981; background: #dcfce7; }
+    
+    .timeline-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.3s;
+    }
+    .timeline-card:hover { transform: translateX(8px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #cbd5e1; }
+    .timeline-item.urgent .timeline-card { border-left: 6px solid #ef4444; }
+    
+    .card-header-flex { display: flex; gap: 20px; align-items: flex-start; }
+    
+    .date-badge {
+      flex-shrink: 0; width: 55px; height: 55px; background: #f1f5f9; border-radius: 12px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .date-badge .day { font-size: 1.2rem; font-weight: 800; color: #1e293b; line-height: 1; }
+    .date-badge .month { font-size: 0.7rem; font-weight: 700; color: #64748b; }
+
+    .card-title-area { flex: 1; }
+    .card-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+    .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; }
+    .status-pending { background: #fee2e2; color: #991b1b; }
+    .status-done { background: #dcfce7; color: #166534; }
+    .badge-urgent { background: #ef4444; color: white; font-size: 0.65rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; animation: pulse 2s infinite; }
+    .reg-date { font-size: 0.75rem; color: #94a3b8; }
+    
+    .comment-text { font-size: 1rem; color: #334155; margin: 0; line-height: 1.5; font-weight: 500; }
+
+    .card-footer-info {
+      margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .assignment-group { display: flex; flex-direction: column; gap: 5px; }
+    .assign-col { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+    .assign-label { font-weight: 700; color: #64748b; }
+    .assign-names { color: #0f172a; font-weight: 600; }
+    .creator-info { font-size: 0.75rem; color: #94a3b8; }
+
+    .btn-delete-icon { background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.3; transition: 0.2s; }
+    .btn-delete-icon:hover { opacity: 1; transform: scale(1.2); }
+
+    /* Docs */
+    .upload-zone-premium { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 25px; }
+    .upload-form { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+    .upload-form input[type="text"] { flex: 1; min-width: 250px; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; }
+    
+    .file-input-wrapper { position: relative; }
+    .file-input-wrapper input { position: absolute; opacity: 0; width: 0; }
+    .file-input-wrapper label {
+      display: inline-block; padding: 12px 20px; background: white; border: 1px solid #cbd5e1;
+      border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+    }
+    .file-count { margin-left: 10px; font-size: 0.8rem; font-weight: 700; color: #3b82f6; }
+
+    .btn-upload { background: #1e293b; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .btn-upload:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .files-grid-premium { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+    .file-card-premium {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px;
+      text-align: center; transition: all 0.2s;
+    }
+    .file-card-premium:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-3px); }
+    .file-icon-bg { 
+      height: 60px; background: #f1f5f9; border-radius: 8px; display: flex; 
+      align-items: center; justify-content: center; margin-bottom: 10px;
+    }
+    .file-icon-large { font-size: 1.8rem; }
+    .file-info-premium { display: flex; flex-direction: column; gap: 2px; }
+    .file-name { font-size: 0.8rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-date { font-size: 0.7rem; color: #94a3b8; }
+
+    .btn-link-back { text-decoration: none; color: #64748b; font-weight: 700; font-size: 0.9rem; transition: color 0.2s; }
+    .btn-link-back:hover { color: #1e293b; }
+
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+  `]
 })
 export class GestionIntervencionComponent implements OnInit {
   tramite: Tramite | null = null;
@@ -234,6 +380,9 @@ export class GestionIntervencionComponent implements OnInit {
   showNuevoHito = false;
   idTramite: number | null = null;
 
+  tecnicosDisponibles: any[] = [];
+  instaladoresDisponibles: TecnicoInstalador[] = [];
+
   filesToUpload: File[] = [];
   nombreVisibleUpload = '';
 
@@ -242,6 +391,8 @@ export class GestionIntervencionComponent implements OnInit {
   constructor(
     private tramiteService: TramiteService,
     private seguimientoService: SeguimientoService,
+    private usuarioService: UsuarioService,
+    private instaladorService: TecnicoInstaladorService,
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private http: HttpClient
@@ -250,7 +401,9 @@ export class GestionIntervencionComponent implements OnInit {
       comentario: ['', Validators.required],
       fechaSeguimiento: [''],
       esUrgente: [false],
-      estado: ['Pendiente']
+      estado: ['Pendiente'],
+      idsUsuariosAsignados: [[]],
+      idsTecnicosInstaladores: [[]]
     });
 
     this.estadoForm = this.fb.group({
@@ -299,10 +452,36 @@ export class GestionIntervencionComponent implements OnInit {
     // Archivos
     this.http.get<ArchivoTramite[]>(`${this.archivosBaseUrl}/tramite/${this.idTramite}`)
       .subscribe(data => this.archivos = data);
+
+    // Fetch technicians and installers
+    this.usuarioService.getAll().subscribe(users => {
+      this.tecnicosDisponibles = users.filter(u => u.rol === 'TÉCNICO');
+    });
+    this.instaladorService.getActivos().subscribe(inst => {
+      this.instaladoresDisponibles = inst;
+    });
   }
 
   toggleNuevoHito() {
     this.showNuevoHito = !this.showNuevoHito;
+    if (this.showNuevoHito) {
+      this.form.patchValue({
+        idsUsuariosAsignados: [],
+        idsTecnicosInstaladores: []
+      });
+    }
+  }
+
+  toggleSelection(controlName: string, id: number) {
+    const control = this.form.get(controlName);
+    const current = control?.value as number[];
+    const index = current.indexOf(id);
+    if (index === -1) {
+      current.push(id);
+    } else {
+      current.splice(index, 1);
+    }
+    control?.setValue(current);
   }
 
   addHito() {
@@ -376,7 +555,7 @@ export class GestionIntervencionComponent implements OnInit {
       next: (newHito) => {
         this.seguimientos.unshift(newHito);
       },
-      error: () => {},
+      error: () => { },
     });
   }
 

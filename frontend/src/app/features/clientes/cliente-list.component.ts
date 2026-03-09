@@ -555,13 +555,16 @@ export class ClienteListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Prioridad 1: Si el término es un número y coincide EXACTAMENTE con un ID
-    const exactIdMatch = this.clientes.find(c =>
-      c.idCliente && c.idCliente.toString() === term
-    );
-    if (exactIdMatch) {
-      this.filtrados = [exactIdMatch];
-      return;
+    // Prioridad 1: Si el término es un número, buscar por ID real
+    const num = Number(term);
+    if (!isNaN(num)) {
+      const exactIdMatch = this.clientes.find(c =>
+        c.idCliente && c.idCliente.toString() === term
+      );
+      if (exactIdMatch) {
+        this.filtrados = [exactIdMatch];
+        return;
+      }
     }
 
     // Prioridad 2: Búsqueda general por substring (insensible a tildes)

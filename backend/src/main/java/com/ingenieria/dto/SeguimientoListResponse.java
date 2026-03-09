@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 /** DTO para listar hitos de seguimiento (evita LazyInit al serializar). */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class SeguimientoListResponse {
     private Long idSeguimiento;
     private Long idTramite;
@@ -25,4 +24,9 @@ public class SeguimientoListResponse {
     private Long idCreador;
     private Long idProveedor;
     private String nombreProveedor;
+
+    private java.util.List<Long> idsTecnicosInstaladores;
+    private java.util.List<String> nombresTecnicosInstaladores;
+    private java.util.List<Long> idsUsuariosAsignados;
+    private java.util.List<String> nombresUsuariosAsignados;
 }

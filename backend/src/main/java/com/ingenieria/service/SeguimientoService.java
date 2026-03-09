@@ -6,10 +6,12 @@ import com.ingenieria.model.Seguimiento;
 import com.ingenieria.model.Tramite;
 import com.ingenieria.model.Usuario;
 import com.ingenieria.model.Proveedor;
+import com.ingenieria.model.TecnicoInstalador;
 import com.ingenieria.repository.SeguimientoRepository;
 import com.ingenieria.repository.TramiteRepository;
 import com.ingenieria.repository.UsuarioRepository;
 import com.ingenieria.repository.ProveedorRepository;
+import com.ingenieria.repository.TecnicoInstaladorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +35,8 @@ public class SeguimientoService {
     private UsuarioRepository usuarioRepo;
     @Autowired
     private ProveedorRepository proveedorRepo;
+    @Autowired
+    private TecnicoInstaladorRepository tecnicoInstaladorRepo;
 
     public List<Seguimiento> findByTramite(Long idTramite) {
         return seguimientoRepo.findByTramite_IdTramiteOrderByFechaRegistroDesc(idTramite);
@@ -45,20 +49,48 @@ public class SeguimientoService {
      * entrar al detalle).
      */
     private static SeguimientoListResponse toListResponse(Seguimiento s) {
-        return new SeguimientoListResponse(
-                s.getIdSeguimiento(),
-                s.getTramite() != null ? s.getTramite().getIdTramite() : null,
-                s.getComentario(),
-                s.getFechaSeguimiento(),
-                s.getEsUrgente(),
-                s.getEstado(),
-                s.getFechaRegistro(),
-                s.getUsuarioAsignado() != null ? s.getUsuarioAsignado().getNombreUsuario() : null,
-                s.getUsuarioAsignado() != null ? s.getUsuarioAsignado().getIdUsuario() : null,
-                s.getCreador() != null ? s.getCreador().getNombreUsuario() : null,
-                s.getCreador() != null ? s.getCreador().getIdUsuario() : null,
-                s.getProveedor() != null ? s.getProveedor().getIdProveedor() : null,
-                s.getProveedor() != null ? s.getProveedor().getNombreComercial() : null);
+        SeguimientoListResponse res = new SeguimientoListResponse();
+        res.setIdSeguimiento(s.getIdSeguimiento());
+        res.setIdTramite(s.getTramite() != null ? s.getTramite().getIdTramite() : null);
+        res.setComentario(s.getComentario());
+        res.setFechaSeguimiento(s.getFechaSeguimiento());
+        res.setEsUrgente(Boolean.TRUE.equals(s.getEsUrgente()));
+        res.setEstado(s.getEstado());
+        res.setFechaRegistro(s.getFechaRegistro());
+
+        if (s.getUsuarioAsignado() != null) {
+            res.setNombreAsignado(s.getUsuarioAsignado().getNombreUsuario());
+            res.setIdUsuarioAsignado(s.getUsuarioAsignado().getIdUsuario());
+        }
+        if (s.getCreador() != null) {
+            res.setNombreCreador(s.getCreador().getNombreUsuario());
+            res.setIdCreador(s.getCreador().getIdUsuario());
+        }
+        if (s.getProveedor() != null) {
+            res.setIdProveedor(s.getProveedor().getIdProveedor());
+            res.setNombreProveedor(s.getProveedor().getNombreComercial());
+        }
+
+        // Mapeo de listas múltiples
+        if (s.getTecnicosInstaladores() != null) {
+            res.setIdsTecnicosInstaladores(s.getTecnicosInstaladores().stream()
+                    .map(TecnicoInstalador::getIdTecnicoInstalador)
+                    .collect(Collectors.toList()));
+            res.setNombresTecnicosInstaladores(s.getTecnicosInstaladores().stream()
+                    .map(TecnicoInstalador::getNombre)
+                    .collect(Collectors.toList()));
+        }
+
+        if (s.getUsuariosAsignados() != null) {
+            res.setIdsUsuariosAsignados(s.getUsuariosAsignados().stream()
+                    .map(Usuario::getIdUsuario)
+                    .collect(Collectors.toList()));
+            res.setNombresUsuariosAsignados(s.getUsuariosAsignados().stream()
+                    .map(Usuario::getNombreUsuario)
+                    .collect(Collectors.toList()));
+        }
+
+        return res;
     }
 
     @Transactional
@@ -83,31 +115,61 @@ public class SeguimientoService {
     }
 
     private void ensurePrimerHito(Long idTramite) {
-        if (seguimientoRepo.countByTramite_IdTramite(idTramite) > 0)
+        List<Seguimiento> existentes = seguimientoRepo
+                .findByTramite_IdTramiteOrderByFechaRegistroDesc(idTramite);
+
+        if (existentes.isEmpty()) {
+            // No hay historial: creamos el hito de apertura estándar
+            Tramite t = tramiteRepo.findById(idTramite)
+                    .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + idTramite));
+
+            Usuario creador = null;
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                creador = usuarioRepo.findByNombreUsuario(auth.getName()).orElse(null);
+            }
+            if (creador == null) {
+                creador = usuarioRepo.findAll().stream().findFirst()
+                        .orElseThrow(() -> new RuntimeException("No hay usuarios en el sistema"));
+            }
+
+            Seguimiento s = new Seguimiento();
+            s.setTramite(t);
+            s.setComentario(COMENTARIO_APERTURA);
+            s.setFechaSeguimiento(LocalDate.now());
+            s.setEstado("Pendiente");
+            s.setEsUrgente(false);
+            s.setCreador(creador);
+            s.setUsuarioAsignado(creador);
+            seguimientoRepo.save(s);
             return;
-
-        Tramite t = tramiteRepo.findById(idTramite)
-                .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + idTramite));
-
-        Usuario creador = null;
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null) {
-            creador = usuarioRepo.findByNombreUsuario(auth.getName()).orElse(null);
-        }
-        if (creador == null) {
-            creador = usuarioRepo.findAll().stream().findFirst()
-                    .orElseThrow(() -> new RuntimeException("No hay usuarios en el sistema"));
         }
 
-        Seguimiento s = new Seguimiento();
-        s.setTramite(t);
-        s.setComentario(COMENTARIO_APERTURA);
-        s.setFechaSeguimiento(LocalDate.now());
-        s.setEstado("Pendiente");
-        s.setEsUrgente(false);
-        s.setCreador(creador);
-        s.setUsuarioAsignado(creador);
-        seguimientoRepo.save(s);
+        // Saneador: si por algún motivo hay seguimientos "en blanco" recién creados,
+        // nos aseguramos de que al menos uno tenga el comentario de apertura
+        // y eliminamos duplicados completamente vacíos.
+        List<Seguimiento> blancos = existentes.stream()
+                .filter(s -> (s.getComentario() == null || s.getComentario().isBlank()))
+                .toList();
+
+        if (!blancos.isEmpty()) {
+            Seguimiento principal = blancos.get(0);
+            if (principal.getComentario() == null || principal.getComentario().isBlank()) {
+                principal.setComentario(COMENTARIO_APERTURA);
+            }
+            if (principal.getEstado() == null || principal.getEstado().isBlank()) {
+                principal.setEstado("Pendiente");
+            }
+            if (principal.getFechaSeguimiento() == null) {
+                principal.setFechaSeguimiento(LocalDate.now());
+            }
+            seguimientoRepo.save(principal);
+
+            if (blancos.size() > 1) {
+                // Eliminamos duplicados completamente vacíos (solo en el caso especial de alta)
+                blancos.stream().skip(1).forEach(seguimientoRepo::delete);
+            }
+        }
     }
 
     @Transactional
@@ -143,32 +205,29 @@ public class SeguimientoService {
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
             s.setProveedor(p);
             s.setUsuarioAsignado(creador);
-            asignado = creador;
         } else if (dto.getIdUsuarioAsignado() != null) {
             Usuario u = usuarioRepo.findById(dto.getIdUsuarioAsignado())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
             s.setUsuarioAsignado(u);
-            asignado = u;
         } else {
             s.setUsuarioAsignado(creador);
-            asignado = creador;
+        }
+
+        // Handle multiple assignments if IDs are provided
+        if (dto.getIdsTecnicosInstaladores() != null) {
+            List<TecnicoInstalador> installers = tecnicoInstaladorRepo.findAllById(dto.getIdsTecnicosInstaladores());
+            s.getTecnicosInstaladores().clear();
+            s.getTecnicosInstaladores().addAll(installers);
+        }
+
+        if (dto.getIdsUsuariosAsignados() != null) {
+            List<Usuario> technicals = usuarioRepo.findAllById(dto.getIdsUsuariosAsignados());
+            s.getUsuariosAsignados().clear();
+            s.getUsuariosAsignados().addAll(technicals);
         }
 
         Seguimiento saved = seguimientoRepo.save(s);
-        return new SeguimientoListResponse(
-                saved.getIdSeguimiento(),
-                dto.getIdTramite(),
-                saved.getComentario(),
-                saved.getFechaSeguimiento(),
-                saved.getEsUrgente(),
-                saved.getEstado(),
-                saved.getFechaRegistro(),
-                asignado != null ? asignado.getNombreUsuario() : null,
-                asignado != null ? asignado.getIdUsuario() : null,
-                creador != null ? creador.getNombreUsuario() : null,
-                creador != null ? creador.getIdUsuario() : null,
-                saved.getProveedor() != null ? saved.getProveedor().getIdProveedor() : null,
-                saved.getProveedor() != null ? saved.getProveedor().getNombreComercial() : null);
+        return toListResponse(saved);
     }
 
     @Transactional
@@ -176,9 +235,15 @@ public class SeguimientoService {
         Seguimiento s = seguimientoRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Seguimiento no encontrado: " + id));
 
-        s.setComentario(dto.getComentario());
-        s.setFechaSeguimiento(dto.getFechaSeguimiento());
-        s.setEsUrgente(Boolean.TRUE.equals(dto.getEsUrgente()));
+        if (dto.getComentario() != null) {
+            s.setComentario(dto.getComentario());
+        }
+        if (dto.getFechaSeguimiento() != null) {
+            s.setFechaSeguimiento(dto.getFechaSeguimiento());
+        }
+        if (dto.getEsUrgente() != null) {
+            s.setEsUrgente(Boolean.TRUE.equals(dto.getEsUrgente()));
+        }
         if (dto.getEstado() != null && !dto.getEstado().isBlank()) {
             s.setEstado(dto.getEstado());
         }
@@ -198,9 +263,19 @@ public class SeguimientoService {
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
             s.setUsuarioAsignado(u);
         }
-        // If null in DTO, we keep the previous value because DB column is NOT NULL.
-        // If we wanted to enforce it provided: else { throw new
-        // RuntimeException("Usuario asignado obligatorio"); }
+
+        // Handle multiple assignments update
+        if (dto.getIdsTecnicosInstaladores() != null) {
+            List<TecnicoInstalador> installers = tecnicoInstaladorRepo.findAllById(dto.getIdsTecnicosInstaladores());
+            s.getTecnicosInstaladores().clear();
+            s.getTecnicosInstaladores().addAll(installers);
+        }
+
+        if (dto.getIdsUsuariosAsignados() != null) {
+            List<Usuario> technicals = usuarioRepo.findAllById(dto.getIdsUsuariosAsignados());
+            s.getUsuariosAsignados().clear();
+            s.getUsuariosAsignados().addAll(technicals);
+        }
 
         Seguimiento saved = seguimientoRepo.save(s);
         return toListResponse(saved);

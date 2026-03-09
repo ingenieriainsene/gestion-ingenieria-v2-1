@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -65,6 +67,14 @@ public class Seguimiento {
 
     @Column(length = 255)
     private String estado;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "seguimiento_instaladores", joinColumns = @JoinColumn(name = "id_seguimiento"), inverseJoinColumns = @JoinColumn(name = "id_tecnico_instalador"))
+    private List<TecnicoInstalador> tecnicosInstaladores = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "seguimiento_tecnicos", joinColumns = @JoinColumn(name = "id_seguimiento"), inverseJoinColumns = @JoinColumn(name = "id_usuario"))
+    private List<Usuario> usuariosAsignados = new ArrayList<>();
 
     @PrePersist
     public void onCreate() {

@@ -15,6 +15,7 @@ import { AlbaranVentaService, AlbaranVentaDTO } from '../../services/albaran-ven
 import { DocumentosService } from '../../services/documentos.service';
 import { ComprasService, CompraDocumentoDTO, CompraDocumentoCreateRequest } from '../../services/compras.service';
 import { UsuarioService as UsuarioApi, Usuario } from '../../services/usuario.service';
+import { TecnicoInstaladorService, TecnicoInstalador } from '../../services/tecnico-instalador.service';
 import { ProveedorService, ProveedorDTO } from '../../services/proveedor.service';
 import { HttpClient } from '@angular/common/http';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
@@ -40,6 +41,7 @@ export class TramiteDetalleComponent implements OnInit {
   detalle: TramiteDetalleResponse | null = null;
   hitos: Seguimiento[] = [];
   tecnicos: Usuario[] = [];
+  instaladores: TecnicoInstalador[] = [];
   proveedores: { id: number; nombre: string }[] = [];
   archivos: ArchivoTramite[] = [];
   showNuevoHito = false;
@@ -79,6 +81,7 @@ export class TramiteDetalleComponent implements OnInit {
     private albaranVentaService: AlbaranVentaService,
     private documentosService: DocumentosService,
     private comprasService: ComprasService,
+    private tecnicoInstaladorService: TecnicoInstaladorService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
@@ -96,7 +99,8 @@ export class TramiteDetalleComponent implements OnInit {
       fechaSeguimiento: [''],
       estado: ['Pendiente'],
       esUrgente: [false],
-      idUsuarioAsignado: [null as number | null],
+      idsUsuariosAsignados: [[] as number[]],
+      idsTecnicosInstaladores: [[] as number[]],
       idProveedor: [null as number | null],
       proveedorLabel: [''],
     });
@@ -125,6 +129,7 @@ export class TramiteDetalleComponent implements OnInit {
       this.cargarDetalle();
       this.cargarHitos();
       this.cargarTecnicos();
+      this.cargarInstaladores();
       this.cargarProveedores();
       this.cargarArchivos();
       this.cargarPresupuestos();
@@ -189,7 +194,14 @@ export class TramiteDetalleComponent implements OnInit {
   cargarHitos() {
     if (!this.idTramite) return;
     this.seguimientoService.getByTramite(this.idTramite).subscribe({
-      next: (list) => (this.hitos = list || []),
+      next: (list) => {
+        const data = list || [];
+        if (!data.length) {
+          this.crearHitoInicial();
+        } else {
+          this.hitos = data;
+        }
+      },
       error: () => { },
     });
   }
@@ -197,6 +209,13 @@ export class TramiteDetalleComponent implements OnInit {
   cargarTecnicos() {
     this.usuarioService.getTecnicos().subscribe({
       next: (list) => (this.tecnicos = list || []),
+      error: () => { },
+    });
+  }
+
+  cargarInstaladores() {
+    this.tecnicoInstaladorService.getActivos().subscribe({
+      next: (list: TecnicoInstalador[]) => (this.instaladores = list || []),
       error: () => { },
     });
   }
@@ -259,6 +278,31 @@ export class TramiteDetalleComponent implements OnInit {
       error: () => {
         this.documentosCompra = [];
         this.cargandoCompras = false;
+      }
+    });
+  }
+
+  private crearHitoInicial() {
+    if (!this.idTramite) return;
+
+    const hoyStr = new Date().toISOString().slice(0, 10);
+    const payload: Seguimiento = {
+      idTramite: this.idTramite,
+      comentario: 'Iniciar Actividad',
+      fechaSeguimiento: hoyStr,
+      esUrgente: false,
+      estado: 'Pendiente',
+      idsTecnicosInstaladores: [],
+      idsUsuariosAsignados: [],
+    } as any;
+
+    this.seguimientoService.create(payload).subscribe({
+      next: (res) => {
+        // Insertamos el nuevo hito al inicio para que se vea sin recargar
+        this.hitos = [res, ...this.hitos];
+      },
+      error: () => {
+        // Si falla, dejamos la lista como esté para no bloquear la pantalla
       }
     });
   }
@@ -720,10 +764,20 @@ export class TramiteDetalleComponent implements OnInit {
         fechaSeguimiento: new Date().toISOString().slice(0, 10),
         estado: 'Pendiente',
         esUrgente: false,
-        idUsuarioAsignado: this.tecnicos[0]?.idUsuario ?? null,
+        idsUsuariosAsignados: [],
+        idsTecnicosInstaladores: [],
         idProveedor: null,
         proveedorLabel: '',
       });
+    }
+  }
+
+  toggleSelection(field: string, id: number) {
+    const arr = this.formHito.get(field)?.value as number[] || [];
+    if (arr.includes(id)) {
+      this.formHito.patchValue({ [field]: arr.filter(x => x !== id) });
+    } else {
+      this.formHito.patchValue({ [field]: [...arr, id] });
     }
   }
 
@@ -742,7 +796,8 @@ export class TramiteDetalleComponent implements OnInit {
       fechaSeguimiento: fSeg,
       estado: h.estado || 'Pendiente',
       esUrgente: !!h.esUrgente,
-      idUsuarioAsignado: h.idUsuarioAsignado ?? null,
+      idsUsuariosAsignados: h.idsUsuariosAsignados || [],
+      idsTecnicosInstaladores: h.idsTecnicosInstaladores || [],
       idProveedor: h.idProveedor ?? null,
       proveedorLabel: h.nombreProveedor || '',
     });
@@ -763,7 +818,8 @@ export class TramiteDetalleComponent implements OnInit {
       fechaSeguimiento: v.fechaSeguimiento || new Date().toISOString().slice(0, 10),
       estado: v.estado || 'Pendiente',
       esUrgente: !!v.esUrgente,
-      idUsuarioAsignado: v.idUsuarioAsignado ?? undefined,
+      idsUsuariosAsignados: v.idsUsuariosAsignados || [],
+      idsTecnicosInstaladores: v.idsTecnicosInstaladores || [],
       idProveedor: finalIdProveedor ?? undefined,
     };
 
@@ -818,68 +874,8 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
-  private hitoSaveTimers: Record<number, any> = {};
-
-  programarGuardadoHito(h: Seguimiento) {
-    if (!h.idSeguimiento) {
-      return;
-    }
-    const id = h.idSeguimiento;
-    if (this.hitoSaveTimers[id]) {
-      clearTimeout(this.hitoSaveTimers[id]);
-    }
-    this.hitoSaveTimers[id] = setTimeout(() => {
-      this.guardarHitoInline(h);
-    }, 600);
-  }
-
-  autoResize(event: Event) {
-    const textarea = event.target as HTMLTextAreaElement;
-    if (!textarea) {
-      return;
-    }
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }
-
-  guardarHitoInline(h: Seguimiento) {
-    if (!h.idSeguimiento || !this.idTramite) {
-      return;
-    }
-
-    const fechaSeg =
-      h.fechaSeguimiento
-        ? (typeof h.fechaSeguimiento === 'string'
-          ? h.fechaSeguimiento
-          : new Date(h.fechaSeguimiento).toISOString().slice(0, 10))
-        : new Date().toISOString().slice(0, 10);
-
-    const payload: Partial<Seguimiento> = {
-      idTramite: this.idTramite,
-      comentario: h.comentario,
-      fechaSeguimiento: fechaSeg,
-      estado: h.estado || 'Pendiente',
-      esUrgente: !!h.esUrgente,
-      idUsuarioAsignado: h.idUsuarioAsignado ?? undefined,
-      idProveedor: h.idProveedor ?? undefined,
-    };
-
-    this.seguimientoService.update(h.idSeguimiento, payload).subscribe({
-      next: () => {
-        Swal.fire({
-          title: 'Guardado',
-          text: 'Seguimiento actualizado correctamente.',
-          icon: 'success',
-          toast: true,
-          position: 'top-end',
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        this.cargarHitos();
-      },
-      error: (e) => this.handleHitoError(e),
-    });
-  }
+  // Edición de seguimientos: se gestiona a través del formulario formHito
+  // usando los métodos guardarHito / editarHito ya existentes.
 
   onFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
