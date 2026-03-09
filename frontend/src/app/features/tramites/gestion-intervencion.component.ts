@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { TramiteService, SeguimientoService, Tramite, Seguimiento } from '../../services/domain.services';
 import { UsuarioService } from '../../services/usuario.service';
 import { TecnicoInstalador, TecnicoInstaladorService } from '../../services/tecnico-instalador.service';
@@ -36,8 +37,11 @@ interface ArchivoTramite {
         </small><br>
         <small style="opacity:0.7;">Estado actual: {{ tramite.estado || 'Pendiente' }}</small>
       </div>
-      <a [routerLink]="['/contratos', tramite.idContrato]"
-         style="color:white; text-decoration:none; font-weight:bold;">← Volver al contrato</a>
+      <button type="button"
+              (click)="goBack()"
+              style="background:transparent; border:none; color:white; text-decoration:none; font-weight:bold; cursor:pointer;">
+        ← Volver atrás
+      </button>
     </div>
 
     <!-- Panel superior: Estado, Urgente, Observaciones, Fecha (replica detalle_tramite.php) -->
@@ -234,11 +238,7 @@ interface ArchivoTramite {
         </div>
       </div>
 
-      <div class="footer-nav mt-5">
-        <a [routerLink]="['/contratos', tramite.idContrato]" class="btn-link-back">
-          ← Volver al Contrato principal
-        </a>
-      </div>
+      <div class="footer-nav mt-5"></div>
     </div>
   </div>
   `,
@@ -395,7 +395,8 @@ export class GestionIntervencionComponent implements OnInit {
     private instaladorService: TecnicoInstaladorService,
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    private http: HttpClient
+    private http: HttpClient,
+    private location: Location
   ) {
     this.form = this.fb.group({
       comentario: ['', Validators.required],
@@ -421,6 +422,10 @@ export class GestionIntervencionComponent implements OnInit {
         this.loadData();
       }
     });
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   loadData() {

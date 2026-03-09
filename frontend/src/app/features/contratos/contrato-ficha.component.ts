@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContratoService, ClienteService, LocalService, Contrato, Cliente, Local } from '../../services/domain.services';
@@ -14,9 +14,9 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
   template: `
     <div class="ficha-wrapper">
       <div class="header-section">
-        <a [routerLink]="idContrato ? ['/contratos', idContrato] : ['/contratos']" class="back-link">
-          <span class="icon">←</span> {{ idContrato ? 'Volver al contrato' : 'Volver al listado' }}
-        </a>
+        <button type="button" class="back-link" (click)="goBack()">
+          <span class="icon">←</span> Volver atrás
+        </button>
         <h2>{{ idContrato ? 'Editar Contrato' : 'Nuevo Contrato' }}</h2>
         <p class="subtitle">{{ idContrato ? 'Modifique los datos del contrato.' : 'Complete la información para registrar un nuevo contrato.' }}</p>
         
@@ -169,7 +169,7 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
           </div>
 
           <div class="form-actions">
-            <button type="button" [routerLink]="idContrato ? ['/contratos', idContrato] : ['/contratos']" class="btn-cancel">Cancelar</button>
+            <button type="button" (click)="goBack()" class="btn-cancel">Cancelar</button>
             <button type="submit" class="btn-save" [disabled]="form.invalid || loading">
               {{ idContrato ? 'Guardar Cambios' : 'Crear Contrato' }}
             </button>
@@ -507,7 +507,8 @@ export class ContratoFichaComponent implements OnInit {
     private clienteService: ClienteService,
     private localService: LocalService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {
     this.formNuevoCliente = this.fb.group({
       nombre: ['', Validators.required],
@@ -783,6 +784,10 @@ export class ContratoFichaComponent implements OnInit {
       this.loading = false;
       console.error(e);
     }
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   private formatDate(dateStr?: string): string {
