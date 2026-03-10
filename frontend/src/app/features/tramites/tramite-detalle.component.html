@@ -375,7 +375,13 @@
         </div>
       </div>
       <div class="card-body">
-        <form [formGroup]="formCompra" class="manual-albaran-box" (ngSubmit)="crearAlbaranCompra()">
+        <div class="compras-form-toggle">
+          <button type="button" class="btn-secondary" (click)="toggleCompraForm()">
+            {{ showCompraForm ? '✕ Cerrar' : (activeComprasTab === 'ALBARAN' ? '+ Crear albarán' : '+ Crear factura') }}
+          </button>
+        </div>
+
+        <form *ngIf="showCompraForm" [formGroup]="formCompra" class="manual-albaran-box" (ngSubmit)="crearAlbaranCompra()">
           <h4>
             {{ activeComprasTab === 'ALBARAN'
             ? 'Crear albarán de gasto manual'
@@ -453,18 +459,48 @@
 
         <div *ngIf="cargandoCompras" class="empty-state">Cargando documentos de compra...</div>
         <div class="albaranes-wrapper" *ngIf="!cargandoCompras">
-          <div *ngFor="let a of documentosCompraFiltrados; let i = index" class="albaran-card">
+          <div *ngFor="let a of documentosCompraFiltrados; let i = index"
+               class="albaran-card"
+               [attr.id]="'compra-doc-' + a.tipo + '-' + a.idDocumento">
             <details>
               <summary>
                 <div class="albaran-summary">
                   <div class="albaran-main">
-                    <strong>{{ a.tipo }}</strong>
-                    <span class="muted">{{ a.numeroDocumento }}</span>
-                    <span class="muted">({{ a.fecha | date:'dd/MM/yyyy' }})</span>
+                    <ng-container *ngIf="a.tipo === 'ALBARAN'; else tituloFactura">
+                      <strong>{{ getTituloAlbaran(a) }}</strong>
+                    </ng-container>
+                    <ng-template #tituloFactura>
+                      <strong>{{ getTituloFactura(a) }}</strong>
+                    </ng-template>
                   </div>
                   <div class="albaran-meta">
+                    <span
+                      *ngIf="a.tipo === 'ALBARAN'"
+                      class="estado-pill"
+                      [ngClass]="a.facturaId ? 'estado-ok' : 'estado-pendiente'">
+                      {{ a.facturaId ? 'Facturado' : 'Pendiente' }}
+                    </span>
                     <span class="badge">{{ a.proveedorNombre }}</span>
                     <span class="total">{{ a.total | currency:'EUR' }}</span>
+                    <span class="factura-ref" *ngIf="a.tipo === 'ALBARAN'">
+                      Factura asociada:
+                      <ng-container *ngIf="getFacturaAsociada(a) as fac; else sinFactura">
+                        <a href="javascript:void(0)" class="factura-link"
+                           (click)="verFacturaAsociada(a); $event.preventDefault(); $event.stopPropagation();">
+                          {{ getTituloFactura(fac) }}
+                        </a>
+                      </ng-container>
+                      <ng-template #sinFactura>—</ng-template>
+                    </span>
+                    <button
+                      *ngIf="a.tipo === 'ALBARAN' && !a.facturaId"
+                      type="button"
+                      class="btn-secondary"
+                      title="Generar factura para este albarán"
+                      (click)="generarFacturaDesdeAlbaran(a); $event.preventDefault(); $event.stopPropagation();"
+                    >
+                      Generar factura
+                    </button>
                     <button type="button" class="btn-icon-delete"
                       [disabled]="eliminandoDocsCompra[(a.tipo + '-' + a.idDocumento)]" title="Eliminar documento"
                       (click)="eliminarDocumentoCompra(a, i); $event.preventDefault(); $event.stopPropagation();">
@@ -475,7 +511,9 @@
               </summary>
               <div class="albaran-body">
                 <div class="albaran-notas" *ngIf="a.notas">Notas: {{ a.notas }}</div>
-                <div class="albaran-estado" *ngIf="a.estado">Estado: <strong>{{ a.estado }}</strong></div>
+                <div class="albaran-estado" *ngIf="a.tipo === 'ALBARAN' && a.estado">
+                  Estado: <strong>{{ a.estado }}</strong>
+                </div>
                 <table class="modern-table table-card">
                   <thead>
                     <tr>
@@ -511,11 +549,6 @@
             No hay {{ activeComprasTab === 'ALBARAN' ? 'albaranes de compra' : 'facturas de proveedor' }} para esta
             intervención.
           </div>
-          <div *ngIf="activeComprasTab === 'ALBARAN' && documentosCompraFiltrados.length > 0" class="acciones-globales">
-            <button type="button" class="btn-primary" (click)="generarFacturaGlobalAlbaranes()">
-              Generar factura agrupando todos los albaranes
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -525,100 +558,191 @@
   <div *ngIf="activeTab === 'ventas'" class="tab-content fade-in">
     <div class="form-card">
       <div class="card-header flex-between">
-        <h3>🧾 Albaranes de Venta</h3>
+        <h3>🧾 Ventas</h3>
+        <div class="subtabs">
+          <button type="button" class="subtab-btn" [class.active]="activeVentasTab === 'ALBARAN'"
+                  (click)="setVentasTab('ALBARAN')">
+            Albaranes
+          </button>
+          <button type="button" class="subtab-btn" [class.active]="activeVentasTab === 'FACTURA'"
+                  (click)="setVentasTab('FACTURA')">
+            Facturas
+          </button>
+        </div>
       </div>
       <div class="card-body">
+        <!-- Generación desde presupuesto aceptado (legacy) -->
         <div class="manual-albaran-box">
-          <h4>Albarán de venta</h4>
-          <p class="muted" style="margin: 0 0 10px;">Genera y descarga el albarán directamente desde un presupuesto en
-            estado <strong>Aceptado</strong>.</p>
+          <h4>Desde presupuesto aceptado</h4>
+          <p class="muted" style="margin: 0 0 10px;">
+            Genera y descarga el albarán de venta directamente desde un presupuesto en estado
+            <strong>Aceptado</strong>.
+          </p>
           <div class="table-responsive">
             <table class="modern-table table-card">
               <thead>
-                <tr>
-                  <th>Referencia</th>
-                  <th>Fecha</th>
-                  <th>Estado</th>
-                  <th class="right">Total</th>
-                  <th class="right">Acción</th>
-                </tr>
+              <tr>
+                <th>Referencia</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th class="right">Total</th>
+                <th class="right">Acción</th>
+              </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let p of presupuestos">
-                  <td data-label="Referencia">{{ p.codigoReferencia || ('#' + p.idPresupuesto) }}</td>
-                  <td data-label="Fecha">{{ p.fecha ? (p.fecha | date:'dd/MM/yyyy') : '—' }}</td>
-                  <td data-label="Estado">{{ p.estado || '—' }}</td>
-                  <td data-label="Total" class="right">{{ p.total | currency:'EUR' }}</td>
-                  <td data-label="Acción" class="right">
-                    <button type="button" class="btn-doc btn-albaran"
-                      [disabled]="p.estado !== 'Aceptado' || descargandoDocs['albaran-' + p.idPresupuesto]"
-                      (click)="descargarDocumento('albaran', p)">
-                      Generar/Descargar
-                    </button>
-                  </td>
-                </tr>
-                <tr *ngIf="presupuestos.length === 0">
-                  <td colspan="5" class="empty-state">No hay presupuestos asociados a esta intervención.</td>
-                </tr>
+              <tr *ngFor="let p of presupuestos">
+                <td data-label="Referencia">{{ p.codigoReferencia || ('#' + p.idPresupuesto) }}</td>
+                <td data-label="Fecha">{{ p.fecha ? (p.fecha | date:'dd/MM/yyyy') : '—' }}</td>
+                <td data-label="Estado">{{ p.estado || '—' }}</td>
+                <td data-label="Total" class="right">{{ p.total | currency:'EUR' }}</td>
+                <td data-label="Acción" class="right">
+                  <button type="button" class="btn-doc btn-albaran"
+                          [disabled]="p.estado !== 'Aceptado' || descargandoDocs['albaran-' + p.idPresupuesto]"
+                          (click)="descargarDocumento('albaran', p)">
+                    Generar/Descargar
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="presupuestos.length === 0">
+                <td colspan="5" class="empty-state">No hay presupuestos asociados a esta intervención.</td>
+              </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <div *ngIf="cargandoAlbaranes" class="empty-state">Cargando albaranes...</div>
-        <div class="albaranes-wrapper" *ngIf="!cargandoAlbaranes">
-          <div *ngFor="let a of albaranesVenta" class="albaran-card">
+        <!-- Formulario manual de documentos de venta -->
+        <div class="compras-form-toggle">
+          <button type="button" class="btn-secondary" (click)="toggleVentaForm()">
+            {{ showVentaForm ? '✕ Cerrar' : (activeVentasTab === 'ALBARAN' ? '+ Crear albarán de venta' : '+ Crear factura de venta') }}
+          </button>
+        </div>
+        <form *ngIf="showVentaForm" [formGroup]="formVenta" class="manual-albaran-box" (ngSubmit)="crearDocumentoVenta()">
+          <h4>
+            {{ activeVentasTab === 'ALBARAN'
+            ? 'Crear albarán de venta manual'
+            : 'Crear factura de venta manual' }}
+          </h4>
+          <div class="form-grid three-cols">
+            <div class="field">
+              <label>Nº documento</label>
+              <input class="input" formControlName="numeroDocumento"
+                     [placeholder]="activeVentasTab === 'ALBARAN' ? 'Ej: ALB-VENTA-2025-001' : 'Ej: FAC-VENTA-2025-001'" />
+              <small class="field-hint">
+                Número interno del documento de venta.
+              </small>
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <input class="input" type="date" formControlName="fecha" />
+            </div>
+            <div class="field">
+              <label>Importe total (€)</label>
+              <input class="input" type="number" min="0" step="0.01" formControlName="importe" readonly />
+              <small class="field-hint">
+                Se calcula automáticamente a partir de las líneas.
+              </small>
+            </div>
+          </div>
+
+          <div class="lineas-compra">
+            <div class="lineas-header">
+              <strong>Líneas de la {{ activeVentasTab === 'ALBARAN' ? 'albarán' : 'factura' }}</strong>
+              <button type="button" class="btn-secondary" (click)="agregarLineaVenta()">+ Añadir línea</button>
+            </div>
+            <div class="linea-head-grid">
+              <span>Descripción del producto/servicio</span>
+              <span>Cantidad</span>
+              <span>Precio unitario (€)</span>
+              <span>IVA (%)</span>
+              <span>Total línea (€)</span>
+              <span></span>
+            </div>
+            <div formArrayName="lineas">
+              <div class="linea-row" *ngFor="let l of lineasVenta.controls; let i = index" [formGroupName]="i">
+                <input class="input" formControlName="concepto" placeholder="Descripción" />
+                <input class="input" type="number" min="0.01" step="0.01" formControlName="cantidad"
+                       placeholder="Cantidad" />
+                <input class="input" type="number" min="0" step="0.01" formControlName="precioUnitario"
+                       placeholder="P. unitario" />
+                <input class="input" type="number" min="0" step="0.01" formControlName="ivaPorcentaje"
+                       placeholder="IVA %" />
+                <input class="input" type="number" formControlName="totalConIva" readonly />
+                <button type="button" class="btn-icon-delete" (click)="eliminarLineaVenta(i)">🗑️</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid three-cols">
+            <div class="field">
+              <label>ID Presupuesto (opcional)</label>
+              <input class="input" type="number" min="1" step="1" formControlName="presupuestoId"
+                     placeholder="Vincular a presupuesto concreto (opcional)" />
+              <small class="field-hint">
+                Si lo rellenas, el documento quedará enlazado al presupuesto indicado.
+              </small>
+            </div>
+            <div class="field full-width">
+              <label>Notas</label>
+              <input class="input" formControlName="notas" placeholder="Observaciones de la venta..." />
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button type="submit" class="btn-primary">
+              {{ activeVentasTab === 'ALBARAN' ? 'Guardar albarán de venta' : 'Guardar factura de venta' }}
+            </button>
+          </div>
+        </form>
+
+        <!-- Listado de documentos de venta -->
+        <div *ngIf="cargandoVentas" class="empty-state">Cargando documentos de venta...</div>
+        <div class="albaranes-wrapper" *ngIf="!cargandoVentas">
+          <div *ngFor="let d of documentosVentaFiltrados"
+               class="albaran-card"
+               [attr.id]="'venta-doc-' + d.tipo + '-' + d.idDocumento">
             <details>
               <summary>
                 <div class="albaran-summary">
                   <div class="albaran-main">
-                    <strong>{{ a.numeroAlbaran }}</strong>
-                    <span class="muted">({{ a.fecha | date:'dd/MM/yyyy' }})</span>
+                    <strong>{{ getTituloVenta(d) }}</strong>
                   </div>
                   <div class="albaran-meta">
-                    <span class="badge">Presupuesto #{{ a.presupuestoId }}</span>
-                    <span class="total">{{ a.total | currency:'EUR' }}</span>
-                    <button type="button" class="btn-secondary"
-                      (click)="descargarAlbaranVenta(a); $event.preventDefault(); $event.stopPropagation();">
-                      PDF
-                    </button>
+                    <span
+                      *ngIf="d.tipo === 'ALBARAN'"
+                      class="estado-pill"
+                      [ngClass]="getFacturaVentaAsociada(d) ? 'estado-ok' : 'estado-pendiente'">
+                      {{ getFacturaVentaAsociada(d) ? 'Facturado' : 'Pendiente' }}
+                    </span>
+                    <span class="badge manual">{{ d.tipo === 'ALBARAN' ? 'ALBARÁN VENTA' : 'FACTURA VENTA' }}</span>
+                    <span class="total">{{ d.total | currency:'EUR' }}</span>
                   </div>
                 </div>
               </summary>
               <div class="albaran-body">
-                <table class="modern-table table-card">
-                  <thead>
-                    <tr>
-                      <th>Concepto</th>
-                      <th class="right">Cantidad</th>
-                      <th class="right">P. Unit.</th>
-                      <th class="right">IVA %</th>
-                      <th class="right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let l of a.lineas">
-                      <td data-label="Concepto">{{ l.concepto }}</td>
-                      <td data-label="Cantidad" class="right">{{ l.cantidad | number:'1.2-2' }}</td>
-                      <td data-label="P. unit." class="right">{{ l.precioUnitario | currency:'EUR' }}</td>
-                      <td data-label="IVA %" class="right">{{ l.ivaPorcentaje | number:'1.0-2' }}</td>
-                      <td data-label="Total" class="right">{{ l.totalConIva | currency:'EUR' }}</td>
-                    </tr>
-                    <tr *ngIf="!a.lineas || a.lineas.length === 0">
-                      <td colspan="5" class="empty-state">Sin líneas registradas.</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div class="albaran-notas" *ngIf="d.notas">Notas: {{ d.notas }}</div>
+                <div class="albaran-estado" *ngIf="d.tipo === 'ALBARAN'">
+                  <span class="factura-ref">
+                    Factura asociada:
+                    <ng-container *ngIf="getFacturaVentaAsociada(d) as fac; else sinFacVenta">
+                      <a href="javascript:void(0)" class="factura-link"
+                         (click)="verFacturaVentaAsociada(d); $event.preventDefault(); $event.stopPropagation();">
+                        {{ getTituloVenta(fac) }}
+                      </a>
+                    </ng-container>
+                    <ng-template #sinFacVenta>—</ng-template>
+                  </span>
+                </div>
                 <div class="albaran-totales">
-                  <div>Subtotal: <strong>{{ a.subtotal | currency:'EUR' }}</strong></div>
-                  <div>IVA: <strong>{{ a.iva | currency:'EUR' }}</strong></div>
-                  <div class="total">Total: <strong>{{ a.total | currency:'EUR' }}</strong></div>
+                  <div>Subtotal: <strong>{{ d.subtotal | currency:'EUR' }}</strong></div>
+                  <div>IVA: <strong>{{ d.iva | currency:'EUR' }}</strong></div>
+                  <div class="total">Total: <strong>{{ d.total | currency:'EUR' }}</strong></div>
                 </div>
               </div>
             </details>
           </div>
-          <div *ngIf="albaranesVenta.length === 0" class="empty-state">
-            No hay albaranes de venta para esta intervención.
+          <div *ngIf="documentosVentaFiltrados.length === 0" class="empty-state">
+            No hay {{ activeVentasTab === 'ALBARAN' ? 'albaranes de venta' : 'facturas de venta' }} para esta intervención.
           </div>
         </div>
       </div>

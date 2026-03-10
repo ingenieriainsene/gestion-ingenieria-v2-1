@@ -9,6 +9,8 @@ import {
   ContratoService,
   TramiteDetalleResponse,
   Seguimiento,
+  VentaDocumentoDTO,
+  VentaDocumentoCreateRequest,
 } from '../../services/domain.services';
 import { PresupuestoService, PresupuestoListItem } from '../../services/presupuesto.service';
 import { AlbaranVentaService, AlbaranVentaDTO } from '../../services/albaran-venta.service';
@@ -21,6 +23,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environments';
+import { VentaDocumentosService } from '../../services/venta-documentos.service';
 
 interface ArchivoTramite {
   idArchivoT?: number;
@@ -56,6 +59,13 @@ export class TramiteDetalleComponent implements OnInit {
   cargandoCompras = false;
   eliminandoDocsCompra: Record<string, boolean> = {};
   activeComprasTab: 'ALBARAN' | 'FACTURA' = 'ALBARAN';
+  showCompraForm = false;
+
+  documentosVenta: VentaDocumentoDTO[] = [];
+  cargandoVentas = false;
+  activeVentasTab: 'ALBARAN' | 'FACTURA' = 'ALBARAN';
+  showVentaForm = false;
+  formVenta: FormGroup;
 
   // Provider Modal
   modalProveedorVisible = false;
@@ -81,6 +91,7 @@ export class TramiteDetalleComponent implements OnInit {
     private albaranVentaService: AlbaranVentaService,
     private documentosService: DocumentosService,
     private comprasService: ComprasService,
+    private ventaDocumentosService: VentaDocumentosService,
     private tecnicoInstaladorService: TecnicoInstaladorService,
     private http: HttpClient,
     private route: ActivatedRoute,
@@ -116,6 +127,18 @@ export class TramiteDetalleComponent implements OnInit {
     });
     this.formCompra.get('lineas')?.valueChanges.subscribe(() => this.recalcularTotalCompra());
     this.agregarLineaCompra();
+
+    this.formVenta = this.fb.group({
+      tipo: ['ALBARAN', Validators.required],
+      numeroDocumento: ['', Validators.required],
+      fecha: [new Date().toISOString().slice(0, 10), Validators.required],
+      importe: [0, [Validators.required, Validators.min(0)]],
+      notas: [''],
+      presupuestoId: [null as number | null],
+      lineas: this.fb.array([])
+    });
+    this.formVenta.get('lineas')?.valueChanges.subscribe(() => this.recalcularTotalVenta());
+    this.agregarLineaVenta();
   }
 
   ngOnInit() {
@@ -135,6 +158,7 @@ export class TramiteDetalleComponent implements OnInit {
       this.cargarPresupuestos();
       this.cargarAlbaranesVenta();
       this.cargarCompras();
+      this.cargarVentas();
     });
 
     // Configurar autoguardado para Información y Estado
@@ -282,6 +306,21 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
+  cargarVentas() {
+    if (!this.idTramite) return;
+    this.cargandoVentas = true;
+    this.ventaDocumentosService.getByTramite(this.idTramite).subscribe({
+      next: (list) => {
+        this.documentosVenta = list || [];
+        this.cargandoVentas = false;
+      },
+      error: () => {
+        this.documentosVenta = [];
+        this.cargandoVentas = false;
+      }
+    });
+  }
+
   private crearHitoInicial() {
     if (!this.idTramite) return;
 
@@ -310,6 +349,10 @@ export class TramiteDetalleComponent implements OnInit {
   setComprasTab(tab: 'ALBARAN' | 'FACTURA') {
     this.activeComprasTab = tab;
     this.formCompra.patchValue({ tipo: tab });
+  }
+
+  toggleCompraForm() {
+    this.showCompraForm = !this.showCompraForm;
   }
 
   crearAlbaranCompra() {
@@ -371,8 +414,15 @@ export class TramiteDetalleComponent implements OnInit {
       if (!res.isConfirmed) return;
       this.comprasService.generarFacturaDesdeAlbaran(doc.idDocumento).subscribe({
         next: (factura) => {
+          // Añadimos la factura a la colección y marcamos el albarán con su factura asociada
           this.documentosCompra.push(factura);
+          if (factura && factura.idDocumento) {
+            doc.facturaId = factura.idDocumento;
+            doc.estado = 'Facturado';
+          }
           Swal.fire('Generada', 'Factura generada correctamente a partir del albarán.', 'success');
+          // Recargamos para asegurar que los datos quedan sincronizados con backend
+          this.cargarCompras();
           this.setComprasTab('FACTURA');
         },
         error: (e) => {
@@ -496,7 +546,23 @@ export class TramiteDetalleComponent implements OnInit {
       this.comprasService.eliminarDocumento(tipo, doc.idDocumento).subscribe({
         next: () => {
           this.eliminandoDocsCompra[key] = false;
-          this.documentosCompra.splice(index, 1);
+          // Eliminamos el documento de la colección completa,
+          // usando idDocumento y tipo en lugar del índice filtrado.
+          this.documentosCompra = this.documentosCompra.filter(d =>
+            !(d.tipo === tipo && d.idDocumento === doc.idDocumento)
+          );
+
+          // Si borramos una FACTURA, los albaranes del mismo proveedor
+          // deben volver a estado "Pendiente" y sin factura asociada.
+          if (tipo === 'FACTURA' && doc.idProveedor != null) {
+            this.documentosCompra.forEach(d => {
+              if (d.tipo === 'ALBARAN' && d.idProveedor === doc.idProveedor) {
+                d.facturaId = null;
+                d.estado = 'Pendiente';
+              }
+            });
+          }
+
           Swal.fire('Eliminado', `${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)} eliminado correctamente.`, 'success');
         },
         error: (e) => {
@@ -608,7 +674,7 @@ export class TramiteDetalleComponent implements OnInit {
   setTab(tab: string) {
     this.activeTab = tab;
     if (tab === 'ventas') {
-      this.cargarAlbaranesVenta();
+      this.cargarVentas();
     }
     if (tab === 'compras') {
       this.cargarCompras();
@@ -623,8 +689,142 @@ export class TramiteDetalleComponent implements OnInit {
     return this.formCompra.get('lineas') as FormArray;
   }
 
+  get lineasVenta(): FormArray {
+    return this.formVenta.get('lineas') as FormArray;
+  }
+
   get documentosCompraFiltrados(): CompraDocumentoDTO[] {
     return this.documentosCompra.filter(d => d.tipo === this.activeComprasTab);
+  }
+
+  get documentosVentaFiltrados(): VentaDocumentoDTO[] {
+    return this.documentosVenta.filter(d => d.tipo === this.activeVentasTab);
+  }
+
+  getTituloAlbaran(a: CompraDocumentoDTO): string {
+    const idParte = (a.numeroDocumento && a.numeroDocumento.trim()) || `ID${a.idDocumento}`;
+    const proveedor = (a.proveedorNombre || 'SIN_PROVEEDOR').replace(/\s+/g, '_');
+    const estado = a.facturaId ? 'FACTURADO' : 'PENDIENTE';
+    let fecha = '';
+    if (a.fecha) {
+      const d = new Date(a.fecha);
+      if (!isNaN(d.getTime())) {
+        // Formato dd/MM/yyyy
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        fecha = `${dd}/${mm}/${yyyy}`;
+      }
+    }
+    let ivaStr = '';
+    if (a.lineas && a.lineas.length && a.lineas[0].ivaPorcentaje != null) {
+      ivaStr = `${a.lineas[0].ivaPorcentaje}%`;
+    }
+    return `ALB-${idParte}-${proveedor}-${estado}-${fecha}-${ivaStr}`;
+  }
+
+  getTituloFactura(a: CompraDocumentoDTO): string {
+    const idParte = (a.numeroDocumento && a.numeroDocumento.trim()) || `ID${a.idDocumento}`;
+    const proveedor = (a.proveedorNombre || 'SIN_PROVEEDOR').replace(/\s+/g, '_');
+    let fecha = '';
+    if (a.fecha) {
+      const d = new Date(a.fecha);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        fecha = `${dd}/${mm}/${yyyy}`;
+      }
+    }
+    let ivaStr = '';
+    if (a.lineas && a.lineas.length && a.lineas[0].ivaPorcentaje != null) {
+      ivaStr = `${a.lineas[0].ivaPorcentaje}%`;
+    }
+    return `FAC-${idParte}-${proveedor}-${fecha}-${ivaStr}`;
+  }
+
+  getTituloVenta(doc: VentaDocumentoDTO): string {
+    const pref = doc.tipo === 'ALBARAN' ? 'ALB' : 'FAC';
+    const idParte = (doc.numeroDocumento && doc.numeroDocumento.trim()) || `ID${doc.idDocumento}`;
+    let fecha = '';
+    if (doc.fecha) {
+      const d = new Date(doc.fecha);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        fecha = `${dd}/${mm}/${yyyy}`;
+      }
+    }
+    // Para ventas, el "proveedor" somos nosotros mismos (INSENE)
+    return `${pref}-${idParte}-INSENE-${fecha}`;
+  }
+
+  getFacturaVentaAsociada(albaran: VentaDocumentoDTO): VentaDocumentoDTO | null {
+    if (!albaran || albaran.tipo !== 'ALBARAN') return null;
+
+    // 1) Preferimos vinculación por presupuesto si existe
+    if (albaran.presupuestoId != null) {
+      const byPres = this.documentosVenta.find(d =>
+        d.tipo === 'FACTURA' && d.presupuestoId === albaran.presupuestoId
+      );
+      if (byPres) return byPres;
+    }
+
+    // 2) Fallback: mismo trámite
+    if (albaran.tramiteId != null) {
+      const byTramite = this.documentosVenta.find(d =>
+        d.tipo === 'FACTURA' && d.tramiteId === albaran.tramiteId
+      );
+      if (byTramite) return byTramite;
+    }
+
+    return null;
+  }
+
+  verFacturaVentaAsociada(albaran: VentaDocumentoDTO): void {
+    const factura = this.getFacturaVentaAsociada(albaran);
+    if (!factura) return;
+
+    this.setVentasTab('FACTURA');
+    // Delay para asegurar DOM renderizado
+    setTimeout(() => {
+      const el = document.getElementById(`venta-doc-FACTURA-${factura.idDocumento}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('flash-focus');
+        setTimeout(() => el.classList.remove('flash-focus'), 1200);
+      }
+    }, 50);
+  }
+
+  getFacturaAsociada(albaran: CompraDocumentoDTO): CompraDocumentoDTO | null {
+    if (!albaran || albaran.tipo !== 'ALBARAN') return null;
+    if (albaran.facturaId != null) {
+      const byId = this.documentosCompra.find(d => d.tipo === 'FACTURA' && d.idDocumento === albaran.facturaId);
+      if (byId) return byId;
+    }
+    // Fallback profesional: misma intervención + mismo proveedor
+    if (albaran.idProveedor != null) {
+      const byProveedor = this.documentosCompra.find(d => d.tipo === 'FACTURA' && d.idProveedor === albaran.idProveedor);
+      if (byProveedor) return byProveedor;
+    }
+    return null;
+  }
+
+  verFacturaAsociada(albaran: CompraDocumentoDTO): void {
+    const factura = this.getFacturaAsociada(albaran);
+    if (!factura) return;
+    this.setComprasTab('FACTURA');
+    // Pequeño delay para asegurar que el DOM de la pestaña está renderizado
+    setTimeout(() => {
+      const el = document.getElementById(`compra-doc-FACTURA-${factura.idDocumento}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('flash-focus');
+        setTimeout(() => el.classList.remove('flash-focus'), 1200);
+      }
+    }, 50);
   }
 
   agregarLineaCompra() {
@@ -663,6 +863,97 @@ export class TramiteDetalleComponent implements OnInit {
       total += totalConIva;
     }
     this.formCompra.patchValue({ importe: Math.round(total * 100) / 100 }, { emitEvent: false });
+  }
+
+  agregarLineaVenta() {
+    const linea = this.fb.group({
+      concepto: ['', Validators.required],
+      cantidad: [1, [Validators.required, Validators.min(0.01)]],
+      precioUnitario: [0, [Validators.required, Validators.min(0)]],
+      ivaPorcentaje: [21, [Validators.required, Validators.min(0)]],
+      totalLinea: [0],
+      totalIva: [0],
+      totalConIva: [0]
+    });
+    this.lineasVenta.push(linea);
+    this.recalcularTotalVenta();
+  }
+
+  eliminarLineaVenta(index: number) {
+    this.lineasVenta.removeAt(index);
+    this.recalcularTotalVenta();
+  }
+
+  private recalcularTotalVenta() {
+    let total = 0;
+    for (const ctrl of this.lineasVenta.controls) {
+      const v = ctrl.value;
+      const cantidad = Number(v.cantidad || 0);
+      const precio = Number(v.precioUnitario || 0);
+      const iva = Number(v.ivaPorcentaje ?? 21);
+      const base = Math.round(cantidad * precio * 100) / 100;
+      const ivaAmt = Math.round(base * (iva / 100) * 100) / 100;
+      const totalConIva = Math.round((base + ivaAmt) * 100) / 100;
+      ctrl.patchValue(
+        { totalLinea: base, totalIva: ivaAmt, totalConIva },
+        { emitEvent: false }
+      );
+      total += totalConIva;
+    }
+    this.formVenta.patchValue({ importe: Math.round(total * 100) / 100 }, { emitEvent: false });
+  }
+
+  setVentasTab(tab: 'ALBARAN' | 'FACTURA') {
+    this.activeVentasTab = tab;
+    this.formVenta.patchValue({ tipo: tab });
+  }
+
+  toggleVentaForm() {
+    this.showVentaForm = !this.showVentaForm;
+  }
+
+  crearDocumentoVenta() {
+    if (!this.idTramite || this.formVenta.invalid) {
+      this.formVenta.markAllAsTouched();
+      return;
+    }
+    const v = this.formVenta.value;
+    const lineas = this.lineasVenta.value || [];
+    if (lineas.length === 0) {
+      Swal.fire('Aviso', 'Añade al menos una línea al documento de venta.', 'warning');
+      return;
+    }
+    const payload: VentaDocumentoCreateRequest = {
+      tipo: this.activeVentasTab,
+      numeroDocumento: String(v.numeroDocumento).trim(),
+      fecha: String(v.fecha),
+      importe: Number(v.importe || 0),
+      notas: v.notas ? String(v.notas).trim() : undefined,
+      presupuestoId: v.presupuestoId ? Number(v.presupuestoId) : undefined,
+      lineas
+    };
+    this.ventaDocumentosService.crearDocumento(this.idTramite, payload).subscribe({
+      next: (doc) => {
+        Swal.fire('Guardado', `${this.activeVentasTab === 'ALBARAN' ? 'Albarán' : 'Factura'} de venta registrada correctamente.`, 'success');
+        this.documentosVenta.push(doc);
+        this.formVenta.patchValue({
+          tipo: this.activeVentasTab,
+          numeroDocumento: '',
+          fecha: new Date().toISOString().slice(0, 10),
+          importe: 0,
+          notas: '',
+          presupuestoId: null,
+        });
+        this.lineasVenta.clear();
+        this.agregarLineaVenta();
+      },
+      error: (e) => {
+        let msg = 'No se pudo registrar el documento de venta.';
+        if (typeof e?.error === 'string') msg = e.error;
+        else if (e?.error?.message) msg = e.error.message;
+        Swal.fire('Error', msg, 'error');
+      }
+    });
   }
 
   guardarInfo(silent = false) {

@@ -20,6 +20,10 @@ export class ApiService {
     return this.http.get(`${this.url}/${endpoint}`, { responseType: 'blob' });
   }
 
+  postBlob(endpoint: string, data: unknown): Observable<Blob> {
+    return this.http.post(`${this.url}/${endpoint}`, data, { responseType: 'blob' });
+  }
+
   post<T = any>(endpoint: string, data: unknown): Observable<T> {
     return this.http.post<T>(`${this.url}/${endpoint}`, data);
   }

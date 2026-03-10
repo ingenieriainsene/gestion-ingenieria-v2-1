@@ -241,6 +241,20 @@ public class CompraService {
                 .findByAlbaran_IdAlbaranOrderByOrdenAsc(a.getIdAlbaran());
         List<CompraDocumentoLineaDTO> mapped = toLineaDto(lineas);
         LineasTotales totales = calcularTotales(mapped);
+
+        // Si existe una factura asociada para este trámite y proveedor, la exponemos como facturaId
+        Long facturaId = null;
+        if (a.getTramite() != null && idProveedor != null) {
+            var facturaOpt = facturaProveedorRepository
+                    .findByTramite_IdTramiteAndProveedor_IdProveedor(a.getTramite().getIdTramite(), idProveedor);
+            if (facturaOpt.isPresent()) {
+                facturaId = facturaOpt.get().getIdFactura();
+            }
+        }
+
+        // Estado del albarán: si tiene factura asociada -> "Facturado", en caso contrario "Pendiente"
+        String estadoAlbaran = (facturaId != null) ? "Facturado" : "Pendiente";
+
         return new CompraDocumentoDTO(
                 a.getIdAlbaran(),
                 tipo,
@@ -251,9 +265,9 @@ public class CompraService {
                 totales.subtotal != null ? totales.subtotal : a.getImporte(),
                 totales.iva != null ? totales.iva : BigDecimal.ZERO,
                 totales.total != null ? totales.total : a.getImporte(),
-                null,
+                estadoAlbaran,
                 a.getNotas(),
-                null,
+                facturaId,
                 mapped);
     }
 

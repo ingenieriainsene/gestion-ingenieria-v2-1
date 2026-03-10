@@ -1,12 +1,18 @@
 package com.ingenieria.controller;
 
+import com.ingenieria.dto.LegalizacionRequestDTO;
 import com.ingenieria.dto.LocalRequest;
 import com.ingenieria.model.Local;
+import com.ingenieria.service.LegalizacionPdfService;
 import com.ingenieria.service.LocalService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -15,6 +21,9 @@ import java.util.List;
 public class LocalController {
     @Autowired
     private LocalService service;
+
+    @Autowired
+    private LegalizacionPdfService legalizacionPdfService;
 
     @GetMapping
     public List<Local> getAll() {
@@ -54,5 +63,34 @@ public class LocalController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Genera la "Memoria Técnica de Instalación Fotovoltaica" para el local indicado,
+     * rellenando una plantilla PDF con los datos proporcionados.
+     *
+     * POST /api/locales/{id}/legalizacion/generar
+     */
+    @PostMapping("/{id}/legalizacion/generar")
+    public ResponseEntity<byte[]> generarLegalizacion(
+            @PathVariable Long id,
+            @RequestBody LegalizacionRequestDTO dto
+    ) {
+        // Por si se quiere validar que el local existe
+        Local local = service.findById(id);
+        if (local == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] pdfBytes = legalizacionPdfService.generarLegalizacion(dto);
+
+        String fileName = "memoria-legalizacion-local-" + id + ".pdf";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replaceAll("\\+", "%20");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .body(pdfBytes);
     }
 }

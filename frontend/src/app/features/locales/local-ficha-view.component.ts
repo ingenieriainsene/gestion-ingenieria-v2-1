@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LocalService, ContratoService } from '../../services/domain.services';
+import { LocalService, ContratoService, LegalizacionRequest } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import type { Local, Contrato, Cliente } from '../../services/domain.services';
 import Swal from 'sweetalert2';
@@ -22,6 +22,16 @@ export class LocalFichaViewComponent implements OnInit {
   loading = true;
   idLocal: number | null = null;
   areasFuncionalesVisible = false;
+  legalizacionVisible = false;
+
+  legalizacion: LegalizacionRequest = {
+    titular: '',
+    nif: '',
+    emplazamiento: '',
+    cups: '',
+    tipoAutoconsumo: '',
+    caracteristicasTecnicas: ''
+  };
 
 
   constructor(
@@ -50,6 +60,7 @@ export class LocalFichaViewComponent implements OnInit {
       next: (l) => {
         this.local = l;
         this.loading = false;
+        this.preRellenarLegalizacion();
       },
       error: () => {
         this.loading = false;
@@ -91,6 +102,17 @@ export class LocalFichaViewComponent implements OnInit {
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(direccion || '');
   }
 
+  private preRellenarLegalizacion(): void {
+    if (!this.local) return;
+    const titular = `${this.local.nombreTitular || ''} ${this.local.apellido1Titular || ''} ${this.local.apellido2Titular || ''}`.trim();
+    this.legalizacion.titular = titular || this.legalizacion.titular;
+    this.legalizacion.nif = this.local.dniTitular || this.legalizacion.nif;
+    this.legalizacion.emplazamiento = this.local.direccionCompleta || this.legalizacion.emplazamiento;
+    this.legalizacion.cups = this.local.cups || this.legalizacion.cups;
+    this.legalizacion.latitud = this.local.latitud ?? this.legalizacion.latitud;
+    this.legalizacion.longitud = this.local.longitud ?? this.legalizacion.longitud;
+  }
+
   abrirCatastro(rc: string): void {
     const normalized = (rc || '').replace(/\s+/g, '').toUpperCase();
     if (!normalized) {
@@ -115,6 +137,40 @@ export class LocalFichaViewComponent implements OnInit {
       return;
     }
     this.router.navigate(['/contratos', c.idContrato]);
+  }
+
+  toggleLegalizacion(): void {
+    this.legalizacionVisible = !this.legalizacionVisible;
+  }
+
+  generarMemoria(): void {
+    if (!this.idLocal) {
+      return;
+    }
+
+    // Refrescamos coordenadas por si se han modificado en otro proceso
+    if (this.local) {
+      this.legalizacion.latitud = this.local.latitud ?? this.legalizacion.latitud;
+      this.legalizacion.longitud = this.local.longitud ?? this.legalizacion.longitud;
+    }
+
+    const payload: LegalizacionRequest = { ...this.legalizacion };
+
+    this.localService.generarMemoriaLegalizacion(this.idLocal, payload).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `memoria-legalizacion-local-${this.idLocal}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar la memoria de legalización.', 'error');
+      }
+    });
   }
 
 }

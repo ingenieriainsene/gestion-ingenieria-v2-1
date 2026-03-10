@@ -9,6 +9,9 @@
   <div class="ficha-header clearfix">
     <h1 class="ficha-title">EXPEDIENTE TÉCNICO DE UBICACIÓN 🏢</h1>
     <div class="ficha-actions">
+      <button type="button" class="btn-primary" (click)="toggleLegalizacion()">
+        📄 Generar Memoria Legalización
+      </button>
       <a [routerLink]="['/locales', idLocal, 'editar']" class="link-editar">✏️ Editar Local</a>
       <a routerLink="/locales" class="link-volver">Volver</a>
     </div>
@@ -88,6 +91,51 @@
         <span class="action-text">Áreas Funcionales</span>
         <span class="toggle-arrow">{{ areasFuncionalesVisible ? '▲' : '▼' }}</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Bloque de generación de memoria de legalización -->
+  <div *ngIf="legalizacionVisible" class="legalizacion-panel">
+    <h2>📄 Memoria Técnica de Instalación Fotovoltaica</h2>
+    <p class="legalizacion-help">
+      Revisa los datos y pulsa en <strong>Generar</strong> para descargar la memoria de legalización en PDF.
+    </p>
+
+    <div class="legalizacion-grid">
+      <div class="field">
+        <label>Titular</label>
+        <input type="text" [(ngModel)]="legalizacion.titular" />
+      </div>
+      <div class="field">
+        <label>NIF</label>
+        <input type="text" [(ngModel)]="legalizacion.nif" />
+      </div>
+      <div class="field">
+        <label>Emplazamiento</label>
+        <input type="text" [(ngModel)]="legalizacion.emplazamiento" />
+      </div>
+      <div class="field">
+        <label>CUPS</label>
+        <input type="text" [(ngModel)]="legalizacion.cups" />
+      </div>
+      <div class="field">
+        <label>Tipo de Autoconsumo</label>
+        <input type="text" [(ngModel)]="legalizacion.tipoAutoconsumo" placeholder="Ej: Autoconsumo con excedentes" />
+      </div>
+      <div class="field field-full">
+        <label>Características Técnicas</label>
+        <textarea rows="3" [(ngModel)]="legalizacion.caracteristicasTecnicas"
+                  placeholder="Descripción resumida de inversor, módulos, potencia, etc."></textarea>
+      </div>
+    </div>
+
+    <div class="legalizacion-actions">
+      <button type="button" class="btn-secondary" (click)="toggleLegalizacion()">
+        Cancelar
+      </button>
+      <button type="button" class="btn-primary" (click)="generarMemoria()">
+        💾 Generar PDF
+      </button>
     </div>
   </div>
 

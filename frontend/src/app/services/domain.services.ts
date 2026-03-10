@@ -61,6 +61,17 @@ export interface Local {
     areas?: LocalArea[];
 }
 
+export interface LegalizacionRequest {
+    titular: string;
+    nif: string;
+    emplazamiento: string;
+    cups: string;
+    tipoAutoconsumo?: string;
+    caracteristicasTecnicas?: string;
+    latitud?: number;
+    longitud?: number;
+}
+
 export interface Contrato {
     idContrato?: number;
     idCliente: number;
@@ -239,6 +250,14 @@ export class LocalService {
         return this.api.get<Local>(`${this.endpoint}/check-rc/${rc}`);
     }
     delete(id: number): Observable<void> { return this.api.delete<void>(`${this.endpoint}/${id}`); }
+
+    /**
+     * POST /api/locales/{id}/legalizacion/generar
+     * Genera la memoria técnica de legalización (PDF) para el local.
+     */
+    generarMemoriaLegalizacion(idLocal: number, payload: LegalizacionRequest): Observable<Blob> {
+        return this.api.postBlob(`${this.endpoint}/${idLocal}/legalizacion/generar`, payload) as any;
+    }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -312,6 +331,40 @@ export interface TramiteListResponse {
     direccionLocal?: string;
     detalleSeguimiento?: string;
     facturado?: boolean;
+}
+
+export interface VentaDocumentoLineaDTO {
+    concepto: string;
+    cantidad: number;
+    precioUnitario: number;
+    ivaPorcentaje: number;
+    totalLinea: number;
+    totalIva: number;
+    totalConIva: number;
+}
+
+export interface VentaDocumentoDTO {
+    idDocumento: number;
+    tipo: 'ALBARAN' | 'FACTURA';
+    numeroDocumento: string;
+    fecha: string;
+    subtotal: number;
+    iva: number;
+    total: number;
+    presupuestoId?: number;
+    tramiteId?: number;
+    notas?: string;
+    lineas: VentaDocumentoLineaDTO[];
+}
+
+export interface VentaDocumentoCreateRequest {
+    tipo: 'ALBARAN' | 'FACTURA';
+    numeroDocumento: string;
+    fecha: string;
+    importe: number;
+    notas?: string;
+    presupuestoId?: number;
+    lineas?: VentaDocumentoLineaDTO[];
 }
 
 @Injectable({ providedIn: 'root' })
