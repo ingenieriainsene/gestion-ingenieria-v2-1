@@ -64,6 +64,13 @@ public class VentaService {
         if (req.getPresupuestoId() != null) {
             p = presupuestoRepo.findById(req.getPresupuestoId())
                     .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado."));
+        } else {
+            // Fallback profesional: si no se indica presupuestoId explícito,
+            // intentamos vincular automáticamente el primero asociado al trámite.
+            List<Presupuesto> asociados = presupuestoRepo.findByTramiteId(tramite.getIdTramite());
+            if (!asociados.isEmpty()) {
+                p = asociados.get(0);
+            }
         }
 
         LocalDate fecha = Optional.ofNullable(req.getFecha()).orElse(LocalDate.now());
@@ -92,6 +99,38 @@ public class VentaService {
             FacturaVenta saved = facturaRepo.save(f);
             return toDtoFactura(saved);
         }
+    }
+
+    /**
+     * Genera una factura de venta a partir de un albarán de venta existente.
+     * Copia importe, presupuesto y trámite, y construye un número de factura
+     * profesional a partir del número de albarán.
+     */
+    @Transactional
+    public VentaDocumentoDTO generarFacturaDesdeAlbaran(Long idAlbaran) {
+        AlbaranVenta albaran = albaranRepo.findById(idAlbaran)
+                .orElseThrow(() -> new IllegalArgumentException("Albarán de venta no encontrado."));
+
+        FacturaVenta factura = new FacturaVenta();
+        factura.setTramite(albaran.getTramite());
+        factura.setPresupuesto(albaran.getPresupuesto());
+
+        String numAlb = albaran.getNumeroAlbaran() != null ? albaran.getNumeroAlbaran().trim() : "";
+        String numeroFactura = numAlb.isEmpty() ? "FAC-" + albaran.getIdAlbaran() : ("FAC-" + numAlb);
+
+        factura.setNumeroFactura(numeroFactura);
+        factura.setFecha(LocalDate.now());
+        factura.setImporte(albaran.getImporte() != null ? albaran.getImporte() : BigDecimal.ZERO);
+        factura.setEstado("Emitida");
+
+        String notas = albaran.getNotas();
+        if (notas == null || notas.isBlank()) {
+            notas = "Factura generada automáticamente a partir del albarán " + albaran.getNumeroAlbaran();
+        }
+        factura.setNotas(notas);
+
+        FacturaVenta saved = facturaRepo.save(factura);
+        return toDtoFactura(saved);
     }
 
     private VentaDocumentoDTO toDtoAlbaran(AlbaranVenta a) {

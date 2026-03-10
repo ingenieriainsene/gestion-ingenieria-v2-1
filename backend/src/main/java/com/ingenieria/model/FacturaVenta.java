@@ -38,7 +38,7 @@ public class FacturaVenta {
     private Long idFactura;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "presupuesto_id", nullable = false)
+    @JoinColumn(name = "presupuesto_id")
     @JsonIgnore
     private Presupuesto presupuesto;
 

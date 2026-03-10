@@ -72,7 +72,8 @@ public class TramiteService {
                 c.getLocal() != null ? c.getLocal().getDireccionCompleta() : null,
                 c.getLocal() != null ? c.getLocal().getNombreTitular() : null,
                 c.getFechaInicio(),
-                c.getFechaVencimiento());
+                c.getFechaVencimiento(),
+                t.getFacturado());
     }
 
     @Transactional(readOnly = true)

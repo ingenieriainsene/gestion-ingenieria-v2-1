@@ -51,6 +51,7 @@ export class TramiteDetalleComponent implements OnInit {
   idTramite: number | null = null;
   loading = true;
   activeTab = 'general';
+  private hasAskedFacturado = false;
   presupuestos: PresupuestoListItem[] = [];
   albaranesVenta: AlbaranVentaDTO[] = [];
   cargandoAlbaranes = false;
@@ -192,6 +193,8 @@ export class TramiteDetalleComponent implements OnInit {
           fechaSeguimiento: fStr || '',
         }, { emitEvent: false });
         this.isPatchingForm = false;
+        // Si ya tenemos ventas cargadas, evaluamos posible marcado de facturación
+        this.evaluarFacturacionIntervencion();
       },
       error: (err) => {
         this.loading = false;
@@ -313,6 +316,7 @@ export class TramiteDetalleComponent implements OnInit {
       next: (list) => {
         this.documentosVenta = list || [];
         this.cargandoVentas = false;
+        this.evaluarFacturacionIntervencion();
       },
       error: () => {
         this.documentosVenta = [];
@@ -703,61 +707,21 @@ export class TramiteDetalleComponent implements OnInit {
 
   getTituloAlbaran(a: CompraDocumentoDTO): string {
     const idParte = (a.numeroDocumento && a.numeroDocumento.trim()) || `ID${a.idDocumento}`;
-    const proveedor = (a.proveedorNombre || 'SIN_PROVEEDOR').replace(/\s+/g, '_');
-    const estado = a.facturaId ? 'FACTURADO' : 'PENDIENTE';
-    let fecha = '';
-    if (a.fecha) {
-      const d = new Date(a.fecha);
-      if (!isNaN(d.getTime())) {
-        // Formato dd/MM/yyyy
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const yyyy = d.getFullYear();
-        fecha = `${dd}/${mm}/${yyyy}`;
-      }
-    }
-    let ivaStr = '';
-    if (a.lineas && a.lineas.length && a.lineas[0].ivaPorcentaje != null) {
-      ivaStr = `${a.lineas[0].ivaPorcentaje}%`;
-    }
-    return `ALB-${idParte}-${proveedor}-${estado}-${fecha}-${ivaStr}`;
+    // En compras, el título principal debe ser solo el identificador/nº de albarán
+    return `ALB-${idParte}`;
   }
 
   getTituloFactura(a: CompraDocumentoDTO): string {
     const idParte = (a.numeroDocumento && a.numeroDocumento.trim()) || `ID${a.idDocumento}`;
-    const proveedor = (a.proveedorNombre || 'SIN_PROVEEDOR').replace(/\s+/g, '_');
-    let fecha = '';
-    if (a.fecha) {
-      const d = new Date(a.fecha);
-      if (!isNaN(d.getTime())) {
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const yyyy = d.getFullYear();
-        fecha = `${dd}/${mm}/${yyyy}`;
-      }
-    }
-    let ivaStr = '';
-    if (a.lineas && a.lineas.length && a.lineas[0].ivaPorcentaje != null) {
-      ivaStr = `${a.lineas[0].ivaPorcentaje}%`;
-    }
-    return `FAC-${idParte}-${proveedor}-${fecha}-${ivaStr}`;
+    // En compras, el título principal de factura debe ser solo el identificador/nº de factura
+    return `FAC-${idParte}`;
   }
 
   getTituloVenta(doc: VentaDocumentoDTO): string {
     const pref = doc.tipo === 'ALBARAN' ? 'ALB' : 'FAC';
     const idParte = (doc.numeroDocumento && doc.numeroDocumento.trim()) || `ID${doc.idDocumento}`;
-    let fecha = '';
-    if (doc.fecha) {
-      const d = new Date(doc.fecha);
-      if (!isNaN(d.getTime())) {
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const yyyy = d.getFullYear();
-        fecha = `${dd}/${mm}/${yyyy}`;
-      }
-    }
-    // Para ventas, el "proveedor" somos nosotros mismos (INSENE)
-    return `${pref}-${idParte}-INSENE-${fecha}`;
+    // En ventas, el título debe ser solo el identificador/nº del documento
+    return `${pref}-${idParte}`;
   }
 
   getFacturaVentaAsociada(albaran: VentaDocumentoDTO): VentaDocumentoDTO | null {
@@ -946,6 +910,7 @@ export class TramiteDetalleComponent implements OnInit {
         });
         this.lineasVenta.clear();
         this.agregarLineaVenta();
+        this.evaluarFacturacionIntervencion();
       },
       error: (e) => {
         let msg = 'No se pudo registrar el documento de venta.';
@@ -953,6 +918,37 @@ export class TramiteDetalleComponent implements OnInit {
         else if (e?.error?.message) msg = e.error.message;
         Swal.fire('Error', msg, 'error');
       }
+    });
+  }
+
+  generarFacturaVentaDesdeAlbaran(doc: VentaDocumentoDTO) {
+    if (!doc?.idDocumento || doc.tipo !== 'ALBARAN') return;
+
+    Swal.fire({
+      title: 'Generar factura de venta',
+      text: 'Se generará una factura de venta a partir de este albarán.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Generar factura',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1e293b',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+
+      this.ventaDocumentosService.generarFacturaDesdeAlbaran(doc.idDocumento).subscribe({
+        next: (factura) => {
+          this.documentosVenta.push(factura);
+          Swal.fire('Generada', 'Factura de venta generada correctamente a partir del albarán.', 'success');
+          this.cargarVentas();
+          this.setVentasTab('FACTURA');
+        },
+        error: (e) => {
+          let msg = 'No se pudo generar la factura de venta.';
+          if (typeof e?.error === 'string') msg = e.error;
+          else if (e?.error?.message) msg = e.error.message;
+          Swal.fire('Error', msg, 'error');
+        }
+      });
     });
   }
 
@@ -1209,5 +1205,46 @@ export class TramiteDetalleComponent implements OnInit {
     if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return '🖼️';
     if (ext === 'pdf') return '📄';
     return '📁';
+  }
+
+  /**
+   * Lógica profesional para sugerir marcar la intervención como facturada.
+   * Si existen facturas de venta vinculadas y la intervención no está marcada
+   * como facturada, mostramos un aviso una sola vez en la sesión del componente.
+   */
+  private evaluarFacturacionIntervencion() {
+    if (this.hasAskedFacturado) return;
+    if (!this.detalle) return;
+
+    const tieneFacturaVenta = (this.documentosVenta || []).some(d => d.tipo === 'FACTURA');
+    if (!tieneFacturaVenta) return;
+
+    // Si ya está facturada en BD, no preguntamos.
+    if (this.detalle.facturado) {
+      this.hasAskedFacturado = true;
+      return;
+    }
+
+    this.hasAskedFacturado = true;
+
+    Swal.fire({
+      title: '¿Marcar intervención como facturada?',
+      text: 'Se han detectado facturas de venta asociadas a esta intervención. ¿Quieres marcarla como facturada para que aparezca así en los listados?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, marcar como facturada',
+      cancelButtonText: 'No por ahora',
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#64748b'
+    }).then(res => {
+      if (!res.isConfirmed) {
+        return;
+      }
+      // Marcamos el check en el formulario y guardamos en backend
+      this.formInfo.patchValue({ facturado: true });
+      this.detalle!.facturado = true;
+      this.guardarInfo(true);
+      Swal.fire('Actualizada', 'La intervención se ha marcado como facturada.', 'success');
+    });
   }
 }

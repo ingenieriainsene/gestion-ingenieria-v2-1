@@ -29,5 +29,10 @@ public class VentasController {
     ) {
         return ResponseEntity.ok(ventaService.crearDocumento(idTramite, request));
     }
+
+    @PostMapping("/albaran/{idAlbaran}/generar-factura")
+    public ResponseEntity<VentaDocumentoDTO> generarFacturaDesdeAlbaran(@PathVariable Long idAlbaran) {
+        return ResponseEntity.ok(ventaService.generarFacturaDesdeAlbaran(idAlbaran));
+    }
 }
 

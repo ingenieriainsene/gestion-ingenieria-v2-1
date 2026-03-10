@@ -473,39 +473,62 @@
                       <strong>{{ getTituloFactura(a) }}</strong>
                     </ng-template>
                   </div>
-                  <div class="albaran-meta">
-                    <span
-                      *ngIf="a.tipo === 'ALBARAN'"
-                      class="estado-pill"
-                      [ngClass]="a.facturaId ? 'estado-ok' : 'estado-pendiente'">
-                      {{ a.facturaId ? 'Facturado' : 'Pendiente' }}
-                    </span>
-                    <span class="badge">{{ a.proveedorNombre }}</span>
-                    <span class="total">{{ a.total | currency:'EUR' }}</span>
-                    <span class="factura-ref" *ngIf="a.tipo === 'ALBARAN'">
-                      Factura asociada:
-                      <ng-container *ngIf="getFacturaAsociada(a) as fac; else sinFactura">
-                        <a href="javascript:void(0)" class="factura-link"
-                           (click)="verFacturaAsociada(a); $event.preventDefault(); $event.stopPropagation();">
-                          {{ getTituloFactura(fac) }}
-                        </a>
-                      </ng-container>
-                      <ng-template #sinFactura>—</ng-template>
-                    </span>
-                    <button
-                      *ngIf="a.tipo === 'ALBARAN' && !a.facturaId"
-                      type="button"
-                      class="btn-secondary"
-                      title="Generar factura para este albarán"
-                      (click)="generarFacturaDesdeAlbaran(a); $event.preventDefault(); $event.stopPropagation();"
-                    >
-                      Generar factura
-                    </button>
-                    <button type="button" class="btn-icon-delete"
-                      [disabled]="eliminandoDocsCompra[(a.tipo + '-' + a.idDocumento)]" title="Eliminar documento"
-                      (click)="eliminarDocumentoCompra(a, i); $event.preventDefault(); $event.stopPropagation();">
-                      🗑️
-                    </button>
+                  <div class="albaran-meta albaran-meta-grid">
+                    <div class="meta-col" *ngIf="a.tipo === 'ALBARAN'">
+                      <div class="meta-label">Estado</div>
+                      <div class="meta-value">
+                        <span
+                          class="estado-pill"
+                          [ngClass]="a.facturaId ? 'estado-ok' : 'estado-pendiente'">
+                          {{ a.facturaId ? 'Facturado' : 'Pendiente' }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="meta-col">
+                      <div class="meta-label">Proveedor</div>
+                      <div class="meta-value">
+                        <span class="badge">{{ a.proveedorNombre }}</span>
+                      </div>
+                    </div>
+                    <div class="meta-col">
+                      <div class="meta-label">Total (€)</div>
+                      <div class="meta-value">
+                        <span class="total">{{ a.total | currency:'EUR' }}</span>
+                      </div>
+                    </div>
+                    <div class="meta-col" *ngIf="a.tipo === 'ALBARAN'">
+                      <div class="meta-label">Factura asociada</div>
+                      <div class="meta-value">
+                        <span class="factura-ref">
+                          <ng-container *ngIf="getFacturaAsociada(a) as fac; else sinFactura">
+                            <a href="javascript:void(0)" class="factura-link"
+                               (click)="verFacturaAsociada(a); $event.preventDefault(); $event.stopPropagation();">
+                              {{ getTituloFactura(fac) }}
+                            </a>
+                          </ng-container>
+                          <ng-template #sinFactura>—</ng-template>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="meta-col meta-actions">
+                      <div class="meta-label">Acciones</div>
+                      <div class="meta-value">
+                        <button
+                          *ngIf="a.tipo === 'ALBARAN' && !a.facturaId"
+                          type="button"
+                          class="btn-secondary"
+                          title="Generar factura para este albarán"
+                          (click)="generarFacturaDesdeAlbaran(a); $event.preventDefault(); $event.stopPropagation();"
+                        >
+                          Generar factura
+                        </button>
+                        <button type="button" class="btn-icon-delete"
+                          [disabled]="eliminandoDocsCompra[(a.tipo + '-' + a.idDocumento)]" title="Eliminar documento"
+                          (click)="eliminarDocumentoCompra(a, i); $event.preventDefault(); $event.stopPropagation();">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </summary>
@@ -707,32 +730,59 @@
                   <div class="albaran-main">
                     <strong>{{ getTituloVenta(d) }}</strong>
                   </div>
-                  <div class="albaran-meta">
-                    <span
-                      *ngIf="d.tipo === 'ALBARAN'"
-                      class="estado-pill"
-                      [ngClass]="getFacturaVentaAsociada(d) ? 'estado-ok' : 'estado-pendiente'">
-                      {{ getFacturaVentaAsociada(d) ? 'Facturado' : 'Pendiente' }}
-                    </span>
-                    <span class="badge manual">{{ d.tipo === 'ALBARAN' ? 'ALBARÁN VENTA' : 'FACTURA VENTA' }}</span>
-                    <span class="total">{{ d.total | currency:'EUR' }}</span>
+                  <div class="albaran-meta albaran-meta-grid">
+                    <div class="meta-col" *ngIf="d.tipo === 'ALBARAN'">
+                      <div class="meta-label">Estado</div>
+                      <div class="meta-value">
+                        <span
+                          class="estado-pill"
+                          [ngClass]="getFacturaVentaAsociada(d) ? 'estado-ok' : 'estado-pendiente'">
+                          {{ getFacturaVentaAsociada(d) ? 'Facturado' : 'Pendiente' }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="meta-col">
+                      <div class="meta-label">Tipo</div>
+                      <div class="meta-value">
+                        <span class="badge manual">{{ d.tipo === 'ALBARAN' ? 'ALBARÁN VENTA' : 'FACTURA VENTA' }}</span>
+                      </div>
+                    </div>
+                    <div class="meta-col">
+                      <div class="meta-label">Total (€)</div>
+                      <div class="meta-value">
+                        <span class="total">{{ d.total | currency:'EUR' }}</span>
+                      </div>
+                    </div>
+                    <div class="meta-col" *ngIf="d.tipo === 'ALBARAN'">
+                      <div class="meta-label">Factura asociada</div>
+                      <div class="meta-value">
+                        <span class="factura-ref">
+                          <ng-container *ngIf="getFacturaVentaAsociada(d) as fac; else sinFacVentaHeader">
+                            <a href="javascript:void(0)" class="factura-link"
+                               (click)="verFacturaVentaAsociada(d); $event.preventDefault(); $event.stopPropagation();">
+                              {{ getTituloVenta(fac) }}
+                            </a>
+                          </ng-container>
+                          <ng-template #sinFacVentaHeader>—</ng-template>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="meta-col meta-actions">
+                      <div class="meta-label">Acciones</div>
+                      <div class="meta-value">
+                        <button type="button"
+                                *ngIf="d.tipo === 'ALBARAN' && !getFacturaVentaAsociada(d)"
+                                class="btn-secondary"
+                                (click)="generarFacturaVentaDesdeAlbaran(d); $event.preventDefault(); $event.stopPropagation();">
+                          Generar factura de venta
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </summary>
               <div class="albaran-body">
                 <div class="albaran-notas" *ngIf="d.notas">Notas: {{ d.notas }}</div>
-                <div class="albaran-estado" *ngIf="d.tipo === 'ALBARAN'">
-                  <span class="factura-ref">
-                    Factura asociada:
-                    <ng-container *ngIf="getFacturaVentaAsociada(d) as fac; else sinFacVenta">
-                      <a href="javascript:void(0)" class="factura-link"
-                         (click)="verFacturaVentaAsociada(d); $event.preventDefault(); $event.stopPropagation();">
-                        {{ getTituloVenta(fac) }}
-                      </a>
-                    </ng-container>
-                    <ng-template #sinFacVenta>—</ng-template>
-                  </span>
-                </div>
                 <div class="albaran-totales">
                   <div>Subtotal: <strong>{{ d.subtotal | currency:'EUR' }}</strong></div>
                   <div>IVA: <strong>{{ d.iva | currency:'EUR' }}</strong></div>

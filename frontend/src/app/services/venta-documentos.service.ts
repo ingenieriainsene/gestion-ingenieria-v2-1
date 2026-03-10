@@ -16,5 +16,9 @@ export class VentaDocumentosService {
   crearDocumento(idTramite: number, payload: VentaDocumentoCreateRequest): Observable<VentaDocumentoDTO> {
     return this.api.post<VentaDocumentoDTO>(`${this.endpoint}/tramite/${idTramite}/documentos`, payload);
   }
+
+  generarFacturaDesdeAlbaran(idAlbaran: number): Observable<VentaDocumentoDTO> {
+    return this.api.post<VentaDocumentoDTO>(`${this.endpoint}/albaran/${idAlbaran}/generar-factura`, {});
+  }
 }
 

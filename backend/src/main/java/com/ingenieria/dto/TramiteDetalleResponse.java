@@ -49,4 +49,7 @@ public class TramiteDetalleResponse {
     // Fechas Contrato
     private LocalDate fechaInicio;
     private LocalDate fechaVencimiento;
+
+    // Indicador de si la intervención está facturada
+    private Boolean facturado;
 }
