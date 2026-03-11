@@ -72,6 +72,73 @@ export interface LegalizacionRequest {
     longitud?: number;
 }
 
+export interface CieRequest {
+    numeroRegistro: string;
+    anoNumeroRegistro: string;
+    nombreTitular: string;
+    dniTitular: string;
+    domicilioTitular: string;
+    cpTitular: string;
+    localidadTitular: string;
+    provinciaTitular: string;
+
+    emplazamientoInstalacion: string;
+    numeroEmplazamientoInstalacion: string;
+    bloqueEmplazamientoInstalacion: string;
+    portalEmplazamientoInstalacion: string;
+    escaleraEmplazamientoInstalacion: string;
+    pisoEmplazamientoInstalacion: string;
+    puertaEmplazamientoInstalacion: string;
+    localidadInstalacion: string;
+    provinciaInstalacion: string;
+    cpInstalacion: string;
+
+    tipoInstalacion: string;
+    usoDestina: string;
+    cups: string;
+
+    intensidadNominal: string;
+    potenciaPrevista: string;
+    tensionSuministro: string;
+
+    nivelAislamiento: string;
+    materialAislamiento: string;
+    materialConductor: string;
+    fase: string;
+    neutro: string;
+    cpConductor: string;
+    empresaDistribuidora: string;
+
+    pfIntensidadNominal: string;
+    sensibilidad: string;
+
+    resistenciaTierra: string;
+    resistenciaAislamiento: string;
+
+    observaciones: string;
+
+    localidadFirma: string;
+    diaFirma: string;
+    mesFirma: string;
+    anoFirma: string;
+
+    chkInstalacionNueva: boolean;
+    chkInstalacionAmpliacion: boolean;
+    chkInstalacionModificacion: boolean;
+
+    chkLineaAlimentacionSi: boolean;
+    chkLineaAlimentacionNo: boolean;
+
+    chkMonofasico: boolean;
+    chkTrifasico: boolean;
+
+    chkInterrup: boolean;
+    chkFusibles: boolean;
+
+    chkCategoriaBasica: boolean;
+    chkCategoriaEspecialista: boolean;
+}
+
 export interface Contrato {
     idContrato?: number;
     idCliente: number;
@@ -257,6 +324,14 @@ export class LocalService {
      */
     generarMemoriaLegalizacion(idLocal: number, payload: LegalizacionRequest): Observable<Blob> {
         return this.api.postBlob(`${this.endpoint}/${idLocal}/legalizacion/generar`, payload) as any;
+    }
+
+    /**
+     * POST /api/locales/{id}/cie/generar
+     * Genera el Certificado de Instalación Eléctrica (CIE) en formato PDF para el local.
+     */
+    generarCie(idLocal: number, payload: CieRequest): Observable<Blob> {
+        return this.api.postBlob(`${this.endpoint}/${idLocal}/cie/generar`, payload) as any;
     }
 }
 

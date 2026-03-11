@@ -1,8 +1,10 @@
 package com.ingenieria.controller;
 
+import com.ingenieria.dto.CieRequestDTO;
 import com.ingenieria.dto.LegalizacionRequestDTO;
 import com.ingenieria.dto.LocalRequest;
 import com.ingenieria.model.Local;
+import com.ingenieria.service.CiePdfService;
 import com.ingenieria.service.LegalizacionPdfService;
 import com.ingenieria.service.LocalService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,9 @@ public class LocalController {
 
     @Autowired
     private LegalizacionPdfService legalizacionPdfService;
+
+    @Autowired
+    private CiePdfService ciePdfService;
 
     @GetMapping
     public List<Local> getAll() {
@@ -66,7 +71,8 @@ public class LocalController {
     }
 
     /**
-     * Genera la "Memoria Técnica de Instalación Fotovoltaica" para el local indicado,
+     * Genera la "Memoria Técnica de Instalación Fotovoltaica" para el local
+     * indicado,
      * rellenando una plantilla PDF con los datos proporcionados.
      *
      * POST /api/locales/{id}/legalizacion/generar
@@ -74,8 +80,7 @@ public class LocalController {
     @PostMapping("/{id}/legalizacion/generar")
     public ResponseEntity<byte[]> generarLegalizacion(
             @PathVariable Long id,
-            @RequestBody LegalizacionRequestDTO dto
-    ) {
+            @RequestBody LegalizacionRequestDTO dto) {
         // Por si se quiere validar que el local existe
         Local local = service.findById(id);
         if (local == null) {
@@ -85,6 +90,34 @@ public class LocalController {
         byte[] pdfBytes = legalizacionPdfService.generarLegalizacion(dto);
 
         String fileName = "memoria-legalizacion-local-" + id + ".pdf";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replaceAll("\\+", "%20");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .body(pdfBytes);
+    }
+
+    /**
+     * Genera el "Certificado de Instalación Eléctrica" (CIE) para el local
+     * indicado,
+     * rellenando la plantilla PDF con los datos proporcionados.
+     *
+     * POST /api/locales/{id}/cie/generar
+     */
+    @PostMapping("/{id}/cie/generar")
+    public ResponseEntity<byte[]> generarCie(
+            @PathVariable Long id,
+            @RequestBody CieRequestDTO dto) {
+        Local local = service.findById(id);
+        if (local == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] pdfBytes = ciePdfService.generarCie(dto);
+
+        String fileName = "certificado-instalacion-electrica-local-" + id + ".pdf";
         String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
                 .replaceAll("\\+", "%20");
 

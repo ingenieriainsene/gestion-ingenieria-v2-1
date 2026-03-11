@@ -25,11 +25,16 @@ Thumbs.db
 .vscode/
 *.zip
 *.rar
-/.metadata/
 
-# Entorno
+# --- Eclipse y configuraciones locales ---
+.metadata/
+.metadata_rota/
+.settings/
+.project
+.classpath
+
+# --- Entorno ---
 .env
 .env.local
 .env.*
 !.env.example
-

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LocalService, ContratoService, LegalizacionRequest } from '../../services/domain.services';
+import { LocalService, ContratoService, LegalizacionRequest, CieRequest } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import type { Local, Contrato, Cliente } from '../../services/domain.services';
 import Swal from 'sweetalert2';
@@ -33,6 +33,61 @@ export class LocalFichaViewComponent implements OnInit {
     caracteristicasTecnicas: ''
   };
 
+  cieVisible = false;
+  cie: CieRequest = {
+    numeroRegistro: '',
+    anoNumeroRegistro: '',
+    nombreTitular: '',
+    dniTitular: '',
+    domicilioTitular: '',
+    cpTitular: '',
+    localidadTitular: '',
+    provinciaTitular: '',
+    emplazamientoInstalacion: '',
+    numeroEmplazamientoInstalacion: '',
+    bloqueEmplazamientoInstalacion: '',
+    portalEmplazamientoInstalacion: '',
+    escaleraEmplazamientoInstalacion: '',
+    pisoEmplazamientoInstalacion: '',
+    puertaEmplazamientoInstalacion: '',
+    localidadInstalacion: '',
+    provinciaInstalacion: '',
+    cpInstalacion: '',
+    tipoInstalacion: '',
+    usoDestina: '',
+    cups: '',
+    intensidadNominal: '',
+    potenciaPrevista: '',
+    tensionSuministro: '',
+    nivelAislamiento: '',
+    materialAislamiento: '',
+    materialConductor: '',
+    fase: '',
+    neutro: '',
+    cpConductor: '',
+    empresaDistribuidora: '',
+    pfIntensidadNominal: '',
+    sensibilidad: '',
+    resistenciaTierra: '',
+    resistenciaAislamiento: '',
+    observaciones: '',
+    localidadFirma: '',
+    diaFirma: '',
+    mesFirma: '',
+    anoFirma: '',
+    chkInstalacionNueva: false,
+    chkInstalacionAmpliacion: false,
+    chkInstalacionModificacion: false,
+    chkLineaAlimentacionSi: false,
+    chkLineaAlimentacionNo: false,
+    chkMonofasico: false,
+    chkTrifasico: false,
+    chkInterrup: false,
+    chkFusibles: false,
+    chkCategoriaBasica: false,
+    chkCategoriaEspecialista: false
+  };
+
 
   constructor(
     private route: ActivatedRoute,
@@ -61,6 +116,7 @@ export class LocalFichaViewComponent implements OnInit {
         this.local = l;
         this.loading = false;
         this.preRellenarLegalizacion();
+        this.preRellenarCie();
       },
       error: () => {
         this.loading = false;
@@ -113,6 +169,31 @@ export class LocalFichaViewComponent implements OnInit {
     this.legalizacion.longitud = this.local.longitud ?? this.legalizacion.longitud;
   }
 
+  private preRellenarCie(): void {
+    if (!this.local) return;
+    
+    // Obtener datos del cliente anidado para rellenar la info del titular si existe
+    const cli = this.local.cliente;
+    if (cli) {
+      if (!this.cie.nombreTitular) {
+          this.cie.nombreTitular = this.nombreCompleto(cli);
+      }
+      this.cie.dniTitular = cli.dni || this.cie.dniTitular;
+      this.cie.domicilioTitular = cli.direccionFiscalCompleta || this.cie.domicilioTitular;
+      this.cie.cpTitular = cli.codigoPostal || this.cie.cpTitular;
+    } else {
+      const titular = `${this.local.nombreTitular || ''} ${this.local.apellido1Titular || ''} ${this.local.apellido2Titular || ''}`.trim();
+      this.cie.nombreTitular = titular || this.cie.nombreTitular;
+      this.cie.dniTitular = this.local.dniTitular || this.cie.dniTitular;
+    }
+    
+    // Extraer localidad y provincia de la dirección si es posible? 
+    // De momento lo dejamos que el usuario lo rellene, rellenamos lo básico.
+    
+    this.cie.emplazamientoInstalacion = this.local.direccionCompleta || this.cie.emplazamientoInstalacion;
+    this.cie.cups = this.local.cups || this.cie.cups;
+  }
+
   abrirCatastro(rc: string): void {
     const normalized = (rc || '').replace(/\s+/g, '').toUpperCase();
     if (!normalized) {
@@ -141,6 +222,10 @@ export class LocalFichaViewComponent implements OnInit {
 
   toggleLegalizacion(): void {
     this.legalizacionVisible = !this.legalizacionVisible;
+  }
+
+  toggleCie(): void {
+    this.cieVisible = !this.cieVisible;
   }
 
   generarMemoria(): void {
@@ -173,4 +258,25 @@ export class LocalFichaViewComponent implements OnInit {
     });
   }
 
+  generarCie(): void {
+    if (!this.idLocal) return;
+
+    const payload: CieRequest = { ...this.cie };
+
+    this.localService.generarCie(this.idLocal, payload).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `CIE-local-${this.idLocal}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el Certificado de Instalación Eléctrica.', 'error');
+      }
+    });
+  }
 }
