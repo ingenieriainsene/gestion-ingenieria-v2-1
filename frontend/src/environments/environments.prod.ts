@@ -1,9 +1,8 @@
 export const environment = {
     production: true,
 
-    // En producción, nginx hace proxy de /api al backend.
-    // Esto elimina CORS: todo es mismo origen desde el browser.
-    apiUrl: '/api',
+    // En producción, apuntamos directamente al backend para evitar problemas de proxy / red privada en Railway
+    apiUrl: 'https://gestion-ingenieria-v2-production.up.railway.app/api',
 
     supabase: {
         // URL de tu proyecto de Supabase en la nube
