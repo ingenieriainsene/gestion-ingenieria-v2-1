@@ -1,6 +1,5 @@
 package com.ingenieria.config;
 
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,9 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -33,22 +32,18 @@ public class SecurityConfig {
      * cadena.
      * Esto puede causar que procese la petición OPTIONS antes de que CORS actúe.
      */
-    @Bean
-    public FilterRegistrationBean<AuthTokenFilter> disableAutoRegistration() {
-        FilterRegistrationBean<AuthTokenFilter> reg = new FilterRegistrationBean<>(authTokenFilter);
-        reg.setEnabled(false);
-        return reg;
-    }
+    // En esta versión no registramos AuthTokenFilter como servlet filter externo,
+    // solo dentro de la cadena de Spring Security (más abajo).
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.disable()) // Desactivado porque usamos el bean CorsFilter con HIGHEST_PRECEDENCE
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().permitAll())
-                // AuthTokenFilter DENTRO de la cadena de seguridad, DESPUÉS del CorsFilter
+                // AuthTokenFilter dentro de la cadena de seguridad
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -65,27 +60,22 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @org.springframework.context.annotation.Bean
-    public org.springframework.boot.web.servlet.FilterRegistrationBean<org.springframework.web.filter.CorsFilter> corsFilter() {
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(Arrays.asList(
+        config.setAllowedOrigins(List.of(
                 "https://pacific-mercy-production-9a82.up.railway.app",
-                "https://*.up.railway.app",
-                "http://localhost:*",
-                "http://127.0.0.1:*"
+                "http://localhost:4200",
+                "http://127.0.0.1:4200"
         ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
-        org.springframework.boot.web.servlet.FilterRegistrationBean<org.springframework.web.filter.CorsFilter> bean =
-                new org.springframework.boot.web.servlet.FilterRegistrationBean<>(new org.springframework.web.filter.CorsFilter(source));
-        bean.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
-        return bean;
+        return source;
     }
 }
