@@ -22,7 +22,7 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist/gestion-frontend /usr/share/nginx/html/
 
 ENV BACKEND_HOST=backend
-ENV BACKEND_PORT=8082
+ENV BACKEND_PORT=8080
 
 EXPOSE 80
 
