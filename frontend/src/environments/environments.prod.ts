@@ -1,10 +1,9 @@
 export const environment = {
     production: true,
 
-    // En producción (Railway), usamos una ruta relativa para que las llamadas
-    // pasen por el proxy Nginx del mismo contenedor (evita CORS por completo).
-    // Nginx reenvía /api/ → backend interno (gestion-ingenieria-v2.railway.internal:8080)
-    apiUrl: '/api',
+    // Conexión directa a la URL Pública de Railway.
+    // Evitamos el proxy Nginx estático para no sufrir problemas de inyección de variables.
+    apiUrl: 'https://gestion-ingenieria-v2-production.up.railway.app/api',
 
     supabase: {
         // URL de tu proyecto de Supabase en la nube

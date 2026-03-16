@@ -64,6 +64,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
+                "https://gestion-ingenieria-v2-production.up.railway.app",
                 "https://pacific-mercy-production-9a82.up.railway.app",
                 "http://localhost:4200",
                 "http://127.0.0.1:4200"
