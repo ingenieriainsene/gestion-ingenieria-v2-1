@@ -1101,6 +1101,12 @@ pres AS (
     DATE '2026-02-04',
     'Aceptado',
     'Mantenimiento preventivo anual para planta FV 250 kWp: limpieza, termografía y revisión de inversores.'
+  WHERE NOT EXISTS (
+    SELECT 1 FROM presupuestos_preventivos 
+    WHERE cliente_id = (SELECT id_cliente FROM cliente) 
+      AND vivienda_id = (SELECT id_local FROM local_sel)
+      AND fecha = DATE '2026-02-04'
+  )
   RETURNING id_presupuesto_prev
 )
 INSERT INTO presupuestos_preventivos_tareas (
@@ -1177,6 +1183,7 @@ p AS (
     DATE '2026-02-04',
     2274.80, 1880.00, 2274.80,
     'Aceptado', 'Preventivo'
+  WHERE NOT EXISTS (SELECT 1 FROM presupuestos WHERE codigo_referencia = 'PRES-FV-MANT-001')
   RETURNING id_presupuesto
 ),
 cap AS (

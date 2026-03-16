@@ -27,7 +27,9 @@ interface NavCategory {
           &#9776;
         </div>
         <div class="nav-brand-container">
-          <a class="nav-brand" routerLink="/">Insene Solar</a>
+          <a class="nav-brand" routerLink="/">
+            <img src="assets/logo-insene.png" alt="Insene Energía" class="brand-logo">
+          </a>
         </div>
       </div>
 
@@ -130,20 +132,73 @@ interface NavCategory {
     }
 
     .nav-brand-container {
-      padding: 20px 50px 20px 16px;
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      min-height: 110px;
     }
 
     .nav-brand {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #fff;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      cursor: pointer;
       text-decoration: none;
+    }
+
+    /* Aura de Neón Orgánica (Resplandor blanco ampliado para máxima visibilidad) */
+    .nav-brand::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 180px;
+      height: 80px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(
+        circle, 
+        rgba(255, 255, 255, 0.4) 0%, 
+        rgba(255, 255, 255, 0.12) 50%, 
+        rgba(255, 255, 255, 0) 85%
+      );
+      filter: blur(14px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .brand-logo {
+      position: relative;
+      z-index: 1;
       display: block;
-      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      max-width: 100%;
+      height: auto;
+      max-height: 62px;
+      object-fit: contain;
+      /* Nitidez total con halo blanco intenso */
+      filter: drop-shadow(0 0 1px rgba(255, 255, 255, 1))
+              drop-shadow(0 0 3px rgba(255, 255, 255, 0.4));
+      animation: solar-glow 4s infinite alternate ease-in-out;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .brand-logo:hover {
+      transform: scale(1.1) rotate(1deg);
+      filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.8));
+    }
+
+    @keyframes solar-glow {
+      0% {
+        filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.3)) 
+                drop-shadow(0 0 8px rgba(255, 255, 255, 0.1));
+      }
+      100% {
+        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6))
+                drop-shadow(0 0 15px rgba(245, 158, 11, 0.2));
+      }
     }
 
     /* Main Navigation */

@@ -90,14 +90,14 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     private initParticles() {
         const width = window.innerWidth;
         const height = window.innerHeight;
-        const targetCount = Math.min(120, Math.max(50, Math.floor((width * height) / 22000)));
+        const targetCount = Math.min(80, Math.max(30, Math.floor((width * height) / 30000)));
         this.particles = new Array(targetCount).fill(null).map(() => ({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.35,
-            vy: (Math.random() - 0.5) * 0.35,
-            radius: Math.random() * 1.4 + 0.8,
-            color: this.colors[Math.floor(Math.random() * this.colors.length)]
+            vx: (Math.random() - 0.5) * 0.2, // Movimiento más pausado y elegante
+            vy: (Math.random() - 0.5) * 0.2,
+            radius: Math.random() * 2 + 1, // Tamaño para los poliedros
+            color: '#fbbf24'
         }));
     }
 
@@ -108,10 +108,25 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
         const height = window.innerHeight;
 
         ctx.clearRect(0, 0, width, height);
-        const gradient = ctx.createLinearGradient(0, 0, 0, height);
-        gradient.addColorStop(0, '#0f172a');
-        gradient.addColorStop(1, '#000000');
-        ctx.fillStyle = gradient;
+        
+        // Fondo Azul Marino Profundo con Degradado Radial
+        const bgGradient = ctx.createRadialGradient(
+            width / 2, height / 2, 0,
+            width / 2, height / 2, width
+        );
+        bgGradient.addColorStop(0, '#0f172a');
+        bgGradient.addColorStop(1, '#020617');
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, width, height);
+
+        // Brillo Solar Distante (Plasma Ambiental)
+        const solarX = width * 0.85;
+        const solarY = height * 0.15;
+        const solarGlow = ctx.createRadialGradient(solarX, solarY, 0, solarX, solarY, 500);
+        solarGlow.addColorStop(0, 'rgba(251, 191, 36, 0.12)');
+        solarGlow.addColorStop(0.5, 'rgba(251, 191, 36, 0.04)');
+        solarGlow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        ctx.fillStyle = solarGlow;
         ctx.fillRect(0, 0, width, height);
 
         this.updateParticles(width, height);
@@ -122,59 +137,73 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     private updateParticles(width: number, height: number) {
-        const repelRadius = 140;
-        const repelForce = 0.4;
+        const parallaxX = this.mouse.active ? (this.mouse.x - width / 2) * 0.02 : 0;
+        const parallaxY = this.mouse.active ? (this.mouse.y - height / 2) * 0.02 : 0;
 
         for (const p of this.particles) {
-            if (this.mouse.active) {
-                const dx = p.x - this.mouse.x;
-                const dy = p.y - this.mouse.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist > 0 && dist < repelRadius) {
-                    const force = (1 - dist / repelRadius) * repelForce;
-                    p.vx += (dx / dist) * force;
-                    p.vy += (dy / dist) * force;
-                }
-            }
-
             p.x += p.vx;
             p.y += p.vy;
 
-            if (p.x <= 0 || p.x >= width) p.vx *= -1;
-            if (p.y <= 0 || p.y >= height) p.vy *= -1;
-
-            p.x = Math.min(width, Math.max(0, p.x));
-            p.y = Math.min(height, Math.max(0, p.y));
+            if (p.x <= -100 || p.x >= width + 100) p.vx *= -1;
+            if (p.y <= -100 || p.y >= height + 100) p.vy *= -1;
         }
     }
 
     private drawParticles(ctx: CanvasRenderingContext2D) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const parallaxX = this.mouse.active ? (this.mouse.x - width / 2) * 0.02 : 0;
+        const parallaxY = this.mouse.active ? (this.mouse.y - height / 2) * 0.02 : 0;
+
         for (const p of this.particles) {
+            const px = p.x + parallaxX;
+            const py = p.y + parallaxY;
+            const r = p.radius;
+
             ctx.beginPath();
             ctx.fillStyle = p.color;
-            ctx.globalAlpha = 0.85;
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.globalAlpha = 0.5;
+            
+            // Dibujar Poliedro Cristalino (Hexágono)
+            ctx.moveTo(px, py - r * 1.5);
+            for (let i = 1; i <= 6; i++) {
+                const angle = (i * Math.PI * 2) / 6 - Math.PI / 2;
+                ctx.lineTo(px + Math.cos(angle) * r * 1.5, py + Math.sin(angle) * r * 1.5);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Reflejo Refractivo
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.arc(px - r * 0.3, py - r * 0.3, r * 0.4, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.globalAlpha = 1;
     }
 
     private drawConnections(ctx: CanvasRenderingContext2D) {
-        const maxDist = 140;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const parallaxX = this.mouse.active ? (this.mouse.x - width / 2) * 0.02 : 0;
+        const parallaxY = this.mouse.active ? (this.mouse.y - height / 2) * 0.02 : 0;
+
+        const maxDist = 200;
         for (let i = 0; i < this.particles.length; i++) {
             for (let j = i + 1; j < this.particles.length; j++) {
                 const a = this.particles[i];
                 const b = this.particles[j];
-                const dx = a.x - b.x;
-                const dy = a.y - b.y;
+                const dx = (a.x + parallaxX) - (b.x + parallaxX);
+                const dy = (a.y + parallaxY) - (b.y + parallaxY);
                 const dist = Math.hypot(dx, dy);
                 if (dist < maxDist) {
-                    const alpha = 0.22 * (1 - dist / maxDist);
-                    ctx.strokeStyle = `rgba(148, 163, 184, ${alpha.toFixed(3)})`;
-                    ctx.lineWidth = 0.6;
+                    const alpha = 0.18 * (1 - dist / maxDist);
+                    ctx.strokeStyle = `rgba(251, 191, 36, ${alpha.toFixed(3)})`;
+                    ctx.lineWidth = 0.4;
                     ctx.beginPath();
-                    ctx.moveTo(a.x, a.y);
-                    ctx.lineTo(b.x, b.y);
+                    ctx.moveTo(a.x + parallaxX, a.y + parallaxY);
+                    ctx.lineTo(b.x + parallaxX, b.y + parallaxY);
                     ctx.stroke();
                 }
             }
