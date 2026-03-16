@@ -1,9 +1,8 @@
 export const environment = {
     production: true,
 
-    // Conexión directa a la URL Pública de Railway.
-    // Evitamos el proxy Nginx estático para no sufrir problemas de inyección de variables.
-    apiUrl: 'https://gestion-ingenieria-v2-production.up.railway.app/api',
+    // Usamos el proxy de Nginx para comunicación interna y evitar CORS.
+    apiUrl: '/api',
 
     supabase: {
         // URL de tu proyecto de Supabase en la nube

@@ -19,12 +19,17 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
+    private final AuthTokenFilter authTokenFilter;
+
+    public SecurityConfig(AuthTokenFilter authTokenFilter) {
+        this.authTokenFilter = authTokenFilter;
     }
 
-    public SecurityConfig() {
+    @Bean
+    public org.springframework.boot.web.servlet.FilterRegistrationBean<AuthTokenFilter> registration(AuthTokenFilter filter) {
+        org.springframework.boot.web.servlet.FilterRegistrationBean<AuthTokenFilter> registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     /**
@@ -46,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().permitAll())
                 // AuthTokenFilter dentro de la cadena de seguridad
-                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
