@@ -1,4 +1,4 @@
-/* Ficha Local – Estilos Restaurados y Mejorados */
+﻿/* Ficha Local â€“ Estilos Restaurados y Mejorados */
 
 .ficha-top {
   margin-bottom: 20px;
@@ -169,7 +169,7 @@
 
 .main-column {
   flex: 2;
-  /* Más ancho para datos principales */
+  /* MÃ¡s ancho para datos principales */
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -181,7 +181,7 @@
   min-width: 350px;
 }
 
-/* CARDS LATERALES TÉCNICAS (Diferencial) */
+/* CARDS LATERALES TÃ‰CNICAS (Diferencial) */
 .tech-side-panel {
   background: #f1f5f9;
   border: 1px solid #cbd5e1;

@@ -14,7 +14,7 @@ import { AreaFuncionalEditorComponent } from './area-funcional-editor.component'
   standalone: true,
   imports: [CommonModule, RouterLink, AuditStampComponent, AreaFuncionalEditorComponent, FormsModule],
   templateUrl: './local-ficha-view.component.html',
-  styleUrls: ['./local-ficha-view.component.css'],
+  styleUrls: ['./local-ficha-view.component.css', './premium-form.css'],
 })
 export class LocalFichaViewComponent implements OnInit {
   local: Local | null = null;

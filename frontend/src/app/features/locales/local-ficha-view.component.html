@@ -142,98 +142,172 @@
     </div>
   </div>
 
-  <div *ngIf="cieVisible" class="legalizacion-panel">
-    <h2>⚡ Certificado de Instalación Eléctrica (CIE)</h2>
-    <p class="legalizacion-help">
-      Rellene los datos para emitir el CIE. Los datos inyectados por defecto son modificables para este PDF.
-    </p>
-
-    <h3>Datos del Expediente y Titular</h3>
-    <div class="legalizacion-grid">
-      <div class="field"><label>Núm. Registro</label><input type="text" [(ngModel)]="cie.numeroRegistro" /></div>
-      <div class="field"><label>Año</label><input type="text" [(ngModel)]="cie.anoNumeroRegistro" /></div>
-      <div class="field field-full"><label>Nombre Titular</label><input type="text" [(ngModel)]="cie.nombreTitular" /></div>
-      <div class="field"><label>NIF / DNI</label><input type="text" [(ngModel)]="cie.dniTitular" /></div>
-      <div class="field field-full"><label>Domicilio</label><input type="text" [(ngModel)]="cie.domicilioTitular" /></div>
-      <div class="field"><label>Localidad</label><input type="text" [(ngModel)]="cie.localidadTitular" /></div>
-      <div class="field"><label>Provincia</label><input type="text" [(ngModel)]="cie.provinciaTitular" /></div>
-      <div class="field"><label>C.Postal</label><input type="text" [(ngModel)]="cie.cpTitular" /></div>
+  <div *ngIf="cieVisible" class="premium-form-panel slide-in">
+    <div class="premium-form-header">
+      <div class="pf-header-title">
+         <span class="pf-icon">⚡</span>
+         <h2>Certificado de Instalación Eléctrica (CIE)</h2>
+      </div>
+      <p class="pf-header-desc">
+        Complete el formulario para la emisión del certificado. Los datos precargados pueden ser ajustados antes de generar el documento final en PDF.
+      </p>
     </div>
 
-    <h3>Datos de la Instalación</h3>
-    <div class="legalizacion-grid">
-      <div class="field field-full"><label>Emplazamiento</label><input type="text" [(ngModel)]="cie.emplazamientoInstalacion" /></div>
-      <div class="field"><label>Núm.</label><input type="text" [(ngModel)]="cie.numeroEmplazamientoInstalacion" /></div>
-      <div class="field"><label>Bloque</label><input type="text" [(ngModel)]="cie.bloqueEmplazamientoInstalacion" /></div>
-      <div class="field"><label>Portal</label><input type="text" [(ngModel)]="cie.portalEmplazamientoInstalacion" /></div>
-      <div class="field"><label>Escalera</label><input type="text" [(ngModel)]="cie.escaleraEmplazamientoInstalacion" /></div>
-      <div class="field"><label>Piso</label><input type="text" [(ngModel)]="cie.pisoEmplazamientoInstalacion" /></div>
-      <div class="field"><label>Puerta</label><input type="text" [(ngModel)]="cie.puertaEmplazamientoInstalacion" /></div>
-      <div class="field"><label>Localidad</label><input type="text" [(ngModel)]="cie.localidadInstalacion" /></div>
-      <div class="field"><label>Provincia</label><input type="text" [(ngModel)]="cie.provinciaInstalacion" /></div>
-      <div class="field"><label>C.Postal</label><input type="text" [(ngModel)]="cie.cpInstalacion" /></div>
-      <div class="field field-full"><label>Tipo de Instalación</label><input type="text" [(ngModel)]="cie.tipoInstalacion" /></div>
-      <div class="field field-full"><label>Uso al que se destina</label><input type="text" [(ngModel)]="cie.usoDestina" /></div>
-      <div class="field"><label>CUPS</label><input type="text" [(ngModel)]="cie.cups" /></div>
-    </div>
-
-    <h3>Características Principales</h3>
-    <div class="legalizacion-grid">
-        <div class="field checkbox-field" style="grid-column: 1 / -1; display: flex; gap: 15px;">
-           <label><input type="checkbox" [(ngModel)]="cie.chkInstalacionNueva" /> Nueva</label>
-           <label><input type="checkbox" [(ngModel)]="cie.chkInstalacionAmpliacion" /> Ampliación</label>
-           <label><input type="checkbox" [(ngModel)]="cie.chkInstalacionModificacion" /> Modificación</label>
+    <div class="premium-form-body">
+      <!-- Sección 1 -->
+      <div class="pf-section">
+        <div class="pf-section-heading">
+          <span class="pf-section-number">01</span>
+          <h3>Datos del Expediente y Titular</h3>
         </div>
-        <div class="field checkbox-field" style="grid-column: 1 / -1; display: flex; gap: 15px;">
-            <span style="font-weight: 600; font-size: 0.85rem; color: #495057;">Línea Alimentación:</span>
-            <label><input type="checkbox" [(ngModel)]="cie.chkLineaAlimentacionSi" /> Sí</label>
-            <label><input type="checkbox" [(ngModel)]="cie.chkLineaAlimentacionNo" /> No</label>
+        <div class="pf-grid pf-grid-4">
+          <div class="pf-field"><label>Núm. Registro</label><input type="text" class="premium-input" [(ngModel)]="cie.numeroRegistro" placeholder="Ej. RE-123" /></div>
+          <div class="pf-field"><label>Año</label><input type="text" class="premium-input" [(ngModel)]="cie.anoNumeroRegistro" placeholder="Ej. 2024" /></div>
+          <div class="pf-field pf-col-span-2"><label>Nombre Titular</label><input type="text" class="premium-input" [(ngModel)]="cie.nombreTitular" /></div>
+          
+          <div class="pf-field pf-col-span-2"><label>NIF / DNI</label><input type="text" class="premium-input" [(ngModel)]="cie.dniTitular" /></div>
+          <div class="pf-field pf-col-span-4"><label>Domicilio</label><input type="text" class="premium-input" [(ngModel)]="cie.domicilioTitular" /></div>
+          
+          <div class="pf-field pf-col-span-2"><label>Localidad</label><input type="text" class="premium-input" [(ngModel)]="cie.localidadTitular" /></div>
+          <div class="pf-field"><label>Provincia</label><input type="text" class="premium-input" [(ngModel)]="cie.provinciaTitular" /></div>
+          <div class="pf-field"><label>C.Postal</label><input type="text" class="premium-input" [(ngModel)]="cie.cpTitular" /></div>
         </div>
-      <div class="field"><label>Intensidad Nominal</label><input type="text" [(ngModel)]="cie.intensidadNominal" /></div>
-      <div class="field"><label>Potencia Instalada/Prevista</label><input type="text" [(ngModel)]="cie.potenciaPrevista" /></div>
-      <div class="field"><label>Tensión Suministro</label><input type="text" [(ngModel)]="cie.tensionSuministro" /></div>
-      
-       <div class="field checkbox-field" style="grid-column: 1 / -1; display: flex; gap: 15px;">
-           <label><input type="checkbox" [(ngModel)]="cie.chkMonofasico" /> Monofásico</label>
-           <label><input type="checkbox" [(ngModel)]="cie.chkTrifasico" /> Trifásico</label>
-       </div>
-    </div>
+      </div>
 
-    <h3>Características Secundarias</h3>
-    <div class="legalizacion-grid">
-      <div class="field"><label>Aislamiento Línea Alim.</label><input type="text" [(ngModel)]="cie.nivelAislamiento" placeholder="Nivel Aislamiento"/></div>
-      <div class="field"><label>Material Aislamiento</label><input type="text" [(ngModel)]="cie.materialAislamiento" /></div>
-      <div class="field"><label>Material Conductor</label><input type="text" [(ngModel)]="cie.materialConductor" /></div>
-      <div class="field"><label>Sección(es) Fase</label><input type="text" [(ngModel)]="cie.fase" /></div>
-      <div class="field"><label>Sección Neutro</label><input type="text" [(ngModel)]="cie.neutro" /></div>
-      <div class="field"><label>Sección CP</label><input type="text" [(ngModel)]="cie.cpConductor" /></div>
-      <div class="field field-full"><label>Empresa Distribuidora</label><input type="text" [(ngModel)]="cie.empresaDistribuidora" /></div>
-    </div>
+      <!-- Sección 2 -->
+      <div class="pf-section">
+        <div class="pf-section-heading">
+          <span class="pf-section-number">02</span>
+          <h3>Datos de la Instalación</h3>
+        </div>
+        <div class="pf-grid pf-grid-4">
+          <div class="pf-field pf-col-span-4"><label>Emplazamiento</label><input type="text" class="premium-input" [(ngModel)]="cie.emplazamientoInstalacion" /></div>
+          <div class="pf-field"><label>Núm.</label><input type="text" class="premium-input" [(ngModel)]="cie.numeroEmplazamientoInstalacion" /></div>
+          <div class="pf-field"><label>Bloque</label><input type="text" class="premium-input" [(ngModel)]="cie.bloqueEmplazamientoInstalacion" /></div>
+          <div class="pf-field"><label>Portal</label><input type="text" class="premium-input" [(ngModel)]="cie.portalEmplazamientoInstalacion" /></div>
+          <div class="pf-field"><label>Escalera</label><input type="text" class="premium-input" [(ngModel)]="cie.escaleraEmplazamientoInstalacion" /></div>
+          <div class="pf-field"><label>Piso</label><input type="text" class="premium-input" [(ngModel)]="cie.pisoEmplazamientoInstalacion" /></div>
+          <div class="pf-field"><label>Puerta</label><input type="text" class="premium-input" [(ngModel)]="cie.puertaEmplazamientoInstalacion" /></div>
+          <div class="pf-field pf-col-span-2"><label>Localidad</label><input type="text" class="premium-input" [(ngModel)]="cie.localidadInstalacion" /></div>
+          
+          <div class="pf-field"><label>Provincia</label><input type="text" class="premium-input" [(ngModel)]="cie.provinciaInstalacion" /></div>
+          <div class="pf-field"><label>C.Postal</label><input type="text" class="premium-input" [(ngModel)]="cie.cpInstalacion" /></div>
+          <div class="pf-field pf-col-span-2"><label>Tipo de Instalación</label><input type="text" class="premium-input" [(ngModel)]="cie.tipoInstalacion" /></div>
+          
+          <div class="pf-field pf-col-span-2"><label>Uso al que se destina</label><input type="text" class="premium-input" [(ngModel)]="cie.usoDestina" /></div>
+          <div class="pf-field pf-col-span-2"><label>CUPS</label><input type="text" class="premium-input pf-highlight" [(ngModel)]="cie.cups" /></div>
+        </div>
+      </div>
 
-    <h3>Protección Individual contra Sobretensión</h3>
-    <div class="legalizacion-grid">
-       <div class="field checkbox-field" style="grid-column: 1 / -1; display: flex; gap: 15px;">
-           <label><input type="checkbox" [(ngModel)]="cie.chkInterrup" /> Interruptor Automático</label>
-           <label><input type="checkbox" [(ngModel)]="cie.chkFusibles" /> Fusibles</label>
-       </div>
-      <div class="field"><label>Intensidad Nominal (A)</label><input type="text" [(ngModel)]="cie.pfIntensidadNominal" /></div>
-      <div class="field"><label>Sensibilidad (mA)</label><input type="text" [(ngModel)]="cie.sensibilidad" /></div>
-      <div class="field"><label>Resistencia de Tierra</label><input type="text" [(ngModel)]="cie.resistenciaTierra" /></div>
-      <div class="field"><label>Resistencia de Aislamiento</label><input type="text" [(ngModel)]="cie.resistenciaAislamiento" /></div>
-      <div class="field field-full"><label>Observaciones</label><textarea rows="2" [(ngModel)]="cie.observaciones"></textarea></div>
-    </div>
+      <!-- Sección 3 -->
+      <div class="pf-section">
+        <div class="pf-section-heading">
+          <span class="pf-section-number">03</span>
+          <h3>Características Principales</h3>
+        </div>
+        <div class="pf-grid pf-grid-3">
+          <div class="pf-field pf-col-span-3 pf-checkbox-group-wrapper">
+             <label class="pf-group-label">Tipo de Obra</label>
+             <div class="pf-checkbox-group">
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkInstalacionNueva" /><span class="checkmark"></span> Nueva</label>
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkInstalacionAmpliacion" /><span class="checkmark"></span> Ampliación</label>
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkInstalacionModificacion" /><span class="checkmark"></span> Modificación</label>
+             </div>
+          </div>
+          
+          <div class="pf-field pf-col-span-3 pf-checkbox-group-wrapper">
+             <label class="pf-group-label">Línea de Alimentación</label>
+             <div class="pf-checkbox-group">
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkLineaAlimentacionSi" /><span class="checkmark"></span> Sí</label>
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkLineaAlimentacionNo" /><span class="checkmark"></span> No</label>
+             </div>
+          </div>
+          
+          <div class="pf-field"><label>Intensidad Nominal</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.intensidadNominal" /><span class="pf-unit">A</span></div></div>
+          <div class="pf-field"><label>Potencia Instalada/Prev.</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.potenciaPrevista" /><span class="pf-unit">W</span></div></div>
+          <div class="pf-field"><label>Tensión Suministro</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.tensionSuministro" /><span class="pf-unit">V</span></div></div>
+          
+          <div class="pf-field pf-col-span-3 pf-checkbox-group-wrapper">
+             <label class="pf-group-label">Suministro</label>
+             <div class="pf-checkbox-group">
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkMonofasico" /><span class="checkmark"></span> Monofásico</label>
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkTrifasico" /><span class="checkmark"></span> Trifásico</label>
+             </div>
+          </div>
+        </div>
+      </div>
 
-    <h3>Datos de la Firma</h3>
-    <div class="legalizacion-grid">
-      <div class="field"><label>Localidad Firma</label><input type="text" [(ngModel)]="cie.localidadFirma" /></div>
-      <div class="field"><label>Día</label><input type="text" [(ngModel)]="cie.diaFirma" /></div>
-      <div class="field"><label>Mes</label><input type="text" [(ngModel)]="cie.mesFirma" /></div>
-      <div class="field"><label>Año</label><input type="text" [(ngModel)]="cie.anoFirma" /></div>
-    </div>
+      <!-- Sección 4 -->
+      <div class="pf-section">
+        <div class="pf-section-heading">
+          <span class="pf-section-number">04</span>
+          <h3>Características Secundarias</h3>
+        </div>
+        <div class="pf-grid pf-grid-3">
+          <div class="pf-field"><label>AislamIENTO LÍNEA ALIM.</label><input type="text" class="premium-input" [(ngModel)]="cie.nivelAislamiento" placeholder="Nivel Aislamiento"/></div>
+          <div class="pf-field"><label>Material Aislamiento</label><input type="text" class="premium-input" [(ngModel)]="cie.materialAislamiento" /></div>
+          <div class="pf-field"><label>Material Conductor</label><input type="text" class="premium-input" [(ngModel)]="cie.materialConductor" /></div>
+          
+          <div class="pf-field"><label>Sección Fase</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.fase" /><span class="pf-unit">mm²</span></div></div>
+          <div class="pf-field"><label>Sección Neutro</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.neutro" /><span class="pf-unit">mm²</span></div></div>
+          <div class="pf-field"><label>Sección CP</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.cpConductor" /><span class="pf-unit">mm²</span></div></div>
+          
+          <div class="pf-field pf-col-span-3"><label>Empresa Distribuidora</label><input type="text" class="premium-input" [(ngModel)]="cie.empresaDistribuidora" /></div>
+        </div>
+      </div>
+
+      <!-- Sección 5 -->
+      <div class="pf-section">
+        <div class="pf-section-heading">
+          <span class="pf-section-number">05</span>
+          <h3>Protección Individual contra Sobretensión</h3>
+        </div>
+        <div class="pf-grid pf-grid-2">
+          <div class="pf-field pf-col-span-2 pf-checkbox-group-wrapper">
+             <label class="pf-group-label">Medida de Protección</label>
+             <div class="pf-checkbox-group">
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkInterrup" /><span class="checkmark"></span> Interruptor Automático</label>
+                <label class="pf-checkbox-custom"><input type="checkbox" [(ngModel)]="cie.chkFusibles" /><span class="checkmark"></span> Fusibles</label>
+             </div>
+          </div>
+          
+          <div class="pf-field"><label>Intensidad Nominal</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.pfIntensidadNominal" /><span class="pf-unit">A</span></div></div>
+          <div class="pf-field"><label>Sensibilidad</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.sensibilidad" /><span class="pf-unit">mA</span></div></div>
+          
+          <div class="pf-field"><label>Resistencia de Tierra</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.resistenciaTierra" /><span class="pf-unit">Ω</span></div></div>
+          <div class="pf-field"><label>Resistencia de Aislamiento</label><div class="pf-input-group"><input type="text" class="premium-input" [(ngModel)]="cie.resistenciaAislamiento" /><span class="pf-unit">MΩ</span></div></div>
+          
+          <div class="pf-field pf-col-span-2"><label>Observaciones</label><textarea rows="3" class="premium-input" [(ngModel)]="cie.observaciones"></textarea></div>
+        </div>
+      </div>
+
+      <!-- Sección 6 -->
+      <div class="pf-section">
+        <div class="pf-section-heading">
+          <span class="pf-section-number">06</span>
+          <h3>Datos de la Firma</h3>
+        </div>
+        <div class="pf-grid pf-grid-4">
+          <div class="pf-field pf-col-span-2"><label>Localidad Firma</label><input type="text" class="premium-input" [(ngModel)]="cie.localidadFirma" /></div>
+          <div class="pf-field"><label>Día</label><input type="text" class="premium-input text-center" [(ngModel)]="cie.diaFirma" /></div>
+          <div class="pf-field"><label>Mes / Año</label>
+             <div class="pf-combined-input">
+                <input type="text" class="premium-input text-center" [(ngModel)]="cie.mesFirma" placeholder="Mes" />
+                <span class="pf-separator">/</span>
+                <input type="text" class="premium-input text-center" [(ngModel)]="cie.anoFirma" placeholder="Año" />
+             </div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- /premium-form-body -->
     
-    <div class="legalizacion-actions">
-      <button type="button" class="btn-secondary" (click)="toggleCie()">Cancelar</button>
-      <button type="button" class="btn-primary" (click)="generarCie()">⚡ Generar CIE</button>
+    <div class="premium-form-actions sticky-actions">
+      <button type="button" class="pf-btn pf-btn-secondary" (click)="toggleCie()">
+        <span class="icon">✕</span> Cancelar
+      </button>
+      <button type="button" class="pf-btn pf-btn-primary" (click)="generarCie()">
+        <span class="icon">⚡</span> Generar Documento CIE
+      </button>
     </div>
   </div>
 
