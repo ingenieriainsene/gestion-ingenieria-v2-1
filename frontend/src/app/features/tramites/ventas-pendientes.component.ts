@@ -11,7 +11,7 @@ import Swal from 'sweetalert2';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
-      <h1>Ventas Pendientes</h1>
+      <h1>Ventas Pendientes <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
     </div>
 
     <div class="filters-container">

@@ -12,7 +12,7 @@ import { ProductoService } from '../../services/producto.service';
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="d-flex justify-content-between align-items-center mb-3 header-row" style="margin-bottom: 25px;">
-      <h1>Almacén de Productos</h1>
+      <h1>Almacén de Productos <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
       <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Producto</button>
     </div>
 

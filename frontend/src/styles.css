@@ -519,3 +519,26 @@ td {
         width: 100%;
     }
 }
+
+/* CONTADOR DINÁMICO DE TABLAS */
+.badge-contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-left: 12px;
+  vertical-align: middle;
+  border: 1px solid #bae6fd;
+  box-shadow: 0 2px 4px rgba(3, 105, 161, 0.05);
+  transition: all 0.2s ease;
+}
+
+.header-section h1 {
+  display: flex;
+  align-items: center;
+}

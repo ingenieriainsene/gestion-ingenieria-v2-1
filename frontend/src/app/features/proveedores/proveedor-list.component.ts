@@ -23,7 +23,7 @@ interface ProveedorRow {
   imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule],
   template: `
     <div class="d-flex justify-content-between align-items-center mb-3 header-row" style="margin-bottom: 25px;">
-      <h1>Gestión de Proveedores</h1>
+      <h1>Gestión de Proveedores <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
       <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Proveedor</button>
     </div>
 

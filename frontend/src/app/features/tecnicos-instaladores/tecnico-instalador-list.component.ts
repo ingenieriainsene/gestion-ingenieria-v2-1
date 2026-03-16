@@ -12,7 +12,7 @@ import Swal from 'sweetalert2';
     <div class="wrapper">
       <div class="header-section">
         <div class="header-content">
-          <h2>🛠️ Técnicos Instaladores</h2>
+          <h2>🛠️ Técnicos Instaladores <span class="badge-contador" *ngIf="tecnicos">{{ tecnicos.length }} registros</span></h2>
           <p class="subtitle">Gestiona el equipo de montaje e instalaciones</p>
         </div>
         <a routerLink="/tecnicos-instaladores/nuevo" class="btn-create">

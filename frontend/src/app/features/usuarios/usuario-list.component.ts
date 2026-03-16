@@ -12,7 +12,7 @@ import Swal from 'sweetalert2';
     <div class="user-wrapper">
       <div class="header-section">
         <div class="header-content">
-          <h2>👥 Gestión de Usuarios</h2>
+          <h2>👥 Gestión de Usuarios <span class="badge-contador" *ngIf="usuarios">{{ usuarios.length }} registros</span></h2>
           <p class="subtitle">Administra los accesos y roles del equipo</p>
         </div>
         <a routerLink="/usuarios/nuevo" class="btn-create">

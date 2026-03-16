@@ -12,7 +12,7 @@ import Swal from 'sweetalert2';
   imports: [CommonModule, RouterLink, ReactiveFormsModule],
   template: `
     <div class="header-container">
-      <h1>GESTIÓN DE PRESUPUESTOS</h1>
+      <h1>GESTIÓN DE PRESUPUESTOS <span class="badge-contador" *ngIf="filteredPresupuestos">{{ filteredPresupuestos.length }} registros</span></h1>
       <a routerLink="/presupuestos/nuevo" class="btn-primary">+ Nuevo Presupuesto</a>
     </div>
 

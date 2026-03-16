@@ -12,7 +12,7 @@ import Swal from 'sweetalert2';
   imports: [CommonModule, RouterLink, ReactiveFormsModule],
   template: `
     <div class="header-bar">
-      <h1>Gestión de Contratos</h1>
+      <h1>Gestión de Contratos <span class="badge-contador" *ngIf="filteredContratos">{{ filteredContratos.length }} registros</span></h1>
       <a routerLink="/contratos/nuevo" class="btn-primary">+ Nuevo Contrato</a>
     </div>
 
