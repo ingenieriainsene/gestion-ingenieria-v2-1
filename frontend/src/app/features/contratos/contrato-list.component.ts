@@ -426,11 +426,18 @@ export class ContratoListComponent implements OnInit, OnDestroy {
   }
 
   private extractFilterOptions() {
-    const typesSet = new Set<string>();
+    const typesMap = new Map<string, string>();
     this.allContratos.forEach(c => {
-      if (c.tipoContrato) typesSet.add(c.tipoContrato);
+      if (c.tipoContrato) {
+        const normalized = this.normalizeString(c.tipoContrato);
+        // Priorizamos la versión que tenga acentos si hay duplicados
+        const hasAccent = /[\u00C0-\u017F]/.test(c.tipoContrato);
+        if (!typesMap.has(normalized) || hasAccent) {
+          typesMap.set(normalized, c.tipoContrato);
+        }
+      }
     });
-    this.types = Array.from(typesSet).sort();
+    this.types = Array.from(typesMap.values()).sort();
   }
 
   private normalizeString(str: string): string {
@@ -457,7 +464,7 @@ export class ContratoListComponent implements OnInit, OnDestroy {
       const matchesLocal = !sLoc ||
         this.normalizeString(c.local?.direccionCompleta || '').includes(sLoc);
 
-      const matchesTipo = !tipo || c.tipoContrato === tipo;
+      const matchesTipo = !tipo || this.normalizeString(c.tipoContrato || '') === this.normalizeString(tipo);
       const matchesEstado = !estado || (c.estado || 'Activo') === estado;
 
       return matchesId && matchesCliente && matchesLocal && matchesTipo && matchesEstado;

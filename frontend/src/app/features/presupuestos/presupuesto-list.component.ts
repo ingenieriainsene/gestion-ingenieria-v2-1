@@ -336,16 +336,35 @@ export class PresupuestoListComponent implements OnInit, OnDestroy {
   }
 
   private extractFilterOptions(): void {
-    const states = new Set<string>();
-    const types = new Set<string>();
+    const statesMap = new Map<string, string>();
+    const typesMap = new Map<string, string>();
 
     this.allPresupuestos.forEach(p => {
-      if (p.estado) states.add(p.estado);
-      if (p.tipoPresupuesto) types.add(p.tipoPresupuesto);
+      if (p.estado) {
+        const normalized = this.normalizeString(p.estado);
+        const hasAccent = /[\u00C0-\u017F]/.test(p.estado);
+        if (!statesMap.has(normalized) || hasAccent) {
+          statesMap.set(normalized, p.estado);
+        }
+      }
+      if (p.tipoPresupuesto) {
+        const normalized = this.normalizeString(p.tipoPresupuesto);
+        const hasAccent = /[\u00C0-\u017F]/.test(p.tipoPresupuesto);
+        if (!typesMap.has(normalized) || hasAccent) {
+          typesMap.set(normalized, p.tipoPresupuesto);
+        }
+      }
     });
 
-    this.states = Array.from(states).sort();
-    this.types = Array.from(types).sort();
+    this.states = Array.from(statesMap.values()).sort();
+    this.types = Array.from(typesMap.values()).sort();
+  }
+
+  private normalizeString(str: string): string {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   private applyFilters(): void {
@@ -358,8 +377,8 @@ export class PresupuestoListComponent implements OnInit, OnDestroy {
         (p.viviendaDireccion || '').toLowerCase().includes(searchLow);
 
       const matchesFecha = !fecha || p.fecha.startsWith(fecha);
-      const matchesEstado = !estado || p.estado === estado;
-      const matchesTipo = !tipo || p.tipoPresupuesto === tipo;
+      const matchesEstado = !estado || this.normalizeString(p.estado || '') === this.normalizeString(estado);
+      const matchesTipo = !tipo || this.normalizeString(p.tipoPresupuesto || '') === this.normalizeString(tipo);
 
       return matchesSearch && matchesFecha && matchesEstado && matchesTipo;
     });
