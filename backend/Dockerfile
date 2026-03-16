@@ -14,7 +14,7 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Railway usará la variable BACKEND_PORT que tienes configurada a 8082
-EXPOSE 8082
+# Railway usará la variable PORT automáticamente. EXPOSE es informativo.
+EXPOSE 8080
 
-CMD ["sh", "-c", "java -jar app.jar --server.port=${BACKEND_PORT:-8082}"]
+CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
