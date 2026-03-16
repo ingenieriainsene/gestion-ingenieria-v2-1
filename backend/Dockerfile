@@ -14,8 +14,7 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Railway inyecta la variable PORT automáticamente.
-# Usamos 8080 como fallback para alinear con proxy interno.
-EXPOSE 8080
+# Railway usará la variable BACKEND_PORT que tienes configurada a 8082
+EXPOSE 8082
 
-CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
+CMD ["sh", "-c", "java -jar app.jar --server.port=${BACKEND_PORT:-8082}"]
