@@ -19,10 +19,12 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final AuthTokenFilter authTokenFilter;
+    @Bean
+    public AuthTokenFilter authenticationJwtTokenFilter() {
+        return new AuthTokenFilter();
+    }
 
-    public SecurityConfig(AuthTokenFilter authTokenFilter) {
-        this.authTokenFilter = authTokenFilter;
+    public SecurityConfig() {
     }
 
     /**
@@ -44,7 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().permitAll())
                 // AuthTokenFilter dentro de la cadena de seguridad
-                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -63,9 +65,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "https://gestion-ingenieria-v2-production.up.railway.app",
-                "https://pacific-mercy-production-9a82.up.railway.app",
+        config.setAllowedOriginPatterns(List.of(
+                "https://*.up.railway.app",
                 "http://localhost:4200",
                 "http://127.0.0.1:4200"
         ));

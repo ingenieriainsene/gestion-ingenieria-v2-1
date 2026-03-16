@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
-@Component
+//@Component  <-- Lo comentamos para que no se registre como Servlet Filter global, solo en SecurityConfig
 public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Autowired
