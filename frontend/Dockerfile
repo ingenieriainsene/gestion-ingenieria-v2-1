@@ -23,6 +23,7 @@ COPY --from=build /app/dist/gestion-frontend/browser /usr/share/nginx/html/
 
 ENV BACKEND_HOST=gestion-backend
 ENV BACKEND_PORT=8080
+ENV BACKEND_URL=http://gestion-backend:8080
 
 EXPOSE 80
 
