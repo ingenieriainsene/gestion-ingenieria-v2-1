@@ -5,7 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "locales", "telefonos" })
+    // Eliminamos EntityGraph con múltiples colecciones para evitar Producto Cartesiano.
+    // Usamos @BatchSize en la entidad Cliente para carga eficiente.
     List<Cliente> findAll();
 
     List<Cliente> findByNombreContainingOrApellido1ContainingOrDniContaining(String nombre, String apellido,
