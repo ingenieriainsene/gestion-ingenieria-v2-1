@@ -31,6 +31,12 @@ public class RailwayConfig {
     @Bean
     @org.springframework.context.annotation.Primary
     public DataSource dataSource() {
+        log.info("--- SYSTEM ENVIRONMENT DIAGNOSIS ---");
+        log.info("PORT: {}", System.getenv("PORT"));
+        log.info("HOSTNAME: {}", System.getenv("HOSTNAME"));
+        log.info("RAILWAY_SERVICE_NAME: {}", System.getenv("RAILWAY_SERVICE_NAME"));
+        log.info("------------------------------------");
+
         DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
 
         // Check environment variables directly as fallback for early bean initialization issues

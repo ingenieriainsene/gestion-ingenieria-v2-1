@@ -21,7 +21,7 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 # Copiamos los archivos compilados a Nginx (Subcarpeta /browser obligatoria en el nuevo builder)
 COPY --from=build /app/dist/gestion-frontend/browser /usr/share/nginx/html/
 
-ENV BACKEND_HOST=backend
+ENV BACKEND_HOST=gestion-backend
 ENV BACKEND_PORT=8080
 
 EXPOSE 80
