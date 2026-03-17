@@ -1,4 +1,0 @@
-INSTRUCCIONES:
-1. Instalar Docker Desktop.
-2. Doble clic en 01_INICIAR.bat
-3. Esperar a que se abra el navegador.

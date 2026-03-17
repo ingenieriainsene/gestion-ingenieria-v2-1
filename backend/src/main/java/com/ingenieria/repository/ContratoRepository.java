@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ContratoRepository extends JpaRepository<Contrato, Long> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "cliente", "local" })
     List<Contrato> findAll();
 
     @Modifying

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LocalRepository extends JpaRepository<Local, Long> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "cliente" })
     List<Local> findAll();
 
     Optional<Local> findByReferenciaCatastral(String referenciaCatastral);

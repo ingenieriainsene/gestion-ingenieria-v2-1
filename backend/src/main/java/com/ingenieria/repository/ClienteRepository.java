@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "locales", "telefonos" })
     List<Cliente> findAll();
 
     List<Cliente> findByNombreContainingOrApellido1ContainingOrDniContaining(String nombre, String apellido,

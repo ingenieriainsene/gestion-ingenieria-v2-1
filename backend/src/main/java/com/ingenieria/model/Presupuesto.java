@@ -35,12 +35,12 @@ public class Presupuesto {
     @EqualsAndHashCode.Include
     private Long idPresupuesto;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     @JsonIgnoreProperties({ "locales", "presupuestos", "seguimientos", "contratos" })
     private Cliente cliente;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vivienda_id", nullable = false)
     @JsonIgnoreProperties({ "areas", "areasFuncionales", "cliente" })
     private Local vivienda;

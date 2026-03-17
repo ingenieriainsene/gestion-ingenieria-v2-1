@@ -1,15 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LocalService, ClienteService, Local, Cliente } from '../../services/domain.services';
 import { AutocompleteComponent } from '../../shared/components/autocomplete/autocomplete.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-local-list',
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AutocompleteComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="header-bar">
       <h1>Gestión de Locales <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
@@ -425,11 +427,14 @@ export class LocalListComponent implements OnInit {
   guardando = false;
   formModal: FormGroup;
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     private service: LocalService,
     private clienteService: ClienteService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.formModal = this.fb.group({
       idCliente: [null],
@@ -442,48 +447,54 @@ export class LocalListComponent implements OnInit {
     });
 
     // Validar RC en tiempo real en el modal
-    this.formModal.get('referenciaCatastral')?.valueChanges.subscribe(val => {
-      if (val && val.length > 5) {
-        this.service.checkRC(val).subscribe({
-          next: (existente) => {
-            if (existente) {
-              let htmlMsg = `<p>Ya existe un local con la Referencia Catastral: <b>${val}</b></p>`;
-              if (existente.idLocal) {
-                htmlMsg += `<p><a href="/locales/${existente.idLocal}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Haz clic aquí para ver la ficha del local existente</a></p>`;
-              }
-              Swal.fire({
-                title: 'Local duplicado',
-                html: htmlMsg,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Ir al Local Existente',
-                cancelButtonText: 'Cerrar'
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  this.cerrarModal();
-                  this.router.navigate(['/locales', existente.idLocal]);
+    this.formModal.get('referenciaCatastral')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(val => {
+        if (val && val.length > 5) {
+          this.service.checkRC(val)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (existente) => {
+                if (existente) {
+                  let htmlMsg = `<p>Ya existe un local con la Referencia Catastral: <b>${val}</b></p>`;
+                  if (existente.idLocal) {
+                    htmlMsg += `<p><a href="/locales/${existente.idLocal}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Haz clic aquí para ver la ficha del local existente</a></p>`;
+                  }
+                  Swal.fire({
+                    title: 'Local duplicado',
+                    html: htmlMsg,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ir al Local Existente',
+                    cancelButtonText: 'Cerrar'
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      this.cerrarModal();
+                      this.router.navigate(['/locales', existente.idLocal]);
+                    }
+                  });
                 }
-              });
-            }
-          },
-          error: () => { }
-        });
-      }
-    });
+              },
+              error: () => { }
+            });
+        }
+      });
 
     // Autofill titular data
-    this.formModal.get('idCliente')?.valueChanges.subscribe(val => {
-      if (val) {
-        const selectedCliente = this.clientes.find(c => c.idCliente === val);
-        if (selectedCliente) {
-          this.formModal.patchValue({
-            nombreTitular: selectedCliente.nombre,
-            apellido1Titular: selectedCliente.apellido1,
-            apellido2Titular: selectedCliente.apellido2 || ''
-          });
+    this.formModal.get('idCliente')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(val => {
+        if (val) {
+          const selectedCliente = this.clientes.find(c => c.idCliente === val);
+          if (selectedCliente) {
+            this.formModal.patchValue({
+              nombreTitular: selectedCliente.nombre,
+              apellido1Titular: selectedCliente.apellido1,
+              apellido2Titular: selectedCliente.apellido2 || ''
+            });
+          }
         }
-      }
-    });
+      });
   }
 
   ngOnInit() {
@@ -491,13 +502,19 @@ export class LocalListComponent implements OnInit {
   }
 
   cargarDatos() {
-    this.service.getAll().subscribe(data => {
-      this.locales = data;
-      this.filtrados = data;
-    });
-    this.clienteService.getAll().subscribe(data => {
-      this.clientes = data;
-    });
+    this.service.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(data => {
+        this.locales = data;
+        this.filtrados = data;
+        this.cdr.markForCheck();
+      });
+    this.clienteService.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(data => {
+        this.clientes = data;
+        this.cdr.markForCheck();
+      });
   }
 
   displayCliente(c: Cliente): string {
@@ -508,10 +525,12 @@ export class LocalListComponent implements OnInit {
     this.guardando = false;
     this.formModal.reset();
     this.modalVisible = true;
+    this.cdr.markForCheck();
   }
 
   cerrarModal() {
     this.modalVisible = false;
+    this.cdr.markForCheck();
   }
 
   onOverlayClick(e: Event) {
@@ -521,6 +540,7 @@ export class LocalListComponent implements OnInit {
   guardarNuevo() {
     if (this.formModal.invalid || this.guardando) return;
     this.guardando = true;
+    this.cdr.markForCheck();
     const v = this.formModal.value;
     const payload = {
       idCliente: v.idCliente,
@@ -531,26 +551,31 @@ export class LocalListComponent implements OnInit {
       cups: v.cups || null,
       referenciaCatastral: v.referenciaCatastral
     };
-    this.service.create(payload as any).subscribe({
-      next: (created) => {
-        this.guardando = false;
-        this.cerrarModal();
-        this.locales = [created, ...this.locales];
-        this.aplicarFiltro();
-        Swal.fire('Guardado', 'Local creado correctamente.', 'success');
-      },
-      error: (e) => {
-        this.guardando = false;
-        const msg = typeof e.error === 'string' ? e.error : (e.error?.message || 'No se pudo crear el local.');
-        Swal.fire('Error', msg, 'error');
-      }
-    });
+    this.service.create(payload as any)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (created) => {
+          this.guardando = false;
+          this.cerrarModal();
+          this.locales = [created, ...this.locales];
+          this.aplicarFiltro();
+          Swal.fire('Guardado', 'Local creado correctamente.', 'success');
+          this.cdr.markForCheck();
+        },
+        error: (e) => {
+          this.guardando = false;
+          const msg = typeof e.error === 'string' ? e.error : (e.error?.message || 'No se pudo crear el local.');
+          Swal.fire('Error', msg, 'error');
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   aplicarFiltro() {
     const term = this.filtro.trim().toLowerCase();
     if (!term) {
       this.filtrados = this.locales;
+      this.cdr.markForCheck();
       return;
     }
     this.filtrados = this.locales.filter(l =>
@@ -560,6 +585,7 @@ export class LocalListComponent implements OnInit {
       (l.cups && l.cups.toLowerCase().includes(term)) ||
       (l.referenciaCatastral && l.referenciaCatastral.toLowerCase().includes(term))
     );
+    this.cdr.markForCheck();
   }
 
   eliminar(l: Local) {
@@ -573,14 +599,20 @@ export class LocalListComponent implements OnInit {
       cancelButtonText: 'Cancelar',
     }).then((res) => {
       if (!res.isConfirmed) return;
-      this.service.delete(l.idLocal!).subscribe({
-        next: () => {
-          this.locales = this.locales.filter(x => x.idLocal !== l.idLocal);
-          this.aplicarFiltro();
-          Swal.fire('Eliminado', 'Local borrado correctamente.', 'success');
-        },
-        error: () => Swal.fire('Error', 'No se pudo eliminar el local.', 'error'),
-      });
+      this.service.delete(l.idLocal!)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.locales = this.locales.filter(x => x.idLocal !== l.idLocal);
+            this.aplicarFiltro();
+            Swal.fire('Eliminado', 'Local borrado correctamente.', 'success');
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            Swal.fire('Error', 'No se pudo eliminar el local.', 'error');
+            this.cdr.markForCheck();
+          },
+        });
     });
   }
 

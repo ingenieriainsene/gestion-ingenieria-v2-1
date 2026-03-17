@@ -1,8 +1,0 @@
-node_modules/
-dist/
-.angular/
-.vscode/
-.git/
-.gitignore
-*.log
-package-lock.json

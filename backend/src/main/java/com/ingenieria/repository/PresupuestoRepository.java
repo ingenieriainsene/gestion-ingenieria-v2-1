@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> {
+       @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "cliente", "vivienda", "tramite" })
        List<Presupuesto> findAll();
 
        @Query("SELECT DISTINCT p FROM Presupuesto p " +
