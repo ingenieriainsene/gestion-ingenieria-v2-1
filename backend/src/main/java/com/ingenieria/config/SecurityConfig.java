@@ -48,7 +48,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/health/**").permitAll()
                         .anyRequest().permitAll())
                 // AuthTokenFilter dentro de la cadena de seguridad
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);

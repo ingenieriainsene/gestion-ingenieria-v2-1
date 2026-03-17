@@ -33,11 +33,10 @@ public class RailwayConfig {
     public DataSource dataSource() {
         DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
 
-        // Si existe DATABASE_URL (Railway, Heroku, etc) y no se proveyó explícitamente SPRING_DATASOURCE_URL
-        if (databaseUrl != null && !databaseUrl.isEmpty() && 
-            (springDatasourceUrl == null || springDatasourceUrl.isEmpty() || springDatasourceUrl.contains("127.0.0.1:54322"))) {
+        // 1. Prioridad Máxima: DATABASE_URL (Railway, Heroku)
+        if (databaseUrl != null && !databaseUrl.isEmpty()) {
             try {
-                log.info("Configuring database from DATABASE_URL...");
+                log.info("Configurating database from DATABASE_URL...");
                 URI dbUri = new URI(databaseUrl);
 
                 String username = dbUri.getUserInfo().split(":")[0];
