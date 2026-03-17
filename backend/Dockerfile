@@ -14,7 +14,7 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Railway usará la variable PORT automáticamente (suele ser 8080).
+# Exponemos el puerto estándar
 EXPOSE 8080
 
-CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
+CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080} --server.address=0.0.0.0"]
