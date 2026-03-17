@@ -18,8 +18,8 @@ FROM nginx:alpine
 # Plantilla de Nginx (se resuelve en runtime con variables de entorno)
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Copiamos los archivos compilados a Nginx
-COPY --from=build /app/dist/gestion-frontend /usr/share/nginx/html/
+# Copiamos los archivos compilados a Nginx (Subcarpeta /browser obligatoria en el nuevo builder)
+COPY --from=build /app/dist/gestion-frontend/browser /usr/share/nginx/html/
 
 ENV BACKEND_HOST=backend
 ENV BACKEND_PORT=8080
