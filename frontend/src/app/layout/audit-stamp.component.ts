@@ -33,34 +33,33 @@ import { CommonModule } from '@angular/common';
     styles: [`
     .user-stamp {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 15px;
-      text-align: right;
+      gap: 20px;
       font-size: 0.7rem;
       color: #64748b;
-      background: #ffffff;
-      padding: 8px 15px;
-      border-radius: 10px;
+      background: #f8fafc;
+      padding: 6px 16px;
+      border-radius: 8px;
       border: 1px solid #e2e8f0;
-      float: right;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      width: 100%;
     }
     .stamp-column {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
+      align-items: center;
+      gap: 15px;
     }
     .stamp-divider {
       width: 1px;
-      height: 25px;
+      height: 16px;
       background: #e2e8f0;
     }
     .stamp-item {
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
       gap: 6px;
-      line-height: 1.2;
     }
     .stamp-label {
       color: #94a3b8;
@@ -76,17 +75,18 @@ import { CommonModule } from '@angular/common';
 
     @media (max-width: 768px) {
       .user-stamp {
-        float: none;
-        width: 100%;
-        box-sizing: border-box;
-        text-align: left;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        margin: 0 0 12px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 14px;
       }
-
-      .stamp-item {
-        justify-content: flex-start;
+      .stamp-divider {
+        display: none;
+      }
+      .stamp-column {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
       }
     }
   `]

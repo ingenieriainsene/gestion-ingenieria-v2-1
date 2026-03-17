@@ -61,6 +61,14 @@ export interface Local {
     areas?: LocalArea[];
 }
 
+export interface LegalizacionBT {
+    idLegalizacion?: number;
+    idLocal?: number;
+    fechaAlta?: string;
+    fechaLegalizacion?: string;
+    datosJson?: string;
+}
+
 export interface LegalizacionRequest {
     titular: string;
     nif: string;
@@ -96,6 +104,10 @@ export interface CieRequest {
     tipoInstalacion: string;
     usoDestina: string;
     cups: string;
+
+    // Campos para MTD Legalizacion
+    tipoAutoconsumo?: string;
+    caracteristicasTecnicas?: string;
 
     intensidadNominal: string;
     potenciaPrevista: string;
@@ -566,6 +578,37 @@ export class LocalAreaService {
 
     deleteUbicacion(id: number): Observable<void> {
         return this.api.delete<void>(`${this.endpoint}/ubicaciones/${id}`);
+    }
+}
+
+@Injectable({ providedIn: 'root' })
+export class LegalizacionBTService {
+    private endpoint = 'legalizaciones-bt';
+    constructor(private api: ApiService) { }
+    getByLocal(idLocal: number): Observable<LegalizacionBT[]> {
+        return this.api.get<LegalizacionBT[]>(`${this.endpoint}/local/${idLocal}`);
+    }
+    create(idLocal: number, data: LegalizacionBT): Observable<LegalizacionBT> {
+        return this.api.post<LegalizacionBT>(`${this.endpoint}/local/${idLocal}`, data);
+    }
+    delete(id: number): Observable<void> {
+        return this.api.delete<void>(`${this.endpoint}/${id}`);
+    }
+    getCiePdf(id: number): Observable<Blob> {
+        return this.api.getBlob(`${this.endpoint}/${id}/pdf/cie`) as any;
+    }
+    getMtdPdf(id: number, tipoAutoconsumo?: string, caracteristicas?: string): Observable<Blob> {
+        let url = `${this.endpoint}/${id}/pdf/mtd`;
+        const params: string[] = [];
+        if (tipoAutoconsumo) params.push(`tipoAutoconsumo=${encodeURIComponent(tipoAutoconsumo)}`);
+        if (caracteristicas) params.push(`caracteristicas=${encodeURIComponent(caracteristicas)}`);
+        if (params.length > 0) url += `?${params.join('&')}`;
+        
+        return this.api.getBlob(url) as any;
+    }
+
+    getCertificadoPdf(id: number): Observable<Blob> {
+        return this.api.getBlob(`${this.endpoint}/${id}/pdf/certificado`) as any;
     }
 }
 

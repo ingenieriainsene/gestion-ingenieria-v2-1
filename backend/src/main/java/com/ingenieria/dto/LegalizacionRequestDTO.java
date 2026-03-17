@@ -10,6 +10,7 @@ public class LegalizacionRequestDTO {
     private String nif;
     private String emplazamiento;
     private String cups;
+    private String referenciaCatastral;
 
     // Campos adicionales de la memoria
     private String tipoAutoconsumo;
@@ -49,6 +50,14 @@ public class LegalizacionRequestDTO {
 
     public void setCups(String cups) {
         this.cups = cups;
+    }
+
+    public String getReferenciaCatastral() {
+        return referenciaCatastral;
+    }
+
+    public void setReferenciaCatastral(String referenciaCatastral) {
+        this.referenciaCatastral = referenciaCatastral;
     }
 
     public String getTipoAutoconsumo() {

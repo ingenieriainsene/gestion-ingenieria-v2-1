@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LocalService, ContratoService, LegalizacionRequest, CieRequest } from '../../services/domain.services';
+import { LocalService, ContratoService, LegalizacionRequest, CieRequest, LegalizacionBT, LegalizacionBTService } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
 import type { Local, Contrato, Cliente } from '../../services/domain.services';
 import Swal from 'sweetalert2';
@@ -22,78 +22,21 @@ export class LocalFichaViewComponent implements OnInit {
   loading = true;
   idLocal: number | null = null;
   areasFuncionalesVisible = false;
-  legalizacionVisible = false;
 
-  legalizacion: LegalizacionRequest = {
-    titular: '',
-    nif: '',
-    emplazamiento: '',
-    cups: '',
-    tipoAutoconsumo: '',
-    caracteristicasTecnicas: ''
-  };
+  // Refactor Legalización BT
+  legalizacionesHistory: LegalizacionBT[] = [];
+  legalizacionPanelVisible = false;
+  mostrarHistorial = true;
+  mostrarFormularioCie = false;
 
-  cieVisible = false;
-  cie: CieRequest = {
-    numeroRegistro: '',
-    anoNumeroRegistro: '',
-    nombreTitular: '',
-    dniTitular: '',
-    domicilioTitular: '',
-    cpTitular: '',
-    localidadTitular: '',
-    provinciaTitular: '',
-    emplazamientoInstalacion: '',
-    numeroEmplazamientoInstalacion: '',
-    bloqueEmplazamientoInstalacion: '',
-    portalEmplazamientoInstalacion: '',
-    escaleraEmplazamientoInstalacion: '',
-    pisoEmplazamientoInstalacion: '',
-    puertaEmplazamientoInstalacion: '',
-    localidadInstalacion: '',
-    provinciaInstalacion: '',
-    cpInstalacion: '',
-    tipoInstalacion: '',
-    usoDestina: '',
-    cups: '',
-    intensidadNominal: '',
-    potenciaPrevista: '',
-    tensionSuministro: '',
-    nivelAislamiento: '',
-    materialAislamiento: '',
-    materialConductor: '',
-    fase: '',
-    neutro: '',
-    cpConductor: '',
-    empresaDistribuidora: '',
-    pfIntensidadNominal: '',
-    sensibilidad: '',
-    resistenciaTierra: '',
-    resistenciaAislamiento: '',
-    observaciones: '',
-    localidadFirma: '',
-    diaFirma: '',
-    mesFirma: '',
-    anoFirma: '',
-    chkInstalacionNueva: false,
-    chkInstalacionAmpliacion: false,
-    chkInstalacionModificacion: false,
-    chkLineaAlimentacionSi: false,
-    chkLineaAlimentacionNo: false,
-    chkMonofasico: false,
-    chkTrifasico: false,
-    chkInterrup: false,
-    chkFusibles: false,
-    chkCategoriaBasica: false,
-    chkCategoriaEspecialista: false
-  };
-
+  cie: CieRequest = this.getEmptyCie();
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private localService: LocalService,
     private contratoService: ContratoService,
+    private legalizacionBTService: LegalizacionBTService
   ) { }
 
   ngOnInit(): void {
@@ -115,7 +58,6 @@ export class LocalFichaViewComponent implements OnInit {
       next: (l) => {
         this.local = l;
         this.loading = false;
-        this.preRellenarLegalizacion();
         this.preRellenarCie();
       },
       error: () => {
@@ -130,6 +72,73 @@ export class LocalFichaViewComponent implements OnInit {
       },
       error: () => { },
     });
+    this.loadLegalizaciones();
+  }
+
+  loadLegalizaciones(): void {
+    if (!this.idLocal) return;
+    this.legalizacionBTService.getByLocal(this.idLocal).subscribe({
+      next: (list) => this.legalizacionesHistory = list,
+      error: () => { }
+    });
+  }
+
+  private getEmptyCie(): CieRequest {
+    return {
+      numeroRegistro: '',
+      anoNumeroRegistro: '',
+      nombreTitular: '',
+      dniTitular: '',
+      domicilioTitular: '',
+      cpTitular: '',
+      localidadTitular: '',
+      provinciaTitular: '',
+      emplazamientoInstalacion: '',
+      numeroEmplazamientoInstalacion: '',
+      bloqueEmplazamientoInstalacion: '',
+      portalEmplazamientoInstalacion: '',
+      escaleraEmplazamientoInstalacion: '',
+      pisoEmplazamientoInstalacion: '',
+      puertaEmplazamientoInstalacion: '',
+      localidadInstalacion: '',
+      provinciaInstalacion: '',
+      cpInstalacion: '',
+      tipoInstalacion: '',
+      usoDestina: '',
+      cups: '',
+      intensidadNominal: '',
+      potenciaPrevista: '',
+      tensionSuministro: '',
+      nivelAislamiento: '',
+      materialAislamiento: '',
+      materialConductor: '',
+      fase: '',
+      neutro: '',
+      cpConductor: '',
+      empresaDistribuidora: '',
+      pfIntensidadNominal: '',
+      sensibilidad: '',
+      resistenciaTierra: '',
+      resistenciaAislamiento: '',
+      observaciones: '',
+      localidadFirma: '',
+      diaFirma: '',
+      mesFirma: '',
+      anoFirma: '',
+      chkInstalacionNueva: false,
+      chkInstalacionAmpliacion: false,
+      chkInstalacionModificacion: false,
+      chkLineaAlimentacionSi: false,
+      chkLineaAlimentacionNo: false,
+      chkMonofasico: false,
+      chkTrifasico: false,
+      chkInterrup: false,
+      chkFusibles: false,
+      chkCategoriaBasica: false,
+      chkCategoriaEspecialista: false,
+      tipoAutoconsumo: '',
+      caracteristicasTecnicas: ''
+    };
   }
 
   vigente(c: Contrato): boolean {
@@ -158,26 +167,11 @@ export class LocalFichaViewComponent implements OnInit {
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(direccion || '');
   }
 
-  private preRellenarLegalizacion(): void {
-    if (!this.local) return;
-    const titular = `${this.local.nombreTitular || ''} ${this.local.apellido1Titular || ''} ${this.local.apellido2Titular || ''}`.trim();
-    this.legalizacion.titular = titular || this.legalizacion.titular;
-    this.legalizacion.nif = this.local.dniTitular || this.legalizacion.nif;
-    this.legalizacion.emplazamiento = this.local.direccionCompleta || this.legalizacion.emplazamiento;
-    this.legalizacion.cups = this.local.cups || this.legalizacion.cups;
-    this.legalizacion.latitud = this.local.latitud ?? this.legalizacion.latitud;
-    this.legalizacion.longitud = this.local.longitud ?? this.legalizacion.longitud;
-  }
-
   private preRellenarCie(): void {
     if (!this.local) return;
-    
-    // Obtener datos del cliente anidado para rellenar la info del titular si existe
     const cli = this.local.cliente;
     if (cli) {
-      if (!this.cie.nombreTitular) {
-          this.cie.nombreTitular = this.nombreCompleto(cli);
-      }
+      if (!this.cie.nombreTitular) this.cie.nombreTitular = this.nombreCompleto(cli);
       this.cie.dniTitular = cli.dni || this.cie.dniTitular;
       this.cie.domicilioTitular = cli.direccionFiscalCompleta || this.cie.domicilioTitular;
       this.cie.cpTitular = cli.codigoPostal || this.cie.cpTitular;
@@ -186,19 +180,13 @@ export class LocalFichaViewComponent implements OnInit {
       this.cie.nombreTitular = titular || this.cie.nombreTitular;
       this.cie.dniTitular = this.local.dniTitular || this.cie.dniTitular;
     }
-    
-    // Extraer localidad y provincia de la dirección si es posible? 
-    // De momento lo dejamos que el usuario lo rellene, rellenamos lo básico.
-    
     this.cie.emplazamientoInstalacion = this.local.direccionCompleta || this.cie.emplazamientoInstalacion;
     this.cie.cups = this.local.cups || this.cie.cups;
   }
 
   abrirCatastro(rc: string): void {
     const normalized = (rc || '').replace(/\s+/g, '').toUpperCase();
-    if (!normalized) {
-      return;
-    }
+    if (!normalized) return;
     const rc14 = encodeURIComponent(normalized.substring(0, Math.min(14, normalized.length)));
     const url = `https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx?buscar=S&refcat=${rc14}`;
     window.open(url, '_blank');
@@ -214,68 +202,153 @@ export class LocalFichaViewComponent implements OnInit {
   }
 
   irAContrato(c: Contrato): void {
-    if (!c.idContrato) {
-      return;
-    }
+    if (!c.idContrato) return;
     this.router.navigate(['/contratos', c.idContrato]);
   }
 
-  toggleLegalizacion(): void {
-    this.legalizacionVisible = !this.legalizacionVisible;
+  // Lógica Legalización BT
+  toggleLegalizacionPanel(): void {
+    this.legalizacionPanelVisible = !this.legalizacionPanelVisible;
+    if (this.legalizacionPanelVisible) {
+      this.mostrarHistorial = true;
+      this.mostrarFormularioCie = false;
+    }
   }
 
-  toggleCie(): void {
-    this.cieVisible = !this.cieVisible;
+  nuevaLegalizacion(): void {
+    this.mostrarHistorial = false;
+    this.mostrarFormularioCie = true;
+    this.cie = this.getEmptyCie();
+    this.preRellenarCie();
   }
 
-  generarMemoria(): void {
-    if (!this.idLocal) {
-      return;
-    }
+  cancelarFormulario(): void {
+    this.mostrarFormularioCie = false;
+    this.mostrarHistorial = true;
+  }
 
-    // Refrescamos coordenadas por si se han modificado en otro proceso
-    if (this.local) {
-      this.legalizacion.latitud = this.local.latitud ?? this.legalizacion.latitud;
-      this.legalizacion.longitud = this.local.longitud ?? this.legalizacion.longitud;
-    }
+  guardarYGenerarCie(): void {
+    if (!this.idLocal) return;
 
-    const payload: LegalizacionRequest = { ...this.legalizacion };
+    const payloadCie: CieRequest = { ...this.cie };
+    const nuevaLeg: LegalizacionBT = {
+      fechaLegalizacion: new Date().toISOString().split('T')[0],
+      datosJson: JSON.stringify(payloadCie)
+    };
 
-    this.localService.generarMemoriaLegalizacion(this.idLocal, payload).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `memoria-legalizacion-local-${this.idLocal}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+    this.legalizacionBTService.create(this.idLocal, nuevaLeg).subscribe({
+      next: () => {
+        this.loadLegalizaciones();
+        this.cancelarFormulario();
+        Swal.fire('Guardado', 'Legalización guardada correctamente. Puedes descargar los PDFs desde el historial.', 'success');
       },
       error: () => {
-        Swal.fire('Error', 'No se pudo generar la memoria de legalización.', 'error');
+        Swal.fire('Error', 'No se pudo guardar la legalización en el historial.', 'error');
       }
     });
   }
 
-  generarCie(): void {
-    if (!this.idLocal) return;
-
-    const payload: CieRequest = { ...this.cie };
-
-    this.localService.generarCie(this.idLocal, payload).subscribe({
+  descargarCertificadoManual(idLeg: number, event: Event): void {
+    event.stopPropagation();
+    this.legalizacionBTService.getCertificadoPdf(idLeg).subscribe({
       next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `CIE-local-${this.idLocal}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        this.downloadBlob(blob, `Certificado-1699-${idLeg}.pdf`);
       },
-      error: () => {
-        Swal.fire('Error', 'No se pudo generar el Certificado de Instalación Eléctrica.', 'error');
+      error: () => Swal.fire('Error', 'No se pudo generar el Certificado.', 'error')
+    });
+  }
+
+  descargarCieManual(idLeg: number, event: Event): void {
+    event.stopPropagation();
+    this.legalizacionBTService.getCiePdf(idLeg).subscribe({
+      next: (blob: Blob) => {
+        this.downloadBlob(blob, `CIE-legalizacion-${idLeg}.pdf`);
+      },
+      error: () => Swal.fire('Error', 'No se pudo generar el CIE.', 'error')
+    });
+  }
+
+  descargarMtdManual(leg: LegalizacionBT, event: Event): void {
+    event.stopPropagation();
+    const idLeg = leg.idLegalizacion;
+    if (!idLeg) return;
+
+    let currentData: any = {};
+    try {
+      currentData = JSON.parse(leg.datosJson || '{}');
+    } catch (e) {}
+
+    Swal.fire({
+      title: 'Completar Datos MTD',
+      html: `
+        <div style="text-align: left; padding: 0 10px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: #555;">Tipo Autoconsumo</label>
+          <input id="swal-tipo" class="swal2-input" style="margin: 0; width: 100%; box-sizing: border-box;" value="${currentData.tipoAutoconsumo || ''}" placeholder="Ej. Individual con excedentes">
+          
+          <label style="display: block; margin-top: 15px; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: #555;">Características Técnicas</label>
+          <textarea id="swal-caract" class="swal2-textarea" style="margin: 0; width: 100%; box-sizing: border-box; height: 100px;" placeholder="Ej. Paneles 450W, Inversor 5kW...">${currentData.caracteristicasTecnicas || ''}</textarea>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Generar PDF',
+      cancelButtonText: 'Cancelar',
+      preConfirm: () => {
+        return {
+          tipoAutoconsumo: (document.getElementById('swal-tipo') as HTMLInputElement).value,
+          caracteristicas: (document.getElementById('swal-caract') as HTMLTextAreaElement).value
+        };
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const { tipoAutoconsumo, caracteristicas } = result.value;
+        this.legalizacionBTService.getMtdPdf(idLeg, tipoAutoconsumo, caracteristicas).subscribe({
+          next: (blob: Blob) => {
+            this.downloadBlob(blob, `MTD-legalizacion-${idLeg}.pdf`);
+          },
+          error: () => Swal.fire('Error', 'No se pudo generar la MTD.', 'error')
+        });
+      }
+    });
+  }
+
+  private downloadBlob(blob: Blob, name: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  verLegalizacion(leg: LegalizacionBT): void {
+    if (!leg.datosJson) return;
+    try {
+      this.cie = JSON.parse(leg.datosJson);
+      this.mostrarHistorial = false;
+      this.mostrarFormularioCie = true;
+    } catch (e) {
+      console.error('Error al parsear datos de legalización', e);
+    }
+  }
+
+  eliminarLegalizacion(id: number, event: Event): void {
+    event.stopPropagation();
+    Swal.fire({
+      title: '¿Eliminar legalización?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.legalizacionBTService.delete(id).subscribe({
+          next: () => this.loadLegalizaciones(),
+          error: () => Swal.fire('Error', 'No se pudo eliminar.', 'error')
+        });
       }
     });
   }

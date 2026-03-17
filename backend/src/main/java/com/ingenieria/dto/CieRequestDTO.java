@@ -30,6 +30,10 @@ public class CieRequestDTO {
     private String usoDestina;
     private String cups;
 
+    // Campos para MTD Legalizacion
+    private String tipoAutoconsumo;
+    private String caracteristicasTecnicas;
+
     private String intensidadNominal;
     private String potenciaPrevista;
     private String tensionSuministro;
