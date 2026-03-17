@@ -33,27 +33,35 @@ public class RailwayConfig {
     public DataSource dataSource() {
         DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
 
-        // 1. Prioridad Máxima: DATABASE_URL (Railway, Heroku)
-        if (databaseUrl != null && !databaseUrl.isEmpty()) {
-            try {
-                log.info("Configurating database from DATABASE_URL...");
-                URI dbUri = new URI(databaseUrl);
+        // Check environment variables directly as fallback for early bean initialization issues
+        String envDbUrl = System.getenv("DATABASE_URL");
+        if (envDbUrl == null || envDbUrl.isEmpty()) {
+            envDbUrl = databaseUrl;
+        }
 
-                String username = dbUri.getUserInfo().split(":")[0];
-                String password = dbUri.getUserInfo().split(":")[1];
+        // 1. Prioridad Máxima: DATABASE_URL (Railway, Heroku)
+        if (envDbUrl != null && !envDbUrl.isEmpty()) {
+            try {
+                log.info("Configuring database from DATABASE_URL...");
+                URI dbUri = new URI(envDbUrl);
+
+                String userInfo = dbUri.getUserInfo();
+                String username = (userInfo != null && userInfo.contains(":")) ? userInfo.split(":")[0] : "";
+                String password = (userInfo != null && userInfo.contains(":")) ? userInfo.split(":")[1] : "";
                 String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath();
 
+                log.info("Parsed DB URL: {}", dbUrl);
                 dataSourceBuilder.url(dbUrl);
                 dataSourceBuilder.username(username);
                 dataSourceBuilder.password(password);
                 return dataSourceBuilder.build();
-            } catch (URISyntaxException e) {
-                log.error("Failed to parse DATABASE_URL", e);
+            } catch (URISyntaxException | ArrayIndexOutOfBoundsException e) {
+                log.error("Failed to parse DATABASE_URL ({}): {}", envDbUrl, e.getMessage());
             }
         }
 
         // Fallback local o explícito
-        log.info("Configuring database from local/explicit properties...");
+        log.info("Configuring database from local/explicit properties (SPRING_DATASOURCE_URL)...");
         String finalUrl = (springDatasourceUrl != null && !springDatasourceUrl.isEmpty()) ? 
                           springDatasourceUrl : "jdbc:postgresql://127.0.0.1:54322/postgres";
         String finalUser = (springDatasourceUsername != null && !springDatasourceUsername.isEmpty()) ? 
@@ -61,6 +69,7 @@ public class RailwayConfig {
         String finalPass = (springDatasourcePassword != null && !springDatasourcePassword.isEmpty()) ? 
                            springDatasourcePassword : "postgres";
 
+        log.info("Final fallback URL: {}", finalUrl);
         dataSourceBuilder.url(finalUrl);
         dataSourceBuilder.username(finalUser);
         dataSourceBuilder.password(finalPass);
