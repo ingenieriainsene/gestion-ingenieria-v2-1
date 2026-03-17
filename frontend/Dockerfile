@@ -9,8 +9,8 @@ RUN npm install --legacy-peer-deps
 
 COPY . .
 
-# Compilamos para producción
-RUN npx ng build --configuration=production
+# Compilamos para producción (Garantizamos configuración production)
+RUN npx ng build --configuration production
 
 # ETAPA 2: Servidor Web
 FROM nginx:alpine
