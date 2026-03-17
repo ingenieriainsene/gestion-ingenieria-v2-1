@@ -12,12 +12,11 @@ import Swal from 'sweetalert2';
     <div class="wrapper">
       <div class="header-section">
         <h1>Técnicos Instaladores <span class="badge-contador" *ngIf="tecnicos">{{ tecnicos.length }} registros</span></h1>
-        <p class="subtitle">Gestiona el equipo de montaje e instalaciones</p>
-      </div>
-      <div style="margin-bottom: 20px;">
-        <a routerLink="/tecnicos-instaladores/nuevo" class="btn-create">
-          <span class="icon">+</span> Nuevo Instalador
-        </a>
+        <div class="header-actions">
+          <a routerLink="/tecnicos-instaladores/nuevo" class="btn-primary">
+            <span class="icon">+</span> Nuevo Instalador
+          </a>
+        </div>
       </div>
 
       <div class="grid">
@@ -63,16 +62,12 @@ import Swal from 'sweetalert2';
     styles: [`
     .wrapper { animation: fadeIn 0.4s ease-out; }
     .header-section {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 2rem; width: 100%;
     }
+    .header-actions { display: flex; gap: 1rem; align-items: center; }
     h2 { display: none; }
     .subtitle { color: #64748b; margin: 0; }
-    .btn-create {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      color: white; padding: 0.75rem 1.5rem; border-radius: 8px;
-      font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 8px;
-    }
     .grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;
     }
