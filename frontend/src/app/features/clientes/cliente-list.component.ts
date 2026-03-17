@@ -201,10 +201,7 @@ import Swal from 'sweetalert2';
   ,
   styles: [`
     .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
+      /* Uses global styles */
     }
     
     .btn-primary {

@@ -13,7 +13,7 @@ import Swal from 'sweetalert2';
   imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AutocompleteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="header-bar">
+    <div class="header-section">
       <h1>Gestión de Locales <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
       <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Local</button>
     </div>
@@ -160,18 +160,7 @@ import Swal from 'sweetalert2';
   `,
   styles: [`
     .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-    }
-
-    .header-bar h1 {
-      font-size: 1.8rem;
-      color: #0f172a;
-      font-weight: 800;
-      margin: 0;
-      letter-spacing: -0.3px;
+      display: none;
     }
 
     .filter-card {

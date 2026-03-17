@@ -11,9 +11,9 @@ import Swal from 'sweetalert2';
     imports: [CommonModule, FormsModule, RouterLink],
     template: `
     <div class="container">
-      <div class="header">
+      <div class="header-section">
         <button routerLink="/tecnicos-instaladores" class="btn-back">⬅️ Volver</button>
-        <h2>{{ editMode ? 'Editar' : 'Nuevo' }} Técnico Instalador</h2>
+        <h1>{{ editMode ? 'Editar' : 'Nuevo' }} Técnico Instalador</h1>
       </div>
 
       <div class="card">
@@ -47,8 +47,7 @@ import Swal from 'sweetalert2';
   `,
     styles: [`
     .container { max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease; }
-    .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
-    h2 { margin: 0; color: #1e293b; }
+    h2 { display: none; }
     .btn-back { background: none; border: none; color: #64748b; cursor: pointer; font-weight: 600; }
     .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
     .form-group { margin-bottom: 1.5rem; }

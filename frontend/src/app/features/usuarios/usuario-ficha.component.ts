@@ -15,7 +15,7 @@ import Swal from 'sweetalert2';
         <a routerLink="/usuarios" class="back-link">
           <span class="icon">←</span> Volver
         </a>
-        <h2>{{ esNuevo ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h2>
+        <h1>{{ esNuevo ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h1>
         <p class="subtitle">Complete la información para {{ esNuevo ? 'registrar un nuevo miembro' : 'actualizar los datos del miembro' }} del equipo.</p>
       </div>
 
@@ -142,12 +142,7 @@ import Swal from 'sweetalert2';
       color: #3b82f6;
     }
 
-    h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0 0 0.5rem 0;
-    }
+    h1 { margin-bottom: 0.5rem; }
 
     .subtitle {
       color: #64748b;

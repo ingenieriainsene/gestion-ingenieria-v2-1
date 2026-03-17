@@ -25,21 +25,8 @@
     animation: fadeIn 0.4s ease-out;
 }
 
-.ficha-header {
-    border-bottom: 2px solid #f1f5f9;
-    padding-bottom: 1.5rem;
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.ficha-title {
-    font-size: 1.5rem;
-    color: #1e293b;
-    font-weight: 800;
-    margin: 0;
-}
+.ficha-header { display: none; }
+.ficha-title { display: none; }
 
 .ficha-actions {
     display: flex;

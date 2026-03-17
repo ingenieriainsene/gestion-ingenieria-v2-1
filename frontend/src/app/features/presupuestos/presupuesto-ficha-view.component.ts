@@ -22,14 +22,8 @@ import { FormsModule } from '@angular/forms';
     <div *ngIf="loading" class="ficha-loading">Cargando…</div>
 
     <div *ngIf="!loading && presupuesto" class="ficha-container">
-      <div class="ficha-header clearfix">
-        <div class="ficha-title-wrap">
-          <h1 class="ficha-title">FICHA PRESUPUESTO #{{ presupuesto.idPresupuesto }}</h1>
-        </div>
-        <div class="header-badge-wrap">
-          <span class="header-label">TIPO:</span>
-          <span class="badge-tipo">{{ presupuesto.tipoPresupuesto || 'Obra' }}</span>
-        </div>
+      <div class="header-section">
+        <h1>FICHA PRESUPUESTO #{{ presupuesto.idPresupuesto }} <span class="badge-contador">{{ presupuesto.tipoPresupuesto || 'Obra' }}</span></h1>
         <div class="ficha-actions">
           <span class="link-archivos link-disabled" title="Código de referencia">
             {{ presupuesto.codigoReferencia || 'Sin referencia' }}

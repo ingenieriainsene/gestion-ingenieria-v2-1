@@ -11,10 +11,10 @@ import Swal from 'sweetalert2';
   template: `
     <div class="user-wrapper">
       <div class="header-section">
-        <div class="header-content">
-          <h2>👥 Gestión de Usuarios <span class="badge-contador" *ngIf="usuarios">{{ usuarios.length }} registros</span></h2>
-          <p class="subtitle">Administra los accesos y roles del equipo</p>
-        </div>
+        <h1>Gestión de Usuarios <span class="badge-contador" *ngIf="usuarios">{{ usuarios.length }} registros</span></h1>
+        <p class="subtitle">Administra los accesos y roles del equipo</p>
+      </div>
+      <div style="margin-bottom: 20px;">
         <a routerLink="/usuarios/nuevo" class="btn-create">
           <span class="icon">+</span> Nuevo Usuario
         </a>
@@ -77,12 +77,7 @@ import Swal from 'sweetalert2';
       border-bottom: 1px solid #e2e8f0;
     }
 
-    h2 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0 0 0.25rem 0;
-    }
+    h2 { display: none; }
 
     .subtitle {
       color: #64748b;

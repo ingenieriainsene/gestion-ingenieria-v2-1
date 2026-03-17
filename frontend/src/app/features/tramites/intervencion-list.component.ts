@@ -10,7 +10,7 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 25px;">
+    <div class="header-section">
       <h1>Intervenciones <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
     </div>
 

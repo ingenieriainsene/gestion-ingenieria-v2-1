@@ -20,24 +20,9 @@
   overflow: hidden;
 }
 
-.ficha-header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  padding: 18px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
-}
+.ficha-header { display: none; }
 
-.ficha-title {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #1e293b;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+.ficha-title { display: none; }
 
 .ficha-actions {
   display: flex;

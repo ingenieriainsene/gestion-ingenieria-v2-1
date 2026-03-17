@@ -5,8 +5,8 @@
 <div *ngIf="loading" class="ficha-loading">Cargando…</div>
 
 <div *ngIf="!loading && cliente" class="ficha-container">
-  <div class="ficha-header clearfix">
-    <h1 class="ficha-title">EXPEDIENTE TÉCNICO 👤</h1>
+  <div class="header-section">
+    <h1>EXPEDIENTE TÉCNICO 👤</h1>
     <div class="ficha-actions">
       <span class="link-archivos link-disabled" title="Próximamente">📂 Archivos Cliente</span>
       <a [routerLink]="['/clientes', idCliente, 'editar']" class="link-editar">✏️ Editar</a>

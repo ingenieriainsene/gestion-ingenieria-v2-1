@@ -22,7 +22,7 @@ interface VentaResumen {
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page-container">
-      <div class="page-header">
+      <div class="header-section">
         <h1>Contabilidad</h1>
         <p class="subtitle">Resumen global de ventas y compras.</p>
       </div>
@@ -180,8 +180,7 @@ interface VentaResumen {
   `,
   styles: [`
     .page-container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    .page-header { margin-bottom: 16px; }
-    .page-header h1 { margin: 0 0 4px 0; color: #1e293b; font-size: 1.6rem; }
+    .page-header { display: none; }
     .subtitle { margin: 0; color: #64748b; font-size: 0.9rem; }
     .tabs-header { display: flex; gap: 8px; margin-bottom: 16px; }
     .tab-btn {

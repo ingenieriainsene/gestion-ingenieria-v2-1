@@ -11,10 +11,10 @@ import Swal from 'sweetalert2';
     template: `
     <div class="wrapper">
       <div class="header-section">
-        <div class="header-content">
-          <h2>🛠️ Técnicos Instaladores <span class="badge-contador" *ngIf="tecnicos">{{ tecnicos.length }} registros</span></h2>
-          <p class="subtitle">Gestiona el equipo de montaje e instalaciones</p>
-        </div>
+        <h1>Técnicos Instaladores <span class="badge-contador" *ngIf="tecnicos">{{ tecnicos.length }} registros</span></h1>
+        <p class="subtitle">Gestiona el equipo de montaje e instalaciones</p>
+      </div>
+      <div style="margin-bottom: 20px;">
         <a routerLink="/tecnicos-instaladores/nuevo" class="btn-create">
           <span class="icon">+</span> Nuevo Instalador
         </a>
@@ -66,7 +66,7 @@ import Swal from 'sweetalert2';
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;
     }
-    h2 { font-size: 1.75rem; font-weight: 700; color: #1e293b; margin: 0; }
+    h2 { display: none; }
     .subtitle { color: #64748b; margin: 0; }
     .btn-create {
       background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);

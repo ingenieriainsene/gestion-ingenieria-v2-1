@@ -9,7 +9,7 @@ import { AuditoriaSesion, AuditoriaSesionService, PageResponse } from './auditor
   template: `
     <div class="audit-wrapper">
       <div class="header-section">
-        <h2>📊 Auditoría de Accesos</h2>
+        <h1>Auditoría de Accesos</h1>
         <p class="subtitle">Registro detallado de conexiones y actividad de usuarios</p>
       </div>
 
@@ -110,12 +110,7 @@ import { AuditoriaSesion, AuditoriaSesionService, PageResponse } from './auditor
       margin-bottom: 2rem;
     }
 
-    h2 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 0.5rem;
-    }
+    h2 { display: none; }
 
     .subtitle {
       color: #64748b;

@@ -16,18 +16,9 @@ import {
     template: `
     <div class="analytics-container">
 
-      <!-- ───── Header ───── -->
-      <div class="analytics-header">
-        <div class="header-left">
-          <h1 class="analytics-title">
-            <span class="title-icon">📊</span>
-            Análisis de Datos
-          </h1>
-          <p class="analytics-subtitle">Ciclo de vida de intervenciones · Solo lectura</p>
-        </div>
-        <div class="header-right" *ngIf="page">
-          <span class="total-badge">{{ page.totalElements }} registros</span>
-        </div>
+      <div class="header-section">
+        <h1>Análisis de Datos <span class="badge-contador" *ngIf="page">{{ page.totalElements }} registros</span></h1>
+        <p class="analytics-subtitle">Ciclo de vida de intervenciones · Solo lectura</p>
       </div>
 
       <!-- ───── Filtros ───── -->
@@ -235,30 +226,7 @@ import {
     }
 
     /* Header */
-    .analytics-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 24px;
-    }
-
-    .analytics-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0 0 4px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .title-icon { font-size: 1.5rem; }
-
-    .analytics-subtitle {
-      font-size: 0.875rem;
-      color: #64748b;
-      margin: 0;
-    }
+    .analytics-header { display: none; }
 
     .total-badge {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);

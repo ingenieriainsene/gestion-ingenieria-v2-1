@@ -16,7 +16,7 @@ import Swal from 'sweetalert2';
       <app-audit-stamp [data]="contrato"></app-audit-stamp>
 
       <div class="gestion-container">
-        <div class="info-header">
+        <div class="header-section">
           <div>
             <h1>CONTRATO #{{ contrato.idContrato }}</h1>
             <p>Seguimiento Tecnico y Expediente</p>
@@ -187,10 +187,8 @@ import Swal from 'sweetalert2';
       overflow: hidden; margin-bottom: 50px;
     }
     .info-header {
-      background: #1e293b; color: white; padding: 25px 40px;
-      display: flex; justify-content: space-between; align-items: center;
+      display: none;
     }
-    .info-header h1 { color: #f1c40f; margin: 0; font-size: 1.25rem; }
     .info-header p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
     .contract-dates {
       margin-top: 6px;

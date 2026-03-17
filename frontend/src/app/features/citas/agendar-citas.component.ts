@@ -18,7 +18,7 @@ import { UsuarioService } from '../../services/usuario.service';
   imports: [CommonModule, FormsModule, RouterLink, FullCalendarModule],
   template: `
     <div class="citas-page" [class.compact]="panelVisible">
-    <div class="header-bar">
+    <div class="header-section">
       <div>
         <h1>Agendar citas</h1>
         <p class="subtitle">Gestiona citas remotas con clientes, técnicos y recordatorios.</p>
@@ -219,10 +219,7 @@ import { UsuarioService } from '../../services/usuario.service';
       gap: 6px;
     }
     .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
+      display: none;
     }
     .citas-page.compact .header-bar { margin-bottom: 2px; }
     .header-actions { display: flex; gap: 12px; align-items: center; }

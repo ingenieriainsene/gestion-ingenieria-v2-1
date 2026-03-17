@@ -6,8 +6,8 @@
 <div *ngIf="loading" class="ficha-loading">Cargando…</div>
 
 <div *ngIf="!loading && detail" class="ficha-container">
-    <div class="ficha-header clearfix">
-        <h1 class="ficha-title">FICHA TÉCNICA DE PROVEEDOR 🛠️</h1>
+    <div class="header-section">
+        <h1>FICHA TÉCNICA DE PROVEEDOR 🛠️</h1>
         <div class="ficha-actions">
             <a [routerLink]="['/proveedores', id, 'editar']" class="link-editar">✏️ Editar Proveedor</a>
             <a routerLink="/proveedores" class="link-volver">Volver</a>

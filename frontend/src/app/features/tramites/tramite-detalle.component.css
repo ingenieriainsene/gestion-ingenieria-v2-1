@@ -92,13 +92,6 @@
 }
 
 /* Header tweaks */
-.header-section h1 {
-  font-size: 1.5rem;
-  /* Smaller title */
-  color: #1e293b;
-  margin: 0.5rem 0 1rem 0;
-  /* Adjust margins */
-}
 
 .back-link,
 .btn-back {
