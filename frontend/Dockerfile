@@ -21,10 +21,8 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 # Copiamos los archivos compilados a Nginx (Subcarpeta /browser obligatoria en el nuevo builder)
 COPY --from=build /app/dist/gestion-frontend/browser /usr/share/nginx/html/
 
-ENV BACKEND_HOST=gestion-backend.railway.internal
+ENV BACKEND_HOST=gestion-ingenieria-v2.railway.internal
 ENV BACKEND_PORT=8080
-# En Railway recomendamos sobreescribir BACKEND_URL en variables del servicio frontend.
-ENV BACKEND_URL=http://gestion-backend.railway.internal:8080
 
 EXPOSE 80
 
