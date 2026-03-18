@@ -52,35 +52,37 @@ public class TramiteService {
         if (c == null)
             throw new RuntimeException("Trámite sin contrato: " + id);
 
-        return new TramiteDetalleResponse(
-                t.getIdTramite(),
-                c.getIdContrato(),
-                t.getTipoTramite(),
-                t.getEstado(),
-                t.getDetalleSeguimiento(),
-                t.getFechaCreacion(),
-                t.getFechaSeguimiento(),
-                t.getFechaEjecucion(),
-                t.getTecnicoAsignado(),
-                t.getEsUrgente(),
-                c.getTipoContrato(),
-                c.getObservaciones(),
-                c.getCePrevio(),
-                c.getCePost(),
-                c.getMtd(),
-                c.getPlanos(),
-                c.getEnviadoCeePost(),
-                c.getLicenciaObras(),
-                c.getSubvencionEstado(),
-                c.getLibroEdifIncluido(),
-                c.getCliente() != null ? c.getCliente().getNombre() : null,
-                c.getCliente() != null ? c.getCliente().getApellido1() : null,
-                c.getCliente() != null ? c.getCliente().getDni() : null,
-                c.getLocal() != null ? c.getLocal().getDireccionCompleta() : null,
-                c.getLocal() != null ? c.getLocal().getNombreTitular() : null,
-                c.getFechaInicio(),
-                c.getFechaVencimiento(),
-                t.getFacturado());
+        TramiteDetalleResponse resp = new TramiteDetalleResponse();
+        resp.setIdTramite(t.getIdTramite());
+        resp.setIdContrato(c.getIdContrato());
+        resp.setIdCliente(c.getCliente() != null ? c.getCliente().getIdCliente() : null);
+        resp.setTipoTramite(t.getTipoTramite());
+        resp.setEstado(t.getEstado());
+        resp.setDetalleSeguimiento(t.getDetalleSeguimiento());
+        resp.setFechaCreacion(t.getFechaCreacion());
+        resp.setFechaSeguimiento(t.getFechaSeguimiento());
+        resp.setFechaEjecucion(t.getFechaEjecucion());
+        resp.setTecnicoAsignado(t.getTecnicoAsignado());
+        resp.setEsUrgente(t.getEsUrgente());
+        resp.setTipoContrato(c.getTipoContrato());
+        resp.setObservacionesContrato(c.getObservaciones());
+        resp.setCePrevio(c.getCePrevio());
+        resp.setCePost(c.getCePost());
+        resp.setMtd(c.getMtd());
+        resp.setPlanos(c.getPlanos());
+        resp.setEnviadoCeePost(c.getEnviadoCeePost());
+        resp.setLicenciaObras(c.getLicenciaObras());
+        resp.setSubvencionEstado(c.getSubvencionEstado());
+        resp.setLibroEdifIncluido(c.getLibroEdifIncluido());
+        resp.setClienteNombre(c.getCliente() != null ? c.getCliente().getNombre() : null);
+        resp.setClienteApellido1(c.getCliente() != null ? c.getCliente().getApellido1() : null);
+        resp.setClienteDni(c.getCliente() != null ? c.getCliente().getDni() : null);
+        resp.setLocalDireccion(c.getLocal() != null ? c.getLocal().getDireccionCompleta() : null);
+        resp.setLocalNombreTitular(c.getLocal() != null ? c.getLocal().getNombreTitular() : null);
+        resp.setFechaInicio(c.getFechaInicio());
+        resp.setFechaVencimiento(c.getFechaVencimiento());
+        resp.setFacturado(t.getFacturado());
+        return resp;
     }
 
     @Transactional(readOnly = true)

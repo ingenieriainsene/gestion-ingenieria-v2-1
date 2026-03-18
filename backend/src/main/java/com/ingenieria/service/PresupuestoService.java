@@ -210,6 +210,31 @@ public class PresupuestoService {
     }
 
     @Transactional
+    public PresupuestoDTO vincularTramite(Long id, Long tramiteId) {
+        Presupuesto p = presupuestoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
+        Tramite t = tramiteRepository.findById(tramiteId)
+                .orElseThrow(() -> new IllegalArgumentException("Trámite no encontrado"));
+
+        p.setTramite(t);
+        if (t.getContrato() != null) {
+            p.setContrato(t.getContrato());
+        }
+
+        Presupuesto saved = presupuestoRepository.save(p);
+        log.info("[Presupuesto] Vinculado a tramite id={} -> tramiteId={}", id, tramiteId);
+        return toDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PresupuestoListResponse> findByClienteId(Long clienteId) {
+        log.info("[Presupuesto] Buscar por clienteId={}", clienteId);
+        return presupuestoRepository.findByClienteId(clienteId).stream()
+                .map(this::toListResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
     public Long convertirAContrato(Long id, String usuarioBd) {
         Presupuesto p = presupuestoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));

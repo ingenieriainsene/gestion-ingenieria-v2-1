@@ -239,7 +239,7 @@
                   {{ (h.nombresTecnicosInstaladores || []).join(', ') }}
                 </span>
                 <ng-template #sinInst>
-                  <span class="sub-text">— Sin instaladores —</span>
+                  <span class="text">— Sin instaladores —</span>
                 </ng-template>
               </td>
               <td data-label="Proveedor">
@@ -313,9 +313,14 @@
     <div class="form-card">
       <div class="card-header flex-between">
         <h3>💰 Presupuestos de la Intervención</h3>
-        <button type="button" class="btn-create-small" (click)="crearPresupuesto()">
-          + Crear Presupuesto
-        </button>
+        <div class="card-actions d-flex gap-2">
+          <button type="button" class="btn-secondary-small" (click)="abrirModalVincularP()">
+            🔗 Vincular Presupuesto
+          </button>
+          <button type="button" class="btn-create-small" (click)="crearPresupuesto()">
+            + Crear Presupuesto
+          </button>
+        </div>
       </div>
       <div class="card-body">
       <div class="table-responsive">
@@ -502,7 +507,7 @@
                           <ng-container *ngIf="getFacturaAsociada(a) as fac; else sinFactura">
                             <a href="javascript:void(0)" class="factura-link"
                                (click)="verFacturaAsociada(a); $event.preventDefault(); $event.stopPropagation();">
-                              {{ getTituloFactura(fac) }}
+                               {{ getTituloFactura(fac) }}
                             </a>
                           </ng-container>
                           <ng-template #sinFactura>—</ng-template>
@@ -580,7 +585,7 @@
   <div *ngIf="activeTab === 'ventas'" class="tab-content fade-in">
     <div class="form-card">
       <div class="card-header flex-between">
-        <h3>🧾 Ventas</h3>
+        <h3>🧽 Ventas</h3>
         <div class="subtabs">
           <button type="button" class="subtab-btn" [class.active]="activeVentasTab === 'ALBARAN'"
                   (click)="setVentasTab('ALBARAN')">
@@ -759,7 +764,7 @@
                           <ng-container *ngIf="getFacturaVentaAsociada(d) as fac; else sinFacVentaHeader">
                             <a href="javascript:void(0)" class="factura-link"
                                (click)="verFacturaVentaAsociada(d); $event.preventDefault(); $event.stopPropagation();">
-                              {{ getTituloVenta(fac) }}
+                               {{ getTituloVenta(fac) }}
                             </a>
                           </ng-container>
                           <ng-template #sinFacVentaHeader>—</ng-template>
@@ -811,7 +816,7 @@
       </div>
       <div class="modal-body">
         <div class="search-box">
-          <span class="search-icon">🔎</span>
+          <span class="search-icon">🔍</span>
           <input type="text" class="search-input" placeholder="Buscar por nombre, CIF o razón social..."
             [(ngModel)]="proveedorQuery" (ngModelChange)="filtrarProveedores()" autofocus />
         </div>
@@ -837,6 +842,46 @@
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" (click)="cerrarProveedorModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL VINCULAR PRESUPUESTO -->
+  <div class="modal-overlay-premium" *ngIf="showModalVincularP" (click)="cerrarModalVincularP()">
+    <div class="modal-card-premium" (click)="$event.stopPropagation()">
+      <div class="modal-header-premium">
+        <h3>🔗 Vincular Presupuesto Existente</h3>
+        <button class="btn-close-modal" (click)="cerrarModalVincularP()">✕</button>
+      </div>
+      <div class="modal-body-premium">
+        <p class="modal-intro">Selecciona un presupuesto de este cliente para vincularlo a esta intervención:</p>
+        
+        <div *ngIf="cargandoCandidatos" class="loading-spinner-container">
+          <div class="spinner"></div>
+          <span>Buscando presupuestos...</span>
+        </div>
+
+        <div *ngIf="!cargandoCandidatos && presupuestosCandidatos.length === 0" class="empty-selection-state">
+          <span>No se han encontrado otros presupuestos para este cliente que no estén ya vinculados.</span>
+        </div>
+
+        <div class="selection-list" *ngIf="!cargandoCandidatos && presupuestosCandidatos.length > 0">
+          <div *ngFor="let p of presupuestosCandidatos" class="selection-item" (click)="vincularPresupuesto(p.idPresupuesto)">
+            <div class="selection-info">
+              <span class="selection-ref">{{ p.codigoReferencia || ('#' + p.idPresupuesto) }}</span>
+              <span class="selection-date">{{ p.fecha | date:'dd/MM/yyyy' }}</span>
+              <span class="selection-desc">{{ p.productoNombre || p.tipoLinea || 'Presupuesto sin detalles' }}</span>
+            </div>
+            <div class="selection-meta">
+              <span class="selection-total">{{ p.total | currency:'EUR' }}</span>
+              <span class="selection-status" [ngClass]="p.estado?.toLowerCase()">{{ p.estado }}</span>
+              <span class="selection-action">Vincular →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer-premium">
+        <button class="btn-cancel" (click)="cerrarModalVincularP()">Cancelar</button>
       </div>
     </div>
   </div>

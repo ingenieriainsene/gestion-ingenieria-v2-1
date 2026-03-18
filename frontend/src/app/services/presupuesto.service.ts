@@ -120,4 +120,12 @@ export class PresupuestoService {
   getByTramite(tramiteId: number): Observable<PresupuestoListItem[]> {
     return this.api.get<PresupuestoListItem[]>(`${this.endpoint}/tramite/${tramiteId}`);
   }
+
+  getByCliente(clienteId: number): Observable<PresupuestoListItem[]> {
+    return this.api.get<PresupuestoListItem[]>(`${this.endpoint}/cliente/${clienteId}`);
+  }
+
+  vincularTramite(id: number, tramiteId: number): Observable<PresupuestoDTO> {
+    return this.api.patch<PresupuestoDTO>(`${this.endpoint}/${id}/vincular-tramite/${tramiteId}`, {});
+  }
 }

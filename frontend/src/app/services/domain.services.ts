@@ -234,6 +234,7 @@ export interface Cita {
 export interface TramiteDetalleResponse {
     idTramite: number;
     idContrato: number;
+    idCliente: number;
     tipoTramite: string;
     estado?: string;
     detalleSeguimiento?: string;

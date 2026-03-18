@@ -44,6 +44,11 @@ public class PresupuestoController {
         return service.findByTramite(idTramite);
     }
 
+    @GetMapping("/cliente/{idCliente}")
+    public List<PresupuestoListResponse> getByCliente(@PathVariable Long idCliente) {
+        return service.findByClienteId(idCliente);
+    }
+
     @GetMapping("/{id}/pdf")
     public ResponseEntity<?> downloadPdf(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean detallado) {
         try {
@@ -102,6 +107,15 @@ public class PresupuestoController {
             // Remove quotes if present (standard for plain string bodies in JSON)
             String estado = nuevoEstado.replace("\"", "");
             return ResponseEntity.ok(service.patchEstado(id, estado));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/{id}/vincular-tramite/{idTramite}")
+    public ResponseEntity<?> vincularTramite(@PathVariable Long id, @PathVariable Long idTramite) {
+        try {
+            return ResponseEntity.ok(service.vincularTramite(id, idTramite));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

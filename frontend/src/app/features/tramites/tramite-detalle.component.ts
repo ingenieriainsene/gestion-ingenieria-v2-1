@@ -68,6 +68,10 @@ export class TramiteDetalleComponent implements OnInit {
   showVentaForm = false;
   formVenta: FormGroup;
 
+  showModalVincularP = false;
+  presupuestosCandidatos: PresupuestoListItem[] = [];
+  cargandoCandidatos = false;
+
   // Provider Modal
   modalProveedorVisible = false;
   proveedorQuery = '';
@@ -583,6 +587,59 @@ export class TramiteDetalleComponent implements OnInit {
   crearPresupuesto() {
     if (!this.idTramite) return;
     this.router.navigate(['/presupuestos/nuevo'], { queryParams: { tramiteId: this.idTramite } });
+  }
+
+  abrirModalVincularP() {
+    if (!this.detalle?.idCliente) {
+      Swal.fire('Error', 'No se puede vincular: falta el ID del cliente.', 'error');
+      return;
+    }
+    this.showModalVincularP = true;
+    this.cargandoCandidatos = true;
+    this.presupuestoService.getByCliente(this.detalle.idCliente).subscribe({
+      next: (list) => {
+        // Filtrar los que ya están en este trámite para no repetirlos en la lista de selección
+        const yaVinculados = new Set(this.presupuestos.map(p => p.idPresupuesto));
+        this.presupuestosCandidatos = (list || []).filter(p => !yaVinculados.has(p.idPresupuesto));
+        this.cargandoCandidatos = false;
+      },
+      error: () => {
+        this.cargandoCandidatos = false;
+        Swal.fire('Error', 'No se pudieron cargar los presupuestos del cliente.', 'error');
+      }
+    });
+  }
+
+  vincularPresupuesto(idPresupuesto: number) {
+    if (!this.idTramite) return;
+    Swal.fire({
+      title: '¿Vincular presupuesto?',
+      text: 'El presupuesto quedará asociado a esta intervención y a su contrato.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, vincular',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.presupuestoService.vincularTramite(idPresupuesto, this.idTramite!).subscribe({
+          next: () => {
+            Swal.fire('Vinculado', 'Presupuesto vinculado correctamente.', 'success');
+            this.showModalVincularP = false;
+            this.cargarPresupuestos();
+            this.cargarAlbaranesVenta(); // Por si el presupuesto ya tenía albaranes
+          },
+          error: (e) => {
+            let msg = 'Hubo un error al vincular el presupuesto.';
+            if (e?.error) msg = e.error;
+            Swal.fire('Error', msg, 'error');
+          }
+        });
+      }
+    });
+  }
+
+  cerrarModalVincularP() {
+    this.showModalVincularP = false;
   }
 
   descargarDocumento(tipo: 'albaran' | 'factura', p: PresupuestoListItem) {
