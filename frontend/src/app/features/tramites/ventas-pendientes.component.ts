@@ -51,13 +51,14 @@ import Swal from 'sweetalert2';
             />
           </th>
           <th>
-            <input
-              type="text"
+            <select
               [(ngModel)]="filtroTipo"
               (ngModelChange)="aplicarFiltro()"
               class="header-input"
-              placeholder="Tipo"
-            />
+            >
+              <option value="">Tipo (Todos)</option>
+              <option *ngFor="let tipo of tiposIntervencion" [value]="tipo">{{ tipo }}</option>
+            </select>
           </th>
           <th>
             <input
@@ -238,6 +239,7 @@ import Swal from 'sweetalert2';
 export class VentasPendientesComponent implements OnInit {
   tramites: any[] = [];
   filtrados: any[] = [];
+  tiposIntervencion: string[] = [];
 
   busqueda = '';
   mostrarFiltrosAvanzados = false;
@@ -260,6 +262,29 @@ export class VentasPendientesComponent implements OnInit {
       next: (list) => {
         // Defensa extra: solo trámites en estado Pendiente
         this.tramites = (list || []).filter(t => t.estado === 'Pendiente');
+        
+        // Construimos lista de tipos con normalización para evitar duplicados (p. ej. Legalizacion vs Legalización)
+        const typesMap = new Map<string, string>();
+        
+        // Tipos base comunes para asegurar que no falten los principales
+        const baseTypes = [
+          'Ampliación', 'Instalación', 'Legalización', 
+          'Licencia de Obras', 'CE Previo', 'CE Post', 
+          'Mantenimiento', 'Certificado Energético'
+        ];
+        baseTypes.forEach(t => typesMap.set(this.normalize(t), t));
+
+        // Añadimos los que vengan en los datos (si hay alguno nuevo o variante)
+        this.tramites.forEach(t => {
+          if (t.tipoTramite) {
+            const norm = this.normalize(t.tipoTramite);
+            if (!typesMap.has(norm)) {
+              typesMap.set(norm, t.tipoTramite);
+            }
+          }
+        });
+
+        this.tiposIntervencion = Array.from(typesMap.values()).sort((a, b) => a.localeCompare(b));
         this.aplicarFiltro();
       },
       error: () => {
@@ -314,9 +339,10 @@ export class VentasPendientesComponent implements OnInit {
       });
     }
 
-    const tipoTerm = this.filtroTipo.trim().toLowerCase();
-    if (tipoTerm) {
-      temp = temp.filter(t => (t.tipoTramite || '').toLowerCase().includes(tipoTerm));
+    const tipoFiltro = this.filtroTipo;
+    if (tipoFiltro) {
+      const normFiltro = this.normalize(tipoFiltro);
+      temp = temp.filter(t => this.normalize(t.tipoTramite || '') === normFiltro);
     }
 
     const detalleTerm = this.filtroDetalle.trim().toLowerCase();
@@ -387,6 +413,14 @@ export class VentasPendientesComponent implements OnInit {
         }
       });
     });
+  }
+
+  private normalize(s: string): string {
+    if (!s) return '';
+    return s.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
   }
 }
 
