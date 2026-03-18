@@ -15,7 +15,7 @@ import Swal from 'sweetalert2';
   template: `
     <div class="ficha-wrapper">
       <div class="header-section">
-        <a [routerLink]="tramiteId ? ['/tramites', tramiteId] : (idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos'])" class="back-link">
+        <a [routerLink]="tramiteId ? ['/tramite-detalle', tramiteId] : (idPresupuesto ? ['/presupuestos', idPresupuesto] : ['/presupuestos'])" class="back-link">
           <span class="icon">←</span> {{ tramiteId ? 'Volver a la Intervención' : (idPresupuesto ? 'Volver a la ficha' : 'Volver al listado') }}
         </a>
         <h2>{{ idPresupuesto ? 'Editar Presupuesto' : 'Nuevo Presupuesto' }}</h2>
@@ -1114,14 +1114,17 @@ export class PresupuestoFormComponent implements OnInit {
       ? this.service.updateBudget(this.idPresupuesto, payload)
       : this.service.createBudget(payload);
     request$.subscribe({
-      next: () => {
+      next: (res) => {
         this.guardando = false;
         const msg = this.idPresupuesto ? 'Presupuesto actualizado correctamente.' : 'Presupuesto creado correctamente.';
 
-        // Si hay tramiteId, volver a la intervención; si no, ir a la lista de presupuestos
+        // Use ID from response if available, otherwise fallback to current ID
+        const finalId = res?.idPresupuesto || this.idPresupuesto;
+
+        // Si hay tramiteId, volver a la intervención; si no, ir a la ficha del presupuesto recién guardado
         const route = this.tramiteId
           ? ['/tramite-detalle', this.tramiteId]
-          : (this.idPresupuesto ? ['/presupuestos', this.idPresupuesto] : ['/presupuestos']);
+          : (finalId ? ['/presupuestos', finalId] : ['/presupuestos']);
 
         Swal.fire('Guardado', msg, 'success')
           .then(() => this.router.navigate(route));
