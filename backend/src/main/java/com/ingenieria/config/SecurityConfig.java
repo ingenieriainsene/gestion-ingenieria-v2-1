@@ -26,8 +26,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public org.springframework.boot.web.servlet.FilterRegistrationBean<AuthTokenFilter> registration(AuthTokenFilter filter) {
-        org.springframework.boot.web.servlet.FilterRegistrationBean<AuthTokenFilter> registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+    public org.springframework.boot.web.servlet.FilterRegistrationBean<AuthTokenFilter> registration(
+            AuthTokenFilter filter) {
+        org.springframework.boot.web.servlet.FilterRegistrationBean<AuthTokenFilter> registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(
+                filter);
         registration.setEnabled(false);
         return registration;
     }
@@ -73,9 +75,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
                 "https://*.up.railway.app",
+                "https://*.vercel.app",
                 "http://localhost:4200",
-                "http://127.0.0.1:4200"
-        ));
+                "http://127.0.0.1:4200"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
