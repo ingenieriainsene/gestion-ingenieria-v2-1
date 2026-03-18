@@ -346,6 +346,10 @@ export class PresupuestoListComponent implements OnInit, OnDestroy {
       }
     });
 
+    if (!typesMap.has('instalacion')) {
+      typesMap.set('instalacion', 'Instalación');
+    }
+
     this.states = Array.from(statesMap.values()).sort();
     this.types = Array.from(typesMap.values()).sort();
   }

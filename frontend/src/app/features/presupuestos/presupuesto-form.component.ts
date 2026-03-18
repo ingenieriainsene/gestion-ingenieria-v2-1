@@ -95,6 +95,7 @@ import Swal from 'sweetalert2';
                   <option value="Obra">Obra</option>
                   <option value="Correctivo">Correctivo</option>
                   <option value="Preventivo">Preventivo</option>
+                  <option value="Instalación">Instalación</option>
                 </select>
               </div>
             </div>

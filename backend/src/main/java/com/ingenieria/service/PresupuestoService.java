@@ -361,6 +361,8 @@ public class PresupuestoService {
             return "Correctivo";
         if (t.equals("preventivo"))
             return "Preventivo";
+        if (t.equals("instalación") || t.equals("instalacion"))
+            return "Instalación";
         return "Obra";
     }
 
