@@ -2,7 +2,7 @@ export const environment = {
     production: true,
 
     // Usamos el proxy de Nginx para comunicación interna y evitar CORS.
-    apiUrl: 'https://gestion-ingenieria-v2.onrender.com',
+    apiUrl: 'https://gestion-ingenieria-v2.onrender.com/api',
 
     supabase: {
         // URL de tu proyecto de Supabase en la nube
