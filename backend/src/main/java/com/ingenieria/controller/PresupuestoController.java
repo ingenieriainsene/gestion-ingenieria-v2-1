@@ -45,11 +45,12 @@ public class PresupuestoController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<?> downloadPdf(@PathVariable Long id) {
+    public ResponseEntity<?> downloadPdf(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean detallado) {
         try {
-            byte[] pdf = pdfService.generarPresupuestoPdf(id);
+            byte[] pdf = pdfService.generarPresupuestoPdf(id, detallado);
+            String suffix = detallado ? "_detallado" : "";
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"presupuesto_" + id + ".pdf\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"presupuesto_" + id + suffix + ".pdf\"")
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(pdf);
         } catch (IllegalArgumentException e) {

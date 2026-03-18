@@ -106,8 +106,9 @@ export class PresupuestoService {
     return this.api.post<number>(`${this.endpoint}/${id}/convertir-a-contrato`, {});
   }
 
-  downloadPdf(id: number): Observable<Blob> {
-    return this.api.getBlob(`${this.endpoint}/${id}/pdf`);
+  downloadPdf(id: number, type: 'simple' | 'detallado' = 'simple'): Observable<Blob> {
+    const detallado = type === 'detallado';
+    return this.api.getBlob(`${this.endpoint}/${id}/pdf?detallado=${detallado}`);
   }
 
   getProducts(): Observable<ProductoItem[]> {

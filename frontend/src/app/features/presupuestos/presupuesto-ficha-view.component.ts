@@ -28,7 +28,8 @@ import { FormsModule } from '@angular/forms';
           <span class="link-archivos link-disabled" title="Código de referencia">
             {{ presupuesto.codigoReferencia || 'Sin referencia' }}
           </span>
-          <button type="button" class="link-archivos" style="background:none;border:none;padding:0;cursor:pointer;" (click)="descargarPdf()">⬇️ PDF</button>
+          <button type="button" class="link-archivos" style="background:none;border:none;padding:0;cursor:pointer;margin-right:10px;" (click)="verPdf('simple')">📄 PDF con Capítulo</button>
+          <button type="button" class="link-archivos" style="background:none;border:none;padding:0;cursor:pointer;margin-right:10px;" (click)="verPdf('detallado')">📑 PDF con Capítulo + Partida</button>
           <a [routerLink]="['/presupuestos', presupuesto.idPresupuesto, 'editar']" class="link-editar">✏️ Editar</a>
           <button type="button" class="link-archivos" style="background:none;border:none;padding:0;cursor:pointer;" (click)="eliminar()">🗑️ Eliminar</button>
           <a routerLink="/presupuestos" class="link-volver">Volver</a>
@@ -465,14 +466,15 @@ export class PresupuestoFichaViewComponent implements OnInit {
     return this.calcPartidaValues(linea).totalFinal;
   }
 
-  descargarPdf(): void {
+  verPdf(type: 'simple' | 'detallado' = 'simple'): void {
     if (!this.presupuesto?.idPresupuesto) return;
-    this.service.downloadPdf(this.presupuesto.idPresupuesto).subscribe({
+    this.service.downloadPdf(this.presupuesto.idPresupuesto, type).subscribe({
       next: (blob) => {
-        void this.guardarBlobConDialogo(blob, `presupuesto_${this.presupuesto!.idPresupuesto}.pdf`);
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
       },
       error: () => {
-        Swal.fire('Error', 'No se pudo descargar el PDF.', 'error');
+        Swal.fire('Error', 'No se pudo generar la vista previa del PDF.', 'error');
       }
     });
   }

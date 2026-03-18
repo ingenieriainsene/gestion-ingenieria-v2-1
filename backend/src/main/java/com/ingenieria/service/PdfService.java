@@ -43,7 +43,7 @@ public class PdfService {
     private static final Font FONT_TEXT = new Font(Font.HELVETICA, 10, Font.NORMAL, COLOR_PRIMARY);
     private static final Font FONT_TABLE_HEADER = new Font(Font.HELVETICA, 9, Font.BOLD, Color.WHITE);
 
-    public byte[] generarPresupuestoPdf(Long id) {
+    public byte[] generarPresupuestoPdf(Long id, boolean detallado) {
         Presupuesto p = presupuestoRepository.findByIdWithLineas(id)
                 .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
 
@@ -53,7 +53,7 @@ public class PdfService {
             document.open();
 
             addHeader(document, p);
-            addLineasTable(document, p);
+            addLineasTable(document, p, detallado);
             addTotales(document, p);
             addFooter(document);
 
@@ -124,7 +124,7 @@ public class PdfService {
         return tipo.trim();
     }
 
-    private void addLineasTable(Document document, Presupuesto p) throws DocumentException {
+    private void addLineasTable(Document document, Presupuesto p, boolean detallado) throws DocumentException {
         PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(100);
         table.setWidths(new float[] { 3.6f, 0.8f, 1.2f, 1.2f });
@@ -134,20 +134,33 @@ public class PdfService {
         addHeaderCell(table, "PVP UNIT.");
         addHeaderCell(table, "TOTAL");
 
-        java.util.List<PresupuestoLinea> lineas = new java.util.ArrayList<>(p.getLineas());
-        List<PresupuestoLinea> roots = buildTree(lineas);
-        for (PresupuestoLinea l : roots) {
-            if ("CAPITULO".equals(l.getTipoJerarquia())) {
-                String capitulo = (l.getCodigoVisual() != null ? l.getCodigoVisual() + " " : "") +
+        // Obtenemos todas las líneas y las ordenamos por código visual
+        List<PresupuestoLinea> allLineas = new ArrayList<>(p.getLineas());
+        allLineas.sort(Comparator
+                .comparing(PresupuestoLinea::getCodigoVisual, Comparator.nullsLast(String::compareTo))
+                .thenComparing(PresupuestoLinea::getOrden, Comparator.nullsLast(Integer::compareTo)));
+
+        // Construimos el árbol solo para que sumarCapituloBase funcione (opcional, pero ayuda a los totales)
+        buildTree(allLineas); 
+
+        for (PresupuestoLinea l : allLineas) {
+            boolean isCapitulo = "CAPITULO".equals(l.getTipoJerarquia());
+            boolean isRoot = l.getPadre() == null;
+
+            if (isCapitulo) {
+                // Siempre mostramos capítulos
+                String titulo = (l.getCodigoVisual() != null ? l.getCodigoVisual() + " " : "") +
                         (l.getConcepto() != null ? l.getConcepto() : "—");
                 BigDecimal capTotal = sumarCapituloBase(l);
-                addBodyCellBold(table, capitulo);
+                addBodyCellBold(table, titulo);
                 addBodyCell(table, "—");
                 addBodyCell(table, "—");
                 addBodyCellBold(table, formatMoney(capTotal));
             } else {
-                // Si es una partida raíz (fuera de capítulos), la mostramos
-                addPartidaRow(table, l);
+                // Mostramos partidas: siempre si es detallado, o solo si es raíz si es resumen
+                if (detallado || isRoot) {
+                    addPartidaRow(table, l);
+                }
             }
         }
 
