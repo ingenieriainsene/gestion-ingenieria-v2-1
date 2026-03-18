@@ -9,8 +9,8 @@ import org.hibernate.annotations.BatchSize;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -76,11 +76,16 @@ public class Presupuesto {
     @OrderBy("orden ASC")
     @JsonManagedReference("presupuesto-lineas")
     @BatchSize(size = 50)
-    private Set<PresupuestoLinea> lineas = new HashSet<>();
+    private List<PresupuestoLinea> lineas = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tramite")
     @JsonIgnore
     private Tramite tramite;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_contrato")
+    @JsonIgnoreProperties({ "tramites", "cliente", "local" })
+    private Contrato contrato;
 
 }

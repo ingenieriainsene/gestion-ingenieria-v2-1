@@ -4,15 +4,36 @@
 .contract-summary-card {
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  /* Slightly less rounded */
-  padding: 1rem;
-  /* Reduced padding from 1.5rem */
-  margin-bottom: 1rem;
-  /* Reduced margin from 2rem */
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   font-size: 0.9rem;
-  /* Slightly compact font */
+  height: 100%;
+}
+
+.summary-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: start;
+}
+
+.summary-left-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-right-column {
+  /* Espacio reservado para futuras funcionalidades */
+  min-height: 100px;
+}
+
+@media (max-width: 1024px) {
+  .summary-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 .summary-row {
@@ -85,10 +106,29 @@
 }
 
 .header-section {
-  margin-bottom: 1rem;
-  /* Reduced margin */
-  margin-top: 0.5rem;
-  /* Reduced margin */
+  margin-bottom: 2rem;
+  margin-top: 1rem;
+}
+
+.header-back-row {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.header-title-row {
+  width: 100%;
+  display: block;
+  text-align: center;
+}
+
+.header-title-row h1 {
+  font-size: 2rem;
+  color: #0f172a;
+  margin: 0;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.025em;
+  text-align: center;
 }
 
 /* Header tweaks */
@@ -217,6 +257,10 @@
   background: #fff;
   transition: all 0.2s;
   box-sizing: border-box;
+}
+
+.form-control.no-icon {
+  padding-left: 1rem;
 }
 
 textarea.form-control {

@@ -34,4 +34,11 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
                      "WHERE p.tramite.idTramite = :idTramite " +
                      "ORDER BY p.fecha DESC, p.idPresupuesto DESC")
        List<Presupuesto> findByTramiteId(@Param("idTramite") Long idTramite);
+
+       @Query("SELECT p FROM Presupuesto p " +
+                     "LEFT JOIN FETCH p.cliente " +
+                     "LEFT JOIN FETCH p.vivienda " +
+                     "WHERE p.contrato.idContrato = :idContrato " +
+                     "ORDER BY p.fecha DESC, p.idPresupuesto DESC")
+       List<Presupuesto> findByContratoId(@Param("idContrato") Long idContrato);
 }

@@ -1,16 +1,21 @@
 package com.ingenieria.service;
 
+import com.ingenieria.dto.AnadirAVentasRequest;
 import com.ingenieria.dto.TramiteContratoResponse;
 import com.ingenieria.dto.TramiteDetalleResponse;
 import com.ingenieria.dto.TramiteMapaResponse;
 import com.ingenieria.dto.TramiteVentaResponse;
 import com.ingenieria.model.Contrato;
+import com.ingenieria.model.Presupuesto;
 import com.ingenieria.model.Tramite;
+import com.ingenieria.repository.ContratoRepository;
+import com.ingenieria.repository.PresupuestoRepository;
 import com.ingenieria.repository.TramiteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +27,8 @@ public class TramiteService {
 
     private final TramiteRepository tramiteRepository;
     private final AuditoriaService auditoriaService;
+    private final ContratoRepository contratoRepository;
+    private final PresupuestoRepository presupuestoRepository;
 
     @Transactional(readOnly = true)
     public List<Tramite> findAll() {
@@ -316,6 +323,41 @@ public class TramiteService {
         return new TramiteVentaResponse(
                 saved.getIdTramite(),
                 idContrato,
+                saved.getTipoTramite(),
+                saved.getEstado(),
+                saved.getDetalleSeguimiento(),
+                saved.getFechaCreacion(),
+                saved.getFechaSeguimiento());
+    }
+
+    @Transactional
+    public TramiteVentaResponse crearTramitePendiente(Long idContrato, AnadirAVentasRequest req) {
+        if (req == null || req.getTipoTramite() == null || req.getTipoTramite().isBlank()) {
+            throw new IllegalArgumentException("tipoTramite es obligatorio");
+        }
+        Contrato c = contratoRepository.findById(idContrato)
+                .orElseThrow(() -> new RuntimeException("Contrato no encontrado: " + idContrato));
+
+        Tramite t = new Tramite();
+        t.setContrato(c);
+        t.setTipoTramite(req.getTipoTramite().trim());
+        t.setDetalleSeguimiento(req.getDetalleSeguimiento() != null ? req.getDetalleSeguimiento().trim() : null);
+        t.setEstado("Pendiente");
+        t.setFechaSeguimiento(LocalDate.now());
+        t.setEsUrgente(false);
+
+        Tramite saved = tramiteRepository.save(t);
+
+        // Vincular presupuesto si el contrato tiene un presupuesto origen
+        if (c.getPresupuestoOrigen() != null) {
+            Presupuesto p = c.getPresupuestoOrigen();
+            p.setTramite(saved);
+            presupuestoRepository.save(p);
+        }
+
+        return new TramiteVentaResponse(
+                saved.getIdTramite(),
+                c.getIdContrato(),
                 saved.getTipoTramite(),
                 saved.getEstado(),
                 saved.getDetalleSeguimiento(),

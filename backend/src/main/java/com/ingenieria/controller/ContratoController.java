@@ -90,7 +90,13 @@ public class ContratoController {
      */
     @PostMapping("/{id}/anadir-a-ventas")
     public ResponseEntity<?> anadirAVentas(@PathVariable Long id, @RequestBody AnadirAVentasRequest req) {
-        return crearTramitePendiente(id, req);
+        try {
+            return ResponseEntity.ok(tramiteService.crearTramitePendiente(id, req));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 
     /**
@@ -100,35 +106,13 @@ public class ContratoController {
      */
     @PostMapping("/{id}/tramites")
     public ResponseEntity<?> crearTramite(@PathVariable Long id, @RequestBody AnadirAVentasRequest req) {
-        return crearTramitePendiente(id, req);
+        try {
+            return ResponseEntity.ok(tramiteService.crearTramitePendiente(id, req));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 
-    /**
-     * Replica acciones_tramites.php?accion=crear. Persiste id_contrato y estado = 'Pendiente' en MySQL.
-     * TramiteService.save es @Transactional.
-     */
-    private ResponseEntity<?> crearTramitePendiente(Long id, AnadirAVentasRequest req) {
-        if (req == null || req.getTipoTramite() == null || req.getTipoTramite().isBlank()) {
-            return ResponseEntity.badRequest().body("tipoTramite es obligatorio");
-        }
-        Contrato c = service.findById(id);
-        Tramite t = new Tramite();
-        t.setContrato(c);
-        t.setTipoTramite(req.getTipoTramite().trim());
-        t.setDetalleSeguimiento(req.getDetalleSeguimiento() != null ? req.getDetalleSeguimiento().trim() : null);
-        t.setEstado("Pendiente");
-        t.setFechaSeguimiento(LocalDate.now());
-        t.setEsUrgente(false);
-        Tramite saved = tramiteService.save(t);
-        TramiteVentaResponse res = new TramiteVentaResponse(
-                saved.getIdTramite(),
-                c.getIdContrato(),
-                saved.getTipoTramite(),
-                saved.getEstado(),
-                saved.getDetalleSeguimiento(),
-                saved.getFechaCreacion(),
-                saved.getFechaSeguimiento()
-        );
-        return ResponseEntity.ok(res);
-    }
 }

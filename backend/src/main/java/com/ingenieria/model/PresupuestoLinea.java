@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "presupuesto", "padre", "hijos" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(exclude = { "presupuesto", "padre", "hijos" })
 @Entity
 @Table(name = "PRESUPUESTO_LINEAS")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -27,7 +27,6 @@ public class PresupuestoLinea {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_linea")
-    @EqualsAndHashCode.Include
     private Long idLinea;
 
     @ManyToOne(fetch = FetchType.LAZY)

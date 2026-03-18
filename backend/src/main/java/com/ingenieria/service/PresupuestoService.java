@@ -109,6 +109,9 @@ public class PresupuestoService {
             Tramite tramite = tramiteRepository.findById(dto.getTramiteId())
                     .orElseThrow(() -> new IllegalArgumentException("Tramite no válido"));
             p.setTramite(tramite);
+            if (tramite.getContrato() != null) {
+                p.setContrato(tramite.getContrato());
+            }
         }
 
         Totales totales = applyLineas(p, dto.getLineas());
@@ -166,11 +169,13 @@ public class PresupuestoService {
             p.setDiasValidez(20);
         }
 
-        // Preserve or update tramiteId
         if (dto.getTramiteId() != null) {
             Tramite tramite = tramiteRepository.findById(dto.getTramiteId())
                     .orElseThrow(() -> new IllegalArgumentException("Tramite no válido"));
             p.setTramite(tramite);
+            if (tramite.getContrato() != null) {
+                p.setContrato(tramite.getContrato());
+            }
         }
 
         Totales totales = applyLineas(p, dto.getLineas());
@@ -190,7 +195,6 @@ public class PresupuestoService {
 
         p.setEstado(nuevoEstado);
 
-        // Logic for "Aceptado"
         if ("Aceptado".equalsIgnoreCase(nuevoEstado)) {
             if (p.getFechaAceptacion() == null) {
                 p.setFechaAceptacion(OffsetDateTime.now(ZoneId.of("Europe/Madrid")));
@@ -214,8 +218,6 @@ public class PresupuestoService {
             throw new IllegalArgumentException("Solo se pueden convertir presupuestos aceptados.");
         }
 
-        // Si es preventivo, delegar al servicio especializado que ya sabe crear
-        // Contrato + Trámite
         if ("Preventivo".equalsIgnoreCase(p.getTipoPresupuesto())) {
             ContratoMantenimientoDTO cm = mantenimientoService.createContractFromPresupuesto(id);
             if (cm == null || cm.getContratoId() == null) {
@@ -224,34 +226,34 @@ public class PresupuestoService {
             return cm.getContratoId();
         }
 
-        // 1. Crear Contrato
         Contrato c = new Contrato();
         c.setCliente(p.getCliente());
         c.setLocal(p.getVivienda());
         c.setFechaInicio(LocalDate.now());
-        // Default 1 año o según validez
         int dias = p.getDiasValidez() != null ? p.getDiasValidez() : 365;
         c.setFechaVencimiento(LocalDate.now().plusDays(dias));
         c.setTipoContrato(p.getTipoPresupuesto() != null ? p.getTipoPresupuesto() : "Instalación");
         c.setObservaciones("Generado automáticamente desde presupuesto #" + p.getIdPresupuesto());
         c.setCreadoPor(usuarioBd);
+        c.setPresupuestoOrigen(p);
 
         Contrato savedContrato = contratoRepository.save(c);
 
-        // 2. Crear Trámite (Venta Pendiente)
         Tramite t = new Tramite();
         t.setContrato(savedContrato);
         t.setTipoTramite(savedContrato.getTipoContrato());
         t.setEstado("Pendiente");
-        t.setEsUrgente(false);
-        // t.setFechaCreacion se maneja en @PrePersist de Tramite (si existe) o lo
-        // ponemos manual
         t.setFechaCreacion(java.time.LocalDateTime.now(java.time.ZoneId.of("Europe/Madrid")));
         t.setDetalleSeguimiento("Nueva venta generada desde presupuesto #" + p.getIdPresupuesto());
 
-        tramiteRepository.save(t);
+        Tramite savedTramite = tramiteRepository.save(t);
 
-        log.info("[Presupuesto] Convertido a contrato id={} -> contratoId={}", id, savedContrato.getIdContrato());
+        p.setContrato(savedContrato);
+        p.setTramite(savedTramite);
+        presupuestoRepository.save(p);
+
+        log.info("[Presupuesto] Convertido a contrato id={} -> contratoId={}, tramiteId={}",
+                id, savedContrato.getIdContrato(), savedTramite.getIdTramite());
 
         return savedContrato.getIdContrato();
     }
@@ -265,7 +267,24 @@ public class PresupuestoService {
     @Transactional(readOnly = true)
     public List<PresupuestoListResponse> findByTramite(Long tramiteId) {
         log.info("[Presupuesto] Buscar por tramiteId={}", tramiteId);
-        return presupuestoRepository.findByTramiteId(tramiteId).stream()
+        Tramite t = tramiteRepository.findById(tramiteId)
+                .orElseThrow(() -> new IllegalArgumentException("Trámite no encontrado"));
+
+        List<Presupuesto> directos = presupuestoRepository.findByTramiteId(tramiteId);
+        List<Presupuesto> porContrato = new ArrayList<>();
+
+        if (t.getContrato() != null) {
+            porContrato = presupuestoRepository.findByContratoId(t.getContrato().getIdContrato());
+        }
+
+        Set<Presupuesto> combinados = new java.util.LinkedHashSet<>(directos);
+        combinados.addAll(porContrato);
+
+        if (t.getContrato() != null && t.getContrato().getPresupuestoOrigen() != null) {
+            combinados.add(t.getContrato().getPresupuestoOrigen());
+        }
+
+        return combinados.stream()
                 .map(this::toListResponse)
                 .collect(Collectors.toList());
     }
@@ -286,7 +305,7 @@ public class PresupuestoService {
         dto.setTotalSinIva(p.getTotalSinIva());
         dto.setTotalConIva(p.getTotalConIva());
         if (p.getLineas() != null) {
-            dto.setLineas(buildTree(new java.util.ArrayList<>(p.getLineas())));
+            dto.setLineas(buildTree(p.getLineas()));
         }
         return dto;
     }
@@ -328,9 +347,8 @@ public class PresupuestoService {
             clienteNombre = clienteNombre.trim();
         }
         String viviendaDir = p.getVivienda() != null ? p.getVivienda().getDireccionCompleta() : null;
-        String tipoLinea = joinLineField(new java.util.ArrayList<>(p.getLineas()), PresupuestoLinea::getConcepto);
-        String productoNombre = joinLineField(new java.util.ArrayList<>(p.getLineas()),
-                PresupuestoLinea::getProductoTexto);
+        String tipoLinea = joinLineField(p.getLineas(), PresupuestoLinea::getConcepto);
+        String productoNombre = joinLineField(p.getLineas(), PresupuestoLinea::getProductoTexto);
         return new PresupuestoListResponse(
                 p.getIdPresupuesto(),
                 p.getCodigoReferencia(),
@@ -381,9 +399,9 @@ public class PresupuestoService {
     }
 
     private Totales applyLineas(Presupuesto p, List<PresupuestoLineaDTO> lineasDto) {
-        java.util.Set<PresupuestoLinea> lineas = p.getLineas();
+        List<PresupuestoLinea> lineas = p.getLineas();
         if (lineas == null) {
-            lineas = new java.util.HashSet<>();
+            lineas = new java.util.ArrayList<>();
             p.setLineas(lineas);
         } else {
             lineas.clear();

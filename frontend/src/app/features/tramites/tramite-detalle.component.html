@@ -1,15 +1,20 @@
 <div *ngIf="detalle" class="ficha-wrapper" [formGroup]="formInfo">
 
-  <!-- Header -->
-  <div class="detalle-wrapper" *ngIf="detalle">
-    <!-- Cabecera y botón volver -->
-    <div class="header-section">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-back-row">
       <button class="btn-back" (click)="volverAlContrato()">
         <span class="icon">←</span> Volver al contrato
       </button>
-
+    </div>
+    <div class="header-title-row">
       <h1>Intervención: {{ detalle.tipoTramite }}</h1>
+    </div>
+  </div>
 
+  <!-- Summary Grid -->
+  <div class="summary-layout-grid">
+    <div class="summary-left-column">
       <!-- Contract & Client Summary -->
       <div class="contract-summary-card">
         <div class="summary-row">
@@ -41,7 +46,7 @@
         </div>
 
         <!-- Estado intervención en cabecera -->
-        <div class="form-row-inline" style="margin-top: 12px;">
+        <div class="form-row-inline" style="margin-top: 1.5rem;">
           <div class="form-group mb-0 flex-grow">
             <label class="form-label">Estado</label>
             <div class="input-wrapper small-input">
@@ -61,7 +66,9 @@
               <input type="date" class="form-control" formControlName="fechaSeguimiento" />
             </div>
           </div>
+        </div>
 
+        <div class="form-row-inline mt-3">
           <div class="form-group mb-0 checkbox-group">
             <label class="checkbox-wrapper warning small-check">
               <input type="checkbox" formControlName="esUrgente" />
@@ -76,8 +83,19 @@
             </label>
           </div>
         </div>
-      </div>
 
+        <!-- Notas Técnicas añadidas a la tarjeta -->
+        <div class="form-row-inline mt-4">
+          <div class="form-group mb-0 flex-grow">
+            <label class="form-label">Notas Técnicas</label>
+            <input type="text" class="form-control no-icon" formControlName="detalleSeguimiento"
+              placeholder="Notas específicas sobre esta intervención..." />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="summary-right-column">
+      <!-- Espacio reservado para futuras funcionalidades -->
     </div>
   </div>
 
@@ -99,25 +117,6 @@
 
   <!-- TAB GENERAL -->
   <div *ngIf="activeTab === 'general'" class="tab-content fade-in">
-    <!-- Información General Form -->
-    <div class="form-card">
-      <div class="card-header">
-        <h3>📋 Información y Estado</h3>
-      </div>
-      <div class="card-body compact-body">
-        <div class="compact-form inline-form">
-          <!-- Notas Técnicas -->
-          <div class="form-row-inline align-end mt-2">
-            <div class="form-group flex-grow mb-0">
-              <label class="form-label">Notas Técnicas</label>
-              <input type="text" class="form-control" formControlName="detalleSeguimiento"
-                placeholder="Notas específicas..." />
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
 
     <!-- Timeline Header -->
     <div class="section-header d-flex justify-content-between align-items-center mb-4 mt-5">

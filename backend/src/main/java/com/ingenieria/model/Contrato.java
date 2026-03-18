@@ -107,4 +107,9 @@ public class Contrato {
     @JsonIgnoreProperties("contrato")
     @BatchSize(size = 50)
     private Set<Tramite> tramites = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_presupuesto_origen")
+    @JsonIgnoreProperties({ "lineas", "cliente", "vivienda", "tramite", "contrato" })
+    private Presupuesto presupuestoOrigen;
 }

@@ -98,8 +98,10 @@ CREATE TABLE IF NOT EXISTS contratos (
     creado_por VARCHAR(100) DEFAULT 'Sistema',
     modificado_por VARCHAR(100) NULL,
     fecha_modificacion TIMESTAMPTZ NULL,
+    id_presupuesto_origen BIGINT NULL,
     CONSTRAINT fk_contrato_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
     CONSTRAINT fk_contrato_local FOREIGN KEY (id_local) REFERENCES locales(id_local) ON DELETE CASCADE,
+    CONSTRAINT fk_contrato_presupuesto_origen FOREIGN KEY (id_presupuesto_origen) REFERENCES presupuestos(id_presupuesto) ON DELETE SET NULL,
     CONSTRAINT chk_periodo_contrato CHECK (fecha_vencimiento >= fecha_inicio)
 );
 
@@ -302,9 +304,11 @@ CREATE TABLE IF NOT EXISTS presupuestos (
     id_tramite BIGINT NULL,
     fecha_aceptacion TIMESTAMPTZ NULL,
     dias_validez INT NULL,
+    id_contrato BIGINT NULL,
     CONSTRAINT fk_presupuesto_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id_cliente) ON DELETE RESTRICT,
     CONSTRAINT fk_presupuesto_vivienda FOREIGN KEY (vivienda_id) REFERENCES locales(id_local) ON DELETE RESTRICT,
-    CONSTRAINT fk_presupuesto_tramite FOREIGN KEY (id_tramite) REFERENCES tramites_contrato(id_tramite) ON DELETE SET NULL
+    CONSTRAINT fk_presupuesto_tramite FOREIGN KEY (id_tramite) REFERENCES tramites_contrato(id_tramite) ON DELETE SET NULL,
+    CONSTRAINT fk_presupuesto_contrato FOREIGN KEY (id_contrato) REFERENCES contratos(id_contrato) ON DELETE SET NULL
 );
 
 ALTER TABLE presupuestos
@@ -638,6 +642,27 @@ ALTER TABLE presupuestos
 
 ALTER TABLE presupuestos
     ADD COLUMN IF NOT EXISTS total_con_iva NUMERIC(12, 2) DEFAULT 0;
+
+-- 1.13 VINCULACION ADICIONAL PRESUPUESTO-CONTRATO
+ALTER TABLE contratos 
+    ADD COLUMN IF NOT EXISTS id_presupuesto_origen BIGINT;
+
+ALTER TABLE contratos
+    DROP CONSTRAINT IF EXISTS fk_contrato_presupuesto_origen;
+
+ALTER TABLE contratos 
+    ADD CONSTRAINT fk_contrato_presupuesto_origen 
+    FOREIGN KEY (id_presupuesto_origen) REFERENCES presupuestos(id_presupuesto) ON DELETE SET NULL;
+
+ALTER TABLE presupuestos 
+    ADD COLUMN IF NOT EXISTS id_contrato BIGINT;
+
+ALTER TABLE presupuestos
+    DROP CONSTRAINT IF EXISTS fk_presupuesto_contrato;
+
+ALTER TABLE presupuestos 
+    ADD CONSTRAINT fk_presupuesto_contrato 
+    FOREIGN KEY (id_contrato) REFERENCES contratos(id_contrato) ON DELETE SET NULL;
 
 -- ======================================================
 -- 2. VISTAS

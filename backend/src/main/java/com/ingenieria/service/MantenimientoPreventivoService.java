@@ -410,7 +410,21 @@ public class MantenimientoPreventivoService {
         c.setTipoContrato("Preventivo");
         c.setObservaciones("Contrato generado desde mantenimiento preventivo");
         c.setCreadoPor(getUsuarioActual());
+        
+        // Vincular presupuesto origen si existe
+        if (contrato.getPresupuestoPreventivo() != null && contrato.getPresupuestoPreventivo().getPresupuesto() != null) {
+            c.setPresupuestoOrigen(contrato.getPresupuestoPreventivo().getPresupuesto());
+        }
+
         Contrato saved = contratoBaseRepo.saveAndFlush(c);
+
+        // Actualizar el presupuesto base con el nuevo contrato para visibilidad inversa
+        if (c.getPresupuestoOrigen() != null) {
+            Presupuesto pOrig = c.getPresupuestoOrigen();
+            pOrig.setContrato(saved);
+            presupuestoBaseRepo.save(pOrig);
+        }
+
         contrato.setContrato(saved);
         contratoRepo.saveAndFlush(contrato);
         return saved;
