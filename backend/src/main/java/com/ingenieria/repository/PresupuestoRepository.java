@@ -16,7 +16,8 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
                      "LEFT JOIN FETCH p.cliente " +
                      "LEFT JOIN FETCH p.vivienda " +
                      "LEFT JOIN FETCH p.tramite " +
-                     "LEFT JOIN FETCH p.lineas")
+                     "LEFT JOIN FETCH p.lineas " +
+                     "ORDER BY p.fecha DESC, p.idPresupuesto DESC")
        List<Presupuesto> findAllWithLineas();
 
        @Query("SELECT p FROM Presupuesto p " +
@@ -30,6 +31,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
        @Query("SELECT p FROM Presupuesto p " +
                      "LEFT JOIN FETCH p.cliente " +
                      "LEFT JOIN FETCH p.vivienda " +
-                     "WHERE p.tramite.idTramite = :idTramite")
+                     "WHERE p.tramite.idTramite = :idTramite " +
+                     "ORDER BY p.fecha DESC, p.idPresupuesto DESC")
        List<Presupuesto> findByTramiteId(@Param("idTramite") Long idTramite);
 }
