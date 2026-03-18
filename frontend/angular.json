@@ -48,14 +48,15 @@
                 {
                   "type": "initial",
                   "maximumWarning": "2mb",
-                  "maximumError": "3mb"
+                  "maximumError": "4mb"
                 }
               ],
               "outputHashing": "all",
               "optimization": true,
               "extractLicenses": true,
               "sourceMap": false,
-              "namedChunks": false
+              "namedChunks": false,
+              "aot": true
             },
             "development": {
               "optimization": false,
@@ -84,6 +85,6 @@
     }
   },
   "cli": {
-    "analytics": "31a37b31-e97b-4ed1-a206-8a3615754bff"
+    "analytics": false
   }
 }
