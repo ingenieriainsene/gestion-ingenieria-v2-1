@@ -36,60 +36,66 @@ import { FormsModule } from '@angular/forms';
         </div>
       </div>
 
-      <div class="info-card-grid">
-        <div class="info-card">
-          <h3>Cliente</h3>
-          <p>
-            <a [routerLink]="['/clientes', presupuesto.clienteId]" class="ficha-link">
-              {{ clienteNombre || ('ID ' + presupuesto.clienteId) }}
-            </a>
-          </p>
-        </div>
-        <div class="info-card">
-          <h3>Vivienda</h3>
-          <p>
-            <a [routerLink]="['/locales', presupuesto.viviendaId]" class="ficha-link">
-              {{ viviendaDireccion || ('ID ' + presupuesto.viviendaId) }}
-            </a>
-          </p>
-        </div>
-        <div class="info-card">
-          <h3>Fecha</h3>
-          <p>{{ presupuesto.fecha | date:'dd/MM/yyyy' }}</p>
-        </div>
-        <div class="info-card status-card" [class.loading]="actualizandoEstado">
-          <div class="status-header">
-            <h3>Estado</h3>
-            <span *ngIf="actualizandoEstado" class="spinner-mini"></span>
+      <div class="summary-header">
+        <div class="summary-main">
+          <div class="summary-item">
+            <span class="summary-label">Cliente</span>
+            <span class="summary-value">
+              <a [routerLink]="['/clientes', presupuesto.clienteId]" class="ficha-link">
+                {{ clienteNombre || ('ID ' + presupuesto.clienteId) }}
+              </a>
+            </span>
           </div>
-          <select 
-            [ngModel]="presupuesto.estado" 
-            (ngModelChange)="cambiarEstado($event)"
-            class="status-select"
-            [disabled]="actualizandoEstado"
-          >
-            <option *ngFor="let st of estados" [value]="st">{{ st }}</option>
-          </select>
+          <div class="summary-item">
+            <span class="summary-label">Vivienda</span>
+            <span class="summary-value">
+              <a [routerLink]="['/locales', presupuesto.viviendaId]" class="ficha-link">
+                {{ viviendaDireccion || ('ID ' + presupuesto.viviendaId) }}
+              </a>
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Fecha</span>
+            <span class="summary-value">{{ presupuesto.fecha | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="summary-item status-item" [class.loading]="actualizandoEstado">
+            <span class="summary-label">Estado</span>
+            <div class="status-selector-wrap">
+              <select 
+                [ngModel]="presupuesto.estado" 
+                (ngModelChange)="cambiarEstado($event)"
+                class="status-select-compact"
+                [disabled]="actualizandoEstado"
+              >
+                <option *ngFor="let st of estados" [value]="st">{{ st }}</option>
+              </select>
+              <span *ngIf="actualizandoEstado" class="spinner-mini"></span>
+            </div>
+          </div>
         </div>
-        <div class="info-card">
-          <h3>Total sin IVA</h3>
-          <p>{{ totalSinIva | number:'1.2-2' }} €</p>
+        
+        <div class="summary-financials">
+          <div class="financial-item">
+            <span class="financial-label">Sin IVA</span>
+            <span class="financial-value">{{ totalSinIva | number:'1.2-2' }} €</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">IVA</span>
+            <span class="financial-value">{{ totalIva | number:'1.2-2' }} €</span>
+          </div>
+          <div class="financial-item total-highlight">
+            <span class="financial-label">TOTAL</span>
+            <span class="financial-value">{{ totalConIva | number:'1.2-2' }} €</span>
+          </div>
         </div>
-        <div class="info-card">
-          <h3>IVA total</h3>
-          <p>{{ totalIva | number:'1.2-2' }} €</p>
+      </div>
+
+      <div class="compact-extra-info" *ngIf="presupuesto.estado === 'Aceptado'">
+        <div class="extra-item">
+          <strong>Fecha Aceptación:</strong> {{ (presupuesto.fechaAceptacion) ? (presupuesto.fechaAceptacion | date:'dd/MM/yyyy HH:mm') : 'Pendiente' }}
         </div>
-        <div class="info-card">
-          <h3>TOTAL con IVA</h3>
-          <p>{{ totalConIva | number:'1.2-2' }} €</p>
-        </div>
-        <div class="info-card" *ngIf="presupuesto.estado === 'Aceptado'">
-          <h3>Fecha Aceptación</h3>
-          <p>{{ (presupuesto.fechaAceptacion) ? (presupuesto.fechaAceptacion | date:'dd/MM/yyyy HH:mm:ss') : 'Pendiente' }}</p>
-        </div>
-        <div class="info-card" *ngIf="presupuesto.estado === 'Aceptado'">
-          <h3>Validez</h3>
-          <p>{{ presupuesto.diasValidez ? (presupuesto.diasValidez + ' días') : 'No def.' }}</p>
+        <div class="extra-item">
+          <strong>Validez:</strong> {{ presupuesto.diasValidez ? (presupuesto.diasValidez + ' días') : 'No def.' }}
         </div>
       </div>
 
@@ -179,42 +185,97 @@ import { FormsModule } from '@angular/forms';
   `,
   styleUrls: ['../clientes/cliente-ficha-view.component.css'],
   styles: [`
-    .status-card {
-      position: relative;
-    }
-    .status-header {
+    .summary-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 15px 35px;
+      background: #fdfdfd;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 10px;
     }
-    .status-select {
-      width: 100%;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      background: white;
+    .summary-main {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      flex: 1;
+    }
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .summary-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+    .summary-value {
       font-size: 0.95rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    .status-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-select-compact {
+      padding: 4px 28px 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 0.85rem;
       font-weight: 700;
       color: #1e293b;
       cursor: pointer;
-      transition: all 0.2s;
       outline: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='C19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 16px;
+      background-position: right 6px center;
+      background-size: 14px;
     }
-    .status-select:hover:not(:disabled) {
-      border-color: #3498db;
-      background-color: #f0f9ff;
+    .summary-financials {
+      display: flex;
+      gap: 20px;
+      background: #f1f5f9;
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
     }
-    .status-select:focus {
-      border-color: #3498db;
-      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    .financial-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .financial-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 700;
+    }
+    .financial-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .total-highlight .financial-value {
+      color: #2563eb;
+    }
+    .compact-extra-info {
+      display: flex;
+      gap: 20px;
+      padding: 0 35px 15px;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .extra-item strong {
+      color: #475569;
     }
     .spinner-mini {
       width: 14px;
@@ -227,7 +288,7 @@ import { FormsModule } from '@angular/forms';
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    .status-card.loading {
+    .status-item.loading {
       opacity: 0.8;
     }
     .ficha-link {
