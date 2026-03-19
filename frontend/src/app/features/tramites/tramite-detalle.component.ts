@@ -116,7 +116,6 @@ export class TramiteDetalleComponent implements OnInit {
       estado: ['Pendiente'],
       esUrgente: [false],
       idsUsuariosAsignados: [[] as number[]],
-      idsTecnicosInstaladores: [[] as number[]],
       idProveedor: [null as number | null],
       proveedorLabel: [''],
     });

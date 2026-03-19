@@ -96,6 +96,18 @@
   text-decoration: underline;
 }
 
+.summary-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.summary-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
 /* Base Styles */
 .ficha-wrapper {
   max-width: 1200px;

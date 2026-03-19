@@ -22,6 +22,7 @@ public class TramiteDetalleResponse {
     private Long idTramite;
     private Long idContrato;
     private Long idCliente;
+    private Long idLocal;
     private String tipoTramite;
     private String estado;
     private String detalleSeguimiento;

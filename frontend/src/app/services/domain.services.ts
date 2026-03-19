@@ -235,6 +235,7 @@ export interface TramiteDetalleResponse {
     idTramite: number;
     idContrato: number;
     idCliente: number;
+    idLocal?: number;
     tipoTramite: string;
     estado?: string;
     detalleSeguimiento?: string;

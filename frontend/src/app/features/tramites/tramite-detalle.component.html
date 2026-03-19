@@ -20,12 +20,21 @@
         <div class="summary-row">
           <div class="summary-item">
             <label>Cliente</label>
-            <span>{{ detalle.clienteNombre }} {{ detalle.clienteApellido1 }} <small *ngIf="detalle.clienteDni">({{
-                detalle.clienteDni }})</small></span>
+            <span>
+              <a [routerLink]="['/clientes', detalle.idCliente]" class="summary-link">
+                {{ detalle.clienteNombre }} {{ detalle.clienteApellido1 }}
+              </a>
+              <small *ngIf="detalle.clienteDni">({{ detalle.clienteDni }})</small>
+            </span>
           </div>
           <div class="summary-item">
             <label>Local / Suministro</label>
-            <span>{{ detalle.localNombreTitular }} - {{ detalle.localDireccion }}</span>
+            <span>
+              <a *ngIf="detalle.idLocal" [routerLink]="['/locales', detalle.idLocal]" class="summary-link">
+                {{ detalle.localNombreTitular }} - {{ detalle.localDireccion }}
+              </a>
+              <span *ngIf="!detalle.idLocal">{{ detalle.localNombreTitular }} - {{ detalle.localDireccion }}</span>
+            </span>
           </div>
         </div>
         <div class="summary-row">
@@ -158,7 +167,6 @@
     <div class="section-header d-flex justify-content-between align-items-center mb-4 mt-5">
       <div>
         <h3 class="section-title">📜 HISTORIAL DE SEGUIMIENTO</h3>
-        <p class="section-subtitle">Línea de tiempo de acciones y objetivos</p>
       </div>
       <button type="button" class="btn-primary-premium" (click)="toggleNuevoHito()">
         <span class="icon">{{ showNuevoHito ? '✕' : '+' }}</span>
@@ -219,16 +227,6 @@
             </div>
           </div>
 
-          <div class="form-field full-width">
-            <label>Instaladores Externos (Asignar)</label>
-            <div class="multi-select-box-premium">
-              <div *ngFor="let t of instaladores" class="select-item-premium">
-                <input type="checkbox" (change)="toggleSelection('idsTecnicosInstaladores', t.idTecnicoInstalador!)"
-                  [checked]="formHito.get('idsTecnicosInstaladores')?.value.includes(t.idTecnicoInstalador)">
-                <span>{{ t.nombre }}</span>
-              </div>
-            </div>
-          </div>
         </div>
         <div class="form-actions-premium mt-4">
           <button type="submit" class="btn-save-premium" [disabled]="formHito.invalid">
@@ -247,7 +245,6 @@
               <th>FECHA</th>
               <th>COMENTARIO</th>
               <th>ASIGNADO</th>
-              <th>INSTALADORES</th>
               <th>PROVEEDOR</th>
               <th>PRÓX. SEG.</th>
               <th style="text-align:center;">URG</th>
@@ -269,14 +266,6 @@
               </td>
               <td data-label="Asignado">
                 {{ h.nombreAsignado || '—' }}
-              </td>
-              <td data-label="Instaladores">
-                <span *ngIf="h.nombresTecnicosInstaladores?.length; else sinInst">
-                  {{ (h.nombresTecnicosInstaladores || []).join(', ') }}
-                </span>
-                <ng-template #sinInst>
-                  <span class="text">— Sin instaladores —</span>
-                </ng-template>
               </td>
               <td data-label="Proveedor">
                 {{ h.nombreProveedor || '—' }}

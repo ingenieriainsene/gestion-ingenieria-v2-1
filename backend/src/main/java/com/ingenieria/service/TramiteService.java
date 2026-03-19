@@ -60,6 +60,7 @@ public class TramiteService {
         resp.setIdTramite(t.getIdTramite());
         resp.setIdContrato(c.getIdContrato());
         resp.setIdCliente(c.getCliente() != null ? c.getCliente().getIdCliente() : null);
+        resp.setIdLocal(c.getLocal() != null ? c.getLocal().getIdLocal() : null);
         resp.setTipoTramite(t.getTipoTramite());
         resp.setEstado(t.getEstado());
         resp.setDetalleSeguimiento(t.getDetalleSeguimiento());
