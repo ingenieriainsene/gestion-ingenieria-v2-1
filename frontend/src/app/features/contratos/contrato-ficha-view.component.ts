@@ -127,7 +127,7 @@ import Swal from 'sweetalert2';
                    (click)="irADetalle(ta)">
                 <div class="map-col">
                   <span class="map-label">Intervencion</span>
-                  <span class="map-data map-data-accent">{{ ta.tipoTramite }}</span>
+                  <span class="map-data map-data-accent">#{{ ta.idTramite }} - {{ ta.tipoTramite }}</span>
                 </div>
                 <div class="map-col">
                   <span class="map-label">Descripcion</span>
