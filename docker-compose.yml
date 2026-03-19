@@ -66,6 +66,9 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_JPA_SHOW_SQL: "false"
       SERVER_PORT: 8082
+      STORAGE_PATH: "/app/archivos"
+    volumes:
+      - ./storage_local:/app/archivos
     ports:
       - "${BACKEND_PORT:-8082}:8082"
     networks:

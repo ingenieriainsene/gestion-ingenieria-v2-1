@@ -1668,3 +1668,67 @@ CREATE INDEX IF NOT EXISTS idx_tramite_instaladores_instalador ON tramite_instal
 
 ALTER TABLE legalizaciones_bt ADD COLUMN IF NOT EXISTS estado VARCHAR(50) DEFAULT 'Pendiente';
 ALTER TABLE legalizaciones_bt ADD COLUMN IF NOT EXISTS id_tramite BIGINT;
+
+-- ==========================================================
+-- MODULO RRHH
+-- ==========================================================
+
+-- 1. Enums
+CREATE TYPE employee_status AS ENUM ('ACTIVO', 'INACTIVO');
+CREATE TYPE absence_type AS ENUM ('VACACIONES', 'BAJA_MEDICA', 'ASUNTOS_PROPIOS');
+CREATE TYPE absence_status AS ENUM ('PENDIENTE', 'APROBADA', 'RECHAZADA');
+
+-- 2. Tabla: empleados
+CREATE TABLE IF NOT EXISTS empleados (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    auth_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    nombre_completo TEXT NOT NULL,
+    dni_nie TEXT UNIQUE NOT NULL,
+    fecha_alta DATE NOT NULL,
+    fecha_baja DATE,
+    puesto TEXT,
+    estado employee_status DEFAULT 'ACTIVO' NOT NULL
+);
+
+-- 3. Tabla: saldos_vacaciones
+CREATE TABLE IF NOT EXISTS saldos_vacaciones (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    empleado_id UUID NOT NULL REFERENCES empleados(id) ON DELETE CASCADE,
+    anio INT NOT NULL,
+    dias_totales INT NOT NULL,
+    dias_disfrutados INT DEFAULT 0 NOT NULL,
+    UNIQUE(empleado_id, anio)
+);
+
+-- 4. Tabla: ausencias
+CREATE TABLE IF NOT EXISTS ausencias (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    empleado_id UUID NOT NULL REFERENCES empleados(id) ON DELETE CASCADE,
+    tipo absence_type NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    dias_solicitados INT NOT NULL,
+    estado absence_status DEFAULT 'PENDIENTE' NOT NULL,
+    solicitado_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 5. Función y Trigger (Gestión automática de días disfrutados)
+CREATE OR REPLACE FUNCTION trg_update_saldos_vacaciones()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Solo actuar si el estado cambia a 'APROBADA' y es de tipo 'VACACIONES'
+    IF NEW.tipo = 'VACACIONES' AND NEW.estado = 'APROBADA' AND (OLD.estado IS DISTINCT FROM 'APROBADA') THEN
+        UPDATE saldos_vacaciones
+        SET dias_disfrutados = dias_disfrutados + NEW.dias_solicitados
+        WHERE empleado_id = NEW.empleado_id 
+          AND anio = EXTRACT(YEAR FROM NEW.fecha_inicio);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_saldo_vacaciones_trigger ON ausencias;
+CREATE TRIGGER update_saldo_vacaciones_trigger
+AFTER UPDATE ON ausencias
+FOR EACH ROW
+EXECUTE FUNCTION trg_update_saldos_vacaciones();

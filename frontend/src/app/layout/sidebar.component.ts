@@ -479,6 +479,15 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
+      id: 'rrhh',
+      label: 'Recursos Humanos',
+      icon: '👥',
+      items: [
+        { label: 'Gestión Empleados', route: '/rrhh/empleados', icon: '👤' },
+        { label: 'Mi Portal (Ausencias)', route: '/rrhh/mi-portal', icon: '📅' }
+      ]
+    },
+    {
       id: 'admin',
       label: 'Admin',
       icon: '👥',
@@ -501,6 +510,7 @@ export class SidebarComponent implements OnInit {
   expandedCategories: { [key: string]: boolean } = {
     'comercial': true,
     'operaciones': false,
+    'rrhh': false,
     'admin': false,
     'comunicacion': false
   };

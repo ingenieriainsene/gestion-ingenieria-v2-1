@@ -105,7 +105,6 @@ export const routes: Routes = [
                     )
             },
 
-            // Módulo Análisis de Datos (Operaciones → Análisis de Datos)
             {
                 path: 'operaciones/analisis-datos',
                 loadComponent: () =>
@@ -113,6 +112,12 @@ export const routes: Routes = [
                         m => m.AnalyticsDataComponent
                     )
             },
+            
+            // RRHH Module
+            {
+                path: 'rrhh',
+                loadChildren: () => import('./features/rrhh/rrhh.routes').then(m => m.RRHHRoutes)
+            }
         ]
     }
 ];
