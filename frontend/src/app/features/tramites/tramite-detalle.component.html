@@ -7,8 +7,11 @@
         <span class="icon">←</span> Volver al contrato
       </button>
     </div>
-    <div class="header-title-row">
+    <div class="header-title-row d-flex justify-content-between align-items-center">
       <h1>Intervención: {{ detalle.tipoTramite }}</h1>
+      <button *ngIf="isLegalizacion" type="button" class="btn-primary-premium btn-legalizacion-header" (click)="toggleLegalizacionForm()">
+        ⚖️ LEGALIZACIÓN BT
+      </button>
     </div>
   </div>
 
@@ -139,6 +142,174 @@
             </select>
           </div>
           <p class="help-text-micro">Selecciona un instalador de la lista para asociarlo a esta intervención.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GESTIÓN DE LEGALIZACIÓN (Réplica de Local Ficha) -->
+  <div *ngIf="isLegalizacion && showLegalizacionForm" class="legalizacion-top-section mb-4 fade-in">
+    <!-- Editor de CIE/MTD (Premium) -->
+    <div class="form-card-premium">
+      <div class="section-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="section-title">⚡ GESTIÓN DE DATOS TÉCNICOS (CIE/MTD)</h3>
+          <p class="section-subtitle">Completa los datos técnicos para generar el boletín y la memoria técnica</p>
+        </div>
+        <button type="button" class="btn-close-panel" (click)="toggleLegalizacionForm()">✕</button>
+      </div>
+
+      <div class="cie-editor-container">
+        <!-- SECCIÓN 1: DATOS DEL EXPEDIENTE Y TITULAR -->
+        <div class="form-section-premium">
+          <h4 class="form-section-title">👤 Datos del Expediente y Titular</h4>
+          <div class="form-grid four-cols">
+            <div class="form-field"><label>Núm. Registro</label><input type="text" [(ngModel)]="cie.numeroRegistro" [ngModelOptions]="{standalone: true}" placeholder="Ej. RE-123" /></div>
+            <div class="form-field"><label>Año</label><input type="text" [(ngModel)]="cie.anoNumeroRegistro" [ngModelOptions]="{standalone: true}" placeholder="Ej. 2024" /></div>
+            <div class="form-field full-width"><label>Nombre Titular</label><input type="text" [(ngModel)]="cie.nombreTitular" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>NIF / DNI</label><input type="text" [(ngModel)]="cie.dniTitular" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field full-width"><label>Domicilio Titular</label><input type="text" [(ngModel)]="cie.domicilioTitular" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Localidad</label><input type="text" [(ngModel)]="cie.localidadTitular" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Provincia</label><input type="text" [(ngModel)]="cie.provinciaTitular" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>C.Postal</label><input type="text" [(ngModel)]="cie.cpTitular" [ngModelOptions]="{standalone: true}" /></div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: DATOS DE LA INSTALACIÓN -->
+        <div class="form-section-premium mt-4">
+          <h4 class="form-section-title">🏠 Datos de la Instalación</h4>
+          <div class="form-grid four-cols">
+            <div class="form-field full-width"><label>Emplazamiento</label><input type="text" [(ngModel)]="cie.emplazamientoInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Núm.</label><input type="text" [(ngModel)]="cie.numeroEmplazamientoInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Bloque</label><input type="text" [(ngModel)]="cie.bloqueEmplazamientoInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Portal</label><input type="text" [(ngModel)]="cie.portalEmplazamientoInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Escalera</label><input type="text" [(ngModel)]="cie.escaleraEmplazamientoInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Piso</label><input type="text" [(ngModel)]="cie.pisoEmplazamientoInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Puerta</label><input type="text" [(ngModel)]="cie.puertaEmplazamientoInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Localidad</label><input type="text" [(ngModel)]="cie.localidadInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Provincia</label><input type="text" [(ngModel)]="cie.provinciaInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>C.Postal</label><input type="text" [(ngModel)]="cie.cpInstalacion" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Uso al que se destina</label><input type="text" [(ngModel)]="cie.usoDestina" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field full-width"><label>CUPS</label><input type="text" [(ngModel)]="cie.cups" [ngModelOptions]="{standalone: true}" class="pf-highlight" /></div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: CARACTERÍSTICAS PRINCIPALES -->
+        <div class="form-section-premium mt-4">
+          <h4 class="form-section-title">⚡ Características Principales</h4>
+          <div class="form-grid three-cols">
+            <div class="form-field full-width">
+               <label>Tipo de Obra</label>
+               <div class="d-flex gap-3 mt-2">
+                  <label class="checkbox-wrapper"><input type="checkbox" [(ngModel)]="cie.chkInstalacionNueva" [ngModelOptions]="{standalone: true}" /><span>Nueva</span></label>
+                  <label class="checkbox-wrapper"><input type="checkbox" [(ngModel)]="cie.chkInstalacionAmpliacion" [ngModelOptions]="{standalone: true}" /><span>Ampliación</span></label>
+                  <label class="checkbox-wrapper"><input type="checkbox" [(ngModel)]="cie.chkInstalacionModificacion" [ngModelOptions]="{standalone: true}" /><span>Modificación</span></label>
+               </div>
+            </div>
+            <div class="form-field">
+              <label>Intensidad Nominal (A)</label>
+              <input type="text" [(ngModel)]="cie.intensidadNominal" [ngModelOptions]="{standalone: true}">
+            </div>
+            <div class="form-field">
+              <label>Potencia Instalada/Prev. (W)</label>
+              <input type="text" [(ngModel)]="cie.potenciaPrevista" [ngModelOptions]="{standalone: true}">
+            </div>
+            <div class="form-field">
+              <label>Tensión Suministro (V)</label>
+              <input type="text" [(ngModel)]="cie.tensionSuministro" [ngModelOptions]="{standalone: true}">
+            </div>
+            <div class="form-field full-width">
+               <label>Suministro</label>
+               <div class="d-flex gap-3 mt-2">
+                  <label class="checkbox-wrapper"><input type="checkbox" [(ngModel)]="cie.chkMonofasico" [ngModelOptions]="{standalone: true}" /><span>Monofásico</span></label>
+                  <label class="checkbox-wrapper"><input type="checkbox" [(ngModel)]="cie.chkTrifasico" [ngModelOptions]="{standalone: true}" /><span>Trifásico</span></label>
+               </div>
+            </div>
+            <div class="form-field full-width">
+              <label>Tipo Autoconsumo (para MTD)</label>
+              <input type="text" [(ngModel)]="cie.tipoAutoconsumo" [ngModelOptions]="{standalone: true}" placeholder="Ej. Individual con excedentes">
+            </div>
+            <div class="form-field full-width">
+              <label>Características Técnicas (para MTD)</label>
+              <textarea [(ngModel)]="cie.caracteristicasTecnicas" [ngModelOptions]="{standalone: true}" rows="2" placeholder="Ej. Paneles 450W, Inversor 5kW..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 4: CARACTERÍSTICAS SECUNDARIAS -->
+        <div class="form-section-premium mt-4">
+          <h4 class="form-section-title">⚙️ Características Secundarias</h4>
+          <div class="form-grid three-cols">
+            <div class="form-field"><label>Nivel Aislamiento</label><input type="text" [(ngModel)]="cie.nivelAislamiento" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Material Aislamiento</label><input type="text" [(ngModel)]="cie.materialAislamiento" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Material Conductor</label><input type="text" [(ngModel)]="cie.materialConductor" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Sección Fase (mm²)</label><input type="text" [(ngModel)]="cie.fase" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Sección Neutro (mm²)</label><input type="text" [(ngModel)]="cie.neutro" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Sección CP (mm²)</label><input type="text" [(ngModel)]="cie.cpConductor" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field full-width"><label>Empresa Distribuidora</label><input type="text" [(ngModel)]="cie.empresaDistribuidora" [ngModelOptions]="{standalone: true}" /></div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 5: PROTECCIÓN INDIVIDUAL -->
+        <div class="form-section-premium mt-4">
+          <h4 class="form-section-title">🛡️ Protección Individual</h4>
+          <div class="form-grid three-cols">
+            <div class="form-field"><label>Intensidad Nominal (A)</label><input type="text" [(ngModel)]="cie.pfIntensidadNominal" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Sensibilidad (mA)</label><input type="text" [(ngModel)]="cie.sensibilidad" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Resistencia Tierra (Ω)</label><input type="text" [(ngModel)]="cie.resistenciaTierra" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Resistencia Aislamiento (MΩ)</label><input type="text" [(ngModel)]="cie.resistenciaAislamiento" [ngModelOptions]="{standalone: true}" /></div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 6: DATOS DE LA FIRMA -->
+        <div class="form-section-premium mt-4">
+          <h4 class="form-section-title">✍️ Datos de la Firma</h4>
+          <div class="form-grid three-cols">
+            <div class="form-field"><label>Localidad Firma</label><input type="text" [(ngModel)]="cie.localidadFirma" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Día</label><input type="text" [(ngModel)]="cie.diaFirma" [ngModelOptions]="{standalone: true}" /></div>
+            <div class="form-field"><label>Mes / Año</label>
+               <div class="d-flex gap-2">
+                  <input type="text" [(ngModel)]="cie.mesFirma" [ngModelOptions]="{standalone: true}" placeholder="Mes" style="width: 50%" />
+                  <input type="text" [(ngModel)]="cie.anoFirma" [ngModelOptions]="{standalone: true}" placeholder="Año" style="width: 50%" />
+               </div>
+            </div>
+          </div>
+          <div class="form-field full-width mt-4">
+            <label>Observaciones Adicionales</label>
+            <textarea [(ngModel)]="cie.observaciones" [ngModelOptions]="{standalone: true}" rows="3" placeholder="Observaciones complementarias..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions-premium mt-5">
+          <button type="button" class="btn-save-premium" (click)="guardarYGenerarCie()">
+            💾 Guardar Legalización
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen de legalización si existe y NO estamos editando -->
+  <div *ngIf="isLegalizacion && legalizacionBT && !showLegalizacionForm" class="legalizacion-summary-section mb-4 fade-in">
+    <div class="form-card-premium">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="section-title m-0">⚖️ DATOS DE LEGALIZACIÓN</h3>
+        <button class="btn-micro-edit" (click)="toggleLegalizacionForm()">✏️ Editar Datos</button>
+      </div>
+      <div class="leg-summary-content">
+        <div class="leg-status-info">
+          <label>Estado:</label>
+          <span class="status-badge" [ngClass]="legalizacionBT.estado === 'Completado' ? 'status-completed' : 'status-pending'">
+            {{ legalizacionBT.estado === 'Completado' ? 'Completado' : 'Pendiente' }}
+          </span>
+          <span class="leg-date" *ngIf="legalizacionBT.fechaLegalizacion">
+            📅 Legalizado el: {{ legalizacionBT.fechaLegalizacion | date:'dd/MM/yyyy' }}
+          </span>
+        </div>
+        <div class="leg-actions-row mt-3">
+          <button class="btn-action-premium cie" (click)="descargarCieManual($event)">📄 Descargar CIE</button>
+          <button class="btn-action-premium mtd" (click)="descargarMtdManual($event)">📊 Descargar MTD</button>
+          <button class="btn-action-premium cert" (click)="descargarCertificadoManual($event)">📜 Certificado</button>
         </div>
       </div>
     </div>
@@ -293,6 +464,7 @@
         </table>
       </div>
     </div>
+
 
     <!-- Gestión de Archivos (Modernized) -->
     <div class="section-header mt-5 mb-4">
@@ -899,7 +1071,7 @@
             </div>
             <div class="selection-meta">
               <span class="selection-total">{{ p.total | currency:'EUR' }}</span>
-              <span class="selection-status" [ngClass]="p.estado?.toLowerCase()">{{ p.estado }}</span>
+              <span class="selection-status" [ngClass]="p.estado.toLowerCase()">{{ p.estado }}</span>
               <span class="selection-action">Vincular →</span>
             </div>
           </div>

@@ -1249,10 +1249,80 @@ details>summary::-webkit-details-marker {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+/* Extensive Form Grid System */
+.form-section-premium {
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.form-section-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-grid.four-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.form-grid.three-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.pf-highlight {
+  background-color: #fefce8 !important;
+  border-color: #fde047 !important;
+  font-weight: 700 !important;
+  color: #854d0e !important;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+@media (max-width: 992px) {
+  .form-grid.four-cols,
+  .form-grid.three-cols {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .form-grid.four-cols,
+  .form-grid.three-cols {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1701,6 +1771,60 @@ details>summary::-webkit-details-marker {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+/* Legalización Header Button */
+.btn-legalizacion-header {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.btn-legalizacion-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+
+.btn-close-panel {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.btn-close-panel:hover {
+  color: #ef4444;
+}
+
+.legalizacion-top-section,
+.legalizacion-summary-section {
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+}
+
+.btn-micro-edit {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-micro-edit:hover {
+  background: #e2e8f0;
+  color: #1e293b;
 }
 
 /* Modal Search Box */

@@ -11,6 +11,9 @@ import {
   Seguimiento,
   VentaDocumentoDTO,
   VentaDocumentoCreateRequest,
+  LegalizacionBTService,
+  LegalizacionBT,
+  CieRequest
 } from '../../services/domain.services';
 import { PresupuestoService, PresupuestoListItem } from '../../services/presupuesto.service';
 import { AlbaranVentaService, AlbaranVentaDTO } from '../../services/albaran-venta.service';
@@ -68,6 +71,11 @@ export class TramiteDetalleComponent implements OnInit {
   showVentaForm = false;
   formVenta: FormGroup;
 
+  // Refactor Legalización BT
+  legalizacionBT: LegalizacionBT | null = null;
+  showLegalizacionForm = false;
+  cie: CieRequest = this.getEmptyCie();
+
   showModalVincularP = false;
   presupuestosCandidatos: PresupuestoListItem[] = [];
   cargandoCandidatos = false;
@@ -98,6 +106,7 @@ export class TramiteDetalleComponent implements OnInit {
     private comprasService: ComprasService,
     private ventaDocumentosService: VentaDocumentosService,
     private tecnicoInstaladorService: TecnicoInstaladorService,
+    private legalizacionBTService: LegalizacionBTService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
@@ -163,6 +172,7 @@ export class TramiteDetalleComponent implements OnInit {
       this.cargarAlbaranesVenta();
       this.cargarCompras();
       this.cargarVentas();
+      this.cargarLegalizacion();
     });
 
     // Configurar autoguardado para Información y Estado
@@ -198,6 +208,7 @@ export class TramiteDetalleComponent implements OnInit {
         this.isPatchingForm = false;
         // Si ya tenemos ventas cargadas, evaluamos posible marcado de facturación
         this.evaluarFacturacionIntervencion();
+        this.preRellenarCie();
       },
       error: (err) => {
         this.loading = false;
@@ -785,7 +796,7 @@ export class TramiteDetalleComponent implements OnInit {
 
     // 1) Preferimos vinculación por presupuesto si existe
     if (albaran.presupuestoId != null) {
-      const byPres = this.documentosVenta.find(d =>
+      const byPres = (this.documentosVenta as VentaDocumentoDTO[]).find((d: VentaDocumentoDTO) =>
         d.tipo === 'FACTURA' && d.presupuestoId === albaran.presupuestoId
       );
       if (byPres) return byPres;
@@ -1020,6 +1031,14 @@ export class TramiteDetalleComponent implements OnInit {
     };
     this.tramiteService.update(this.idTramite, tramitePayload).subscribe({
       next: () => {
+        // Automatizar estado de la legalización según la fecha de ejecución (fechaSeguimiento)
+        if (this.isLegalizacion && this.legalizacionBT?.idLegalizacion) {
+          const nuevoEstado = v.fechaSeguimiento ? 'Completado' : 'Pendiente';
+          if (this.legalizacionBT.estado !== nuevoEstado) {
+            this.cambiarEstadoLegalizacion(nuevoEstado);
+          }
+        }
+
         if (!silent) {
           this.finGuardarInfo();
         }
@@ -1304,15 +1323,29 @@ export class TramiteDetalleComponent implements OnInit {
     });
   }
 
-  asignarInstalador(event: any) {
-    const idInstalador = Number(event.target.value);
+  quitarInstalador(idInstalador: number) {
+    if (!idInstalador || !this.idTramite) return;
+    this.tramiteService.desvincularInstalador(this.idTramite, idInstalador).subscribe({
+      next: () => {
+        if (this.detalle?.instaladores) {
+          this.detalle.instaladores = this.detalle.instaladores.filter(i => i.idTecnicoInstalador !== idInstalador);
+        }
+        Swal.fire({ title: 'Eliminado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+      },
+      error: () => Swal.fire('Error', 'No se pudo desvincular.', 'error')
+    });
+  }
+
+  asignarInstalador(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    const idInstalador = Number(target.value);
     if (!idInstalador || !this.idTramite) return;
 
     // Evitar duplicados localmente
     const existe = this.detalle?.instaladores?.some(i => i.idTecnicoInstalador === idInstalador);
     if (existe) {
       Swal.fire('Aviso', 'Este instalador ya está asignado.', 'info');
-      event.target.value = '';
+      target.value = '';
       return;
     }
 
@@ -1327,35 +1360,138 @@ export class TramiteDetalleComponent implements OnInit {
             telefono: ins.telefono
           });
         }
-        event.target.value = '';
+        target.value = '';
         Swal.fire({ title: 'Asignado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
       },
-      error: (e) => {
+      error: () => {
         Swal.fire('Error', 'No se pudo asignar.', 'error');
       }
     });
   }
 
-  quitarInstalador(idInstalador: number) {
+  // LÓGICA LEGALIZACIÓN BT
+  cargarLegalizacion() {
     if (!this.idTramite) return;
-
-    Swal.fire({
-      title: '¿Quitar instalador?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, quitar',
-      confirmButtonColor: '#1e293b',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.tramiteService.desvincularInstalador(this.idTramite!, idInstalador).subscribe({
-          next: () => {
-            if (this.detalle?.instaladores) {
-              this.detalle.instaladores = this.detalle.instaladores.filter(i => i.idTecnicoInstalador !== idInstalador);
+    this.legalizacionBTService.getByTramite(this.idTramite).subscribe({
+      next: (list) => {
+        if (list && list.length > 0) {
+          this.legalizacionBT = list[0];
+          try {
+            if (this.legalizacionBT.datosJson) {
+              const parsed = JSON.parse(this.legalizacionBT.datosJson);
+              this.cie = { ...this.getEmptyCie(), ...parsed };
+              // Ensure any missing fields from the old JSON are autocompleted from local
+              this.preRellenarCie();
             }
-            Swal.fire({ title: 'Eliminado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+          } catch (e) {
+            console.error('Error parseando datos de legalización', e);
           }
-        });
+        }
       }
     });
+  }
+
+  toggleLegalizacionForm() {
+    this.showLegalizacionForm = !this.showLegalizacionForm;
+    if (this.showLegalizacionForm && !this.legalizacionBT) {
+      this.preRellenarCie();
+    }
+  }
+
+  guardarYGenerarCie() {
+    if (!this.idTramite || !this.detalle?.idLocal) return;
+
+    const estadoCalculado = this.formInfo.value.fechaSeguimiento ? 'Completado' : 'Pendiente';
+    const payloadCie: CieRequest = { ...this.cie };
+    const data: LegalizacionBT = {
+      ...(this.legalizacionBT || {}),
+      idLocal: this.detalle.idLocal,
+      idTramite: this.idTramite,
+      datosJson: JSON.stringify(payloadCie),
+      estado: estadoCalculado
+    };
+
+    this.legalizacionBTService.create(this.detalle.idLocal, data).subscribe({
+      next: (res) => {
+        this.legalizacionBT = res;
+        this.showLegalizacionForm = false;
+        Swal.fire('Guardado', 'Datos de legalización guardados correctamente.', 'success');
+      },
+      error: () => Swal.fire('Error', 'No se pudo guardar la legalización.', 'error')
+    });
+  }
+
+  getEmptyCie(): CieRequest {
+    return {
+      numeroRegistro: '', anoNumeroRegistro: '', nombreTitular: '', dniTitular: '', domicilioTitular: '',
+      cpTitular: '', localidadTitular: '', provinciaTitular: '', emplazamientoInstalacion: '',
+      numeroEmplazamientoInstalacion: '', bloqueEmplazamientoInstalacion: '', portalEmplazamientoInstalacion: '',
+      escaleraEmplazamientoInstalacion: '', pisoEmplazamientoInstalacion: '', puertaEmplazamientoInstalacion: '',
+      localidadInstalacion: '', provinciaInstalacion: '', cpInstalacion: '', tipoInstalacion: '',
+      usoDestina: '', cups: '', intensidadNominal: '', potenciaPrevista: '', tensionSuministro: '',
+      nivelAislamiento: '', materialAislamiento: '', materialConductor: '', fase: '', neutro: '',
+      cpConductor: '', empresaDistribuidora: '', pfIntensidadNominal: '', sensibilidad: '',
+      resistenciaTierra: '', resistenciaAislamiento: '', observaciones: '', localidadFirma: '',
+      diaFirma: '', mesFirma: '', anoFirma: '', chkInstalacionNueva: false, chkInstalacionAmpliacion: false,
+      chkInstalacionModificacion: false, chkLineaAlimentacionSi: false, chkLineaAlimentacionNo: false,
+      chkMonofasico: false, chkTrifasico: false, chkInterrup: false, chkFusibles: false,
+      chkCategoriaBasica: false, chkCategoriaEspecialista: false, tipoAutoconsumo: '', caracteristicasTecnicas: ''
+    };
+  }
+
+  preRellenarCie() {
+    if (!this.detalle) return;
+    
+    // Autocompleta SI el campo está vacío
+    if (!this.cie.nombreTitular) this.cie.nombreTitular = this.detalle.localNombreTitular || '';
+    if (!this.cie.dniTitular) this.cie.dniTitular = this.detalle.clienteDni || '';
+    if (!this.cie.domicilioTitular) this.cie.domicilioTitular = this.detalle.localDireccion || '';
+    if (!this.cie.emplazamientoInstalacion) this.cie.emplazamientoInstalacion = this.detalle.localDireccion || '';
+    if (!this.cie.cups) this.cie.cups = this.detalle.localCups || '';
+    if (!this.cie.localidadInstalacion) this.cie.localidadInstalacion = this.detalle.localLocalidad || '';
+    if (!this.cie.provinciaInstalacion) this.cie.provinciaInstalacion = this.detalle.localProvincia || '';
+    if (!this.cie.cpInstalacion) this.cie.cpInstalacion = this.detalle.localCp || '';
+  }
+
+  descargarCieManual(event: Event) {
+    event.stopPropagation();
+    if (!this.legalizacionBT?.idLegalizacion) return;
+    this.legalizacionBTService.getCiePdf(this.legalizacionBT.idLegalizacion).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
+
+  descargarMtdManual(event: Event) {
+    event.stopPropagation();
+    if (!this.legalizacionBT?.idLegalizacion) return;
+    this.legalizacionBTService.getMtdPdf(this.legalizacionBT.idLegalizacion, this.cie.tipoAutoconsumo, this.cie.caracteristicasTecnicas).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
+
+  descargarCertificadoManual(event: Event) {
+    event.stopPropagation();
+    if (!this.legalizacionBT?.idLegalizacion) return;
+    this.legalizacionBTService.getCertificadoPdf(this.legalizacionBT.idLegalizacion).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
+
+  cambiarEstadoLegalizacion(nuevoEstado: string): void {
+    if (!this.legalizacionBT?.idLegalizacion) return;
+    this.legalizacionBTService.patchEstado(this.legalizacionBT.idLegalizacion, nuevoEstado).subscribe({
+      next: (res) => {
+        this.legalizacionBT = res;
+      },
+      error: () => Swal.fire('Error', 'No se pudo actualizar el estado.', 'error')
+    });
+  }
+
+  get isLegalizacion(): boolean {
+    const t = (this.detalle?.tipoTramite || '').toUpperCase();
+    return t === 'LEGALIZACIÓN' || t === 'LEGALIZACION' || t === 'LEGALIZACION BT';
   }
 }

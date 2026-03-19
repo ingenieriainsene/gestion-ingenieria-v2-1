@@ -36,14 +36,18 @@ public class LegalizacionBTService {
     private ObjectMapper objectMapper;
 
     public List<LegalizacionBT> findByLocal(Long idLocal) {
-        return repository.findByLocalIdLocalOrderByFechaAltaDesc(idLocal);
+        return repository.findByIdLocalOrderByFechaAltaDesc(idLocal);
+    }
+
+    public List<LegalizacionBT> findByTramite(Long idTramite) {
+        return repository.findByIdTramite(idTramite);
     }
 
     @Transactional
     public LegalizacionBT save(Long idLocal, LegalizacionBT legalizacion) {
         Local local = localRepository.findById(idLocal)
                 .orElseThrow(() -> new IllegalArgumentException("Local no encontrado"));
-        legalizacion.setLocal(local);
+        legalizacion.setIdLocal(idLocal);
         return repository.save(legalizacion);
     }
 

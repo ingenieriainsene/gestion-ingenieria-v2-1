@@ -24,11 +24,17 @@ public class LegalizacionBT {
     private Long idLegalizacion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_local", nullable = false)
+    @JoinColumn(name = "id_local", nullable = false, insertable = false, updatable = false)
     private Local local;
 
     @Column(name = "fecha_alta", insertable = false, updatable = false)
     private LocalDateTime fechaAlta;
+
+    @Column(name = "id_local")
+    private Long idLocal;
+
+    @Column(name = "id_tramite")
+    private Long idTramite;
 
     @Column(name = "fecha_legalizacion")
     private LocalDate fechaLegalizacion;

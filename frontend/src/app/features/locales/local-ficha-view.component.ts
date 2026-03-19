@@ -215,38 +215,13 @@ export class LocalFichaViewComponent implements OnInit {
     }
   }
 
-  nuevaLegalizacion(): void {
-    this.mostrarHistorial = false;
-    this.mostrarFormularioCie = true;
-    this.cie = this.getEmptyCie();
-    this.preRellenarCie();
-  }
+  // Métodos de creación eliminados: Se gestionan desde la intervención
 
   cancelarFormulario(): void {
     this.mostrarFormularioCie = false;
     this.mostrarHistorial = true;
   }
 
-  guardarYGenerarCie(): void {
-    if (!this.idLocal) return;
-
-    const payloadCie: CieRequest = { ...this.cie };
-    const nuevaLeg: LegalizacionBT = {
-      datosJson: JSON.stringify(payloadCie),
-      estado: 'Pendiente'
-    };
-
-    this.legalizacionBTService.create(this.idLocal, nuevaLeg).subscribe({
-      next: () => {
-        this.loadLegalizaciones();
-        this.cancelarFormulario();
-        Swal.fire('Guardado', 'Legalización guardada correctamente. Puedes descargar los PDFs desde el historial.', 'success');
-      },
-      error: () => {
-        Swal.fire('Error', 'No se pudo guardar la legalización en el historial.', 'error');
-      }
-    });
-  }
 
   descargarCertificadoManual(idLeg: number, event: Event): void {
     event.stopPropagation();
@@ -330,6 +305,9 @@ export class LocalFichaViewComponent implements OnInit {
     if (!leg.datosJson) return;
     try {
       this.cie = JSON.parse(leg.datosJson);
+      // Solo para visualización, podrías mostrar un modal de solo lectura si lo deseas, 
+      // o simplemente navegar a la intervención si tiene idTramite.
+      // Por ahora, mantenemos la visibilidad del "formulario" pero lo usaremos como solo lectura en el HTML si es necesario.
       this.mostrarFormularioCie = true;
       this.mostrarHistorial = false;
     } catch (e) {
@@ -337,15 +315,6 @@ export class LocalFichaViewComponent implements OnInit {
     }
   }
 
-  cambiarEstadoLegalizacion(leg: LegalizacionBT, nuevoEstado: string): void {
-    if (!leg.idLegalizacion) return;
-    this.legalizacionBTService.patchEstado(leg.idLegalizacion, nuevoEstado).subscribe({
-      next: () => {
-        this.loadLegalizaciones();
-      },
-      error: () => Swal.fire('Error', 'No se pudo actualizar el estado.', 'error')
-    });
-  }
 
   eliminarLegalizacion(id: number, event: Event): void {
     event.stopPropagation();

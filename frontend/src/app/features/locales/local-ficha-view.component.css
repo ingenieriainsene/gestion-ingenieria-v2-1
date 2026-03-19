@@ -276,7 +276,24 @@
 
 .side-column {
   flex: 1;
-  /* Columna diferencial a la derecha */
+  /* Columna diferencial */
+/* Solo lectura */
+.read-only-view .pf-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.read-value {
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  color: #1e293b;
+  font-weight: 500;
+}
   min-width: 350px;
 }
 

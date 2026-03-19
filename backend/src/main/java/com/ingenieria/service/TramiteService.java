@@ -84,6 +84,10 @@ public class TramiteService {
         resp.setClienteDni(c.getCliente() != null ? c.getCliente().getDni() : null);
         resp.setLocalDireccion(c.getLocal() != null ? c.getLocal().getDireccionCompleta() : null);
         resp.setLocalNombreTitular(c.getLocal() != null ? c.getLocal().getNombreTitular() : null);
+        resp.setLocalCups(c.getLocal() != null ? c.getLocal().getCups() : null);
+        resp.setLocalCp(c.getCliente() != null ? c.getCliente().getCodigoPostal() : null);
+        resp.setLocalLocalidad(""); 
+        resp.setLocalProvincia("");
         resp.setFechaInicio(c.getFechaInicio());
         resp.setFechaVencimiento(c.getFechaVencimiento());
         resp.setFacturado(t.getFacturado());

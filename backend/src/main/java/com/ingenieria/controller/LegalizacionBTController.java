@@ -22,6 +22,11 @@ public class LegalizacionBTController {
         return service.findByLocal(idLocal);
     }
 
+    @GetMapping("/tramite/{idTramite}")
+    public List<LegalizacionBT> getByTramite(@PathVariable Long idTramite) {
+        return service.findByTramite(idTramite);
+    }
+
     @PostMapping("/local/{idLocal}")
     public ResponseEntity<LegalizacionBT> create(@PathVariable Long idLocal, @RequestBody LegalizacionBT legalizacion) {
         return ResponseEntity.ok(service.save(idLocal, legalizacion));

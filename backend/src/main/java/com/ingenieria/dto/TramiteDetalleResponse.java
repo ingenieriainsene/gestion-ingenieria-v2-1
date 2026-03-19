@@ -49,6 +49,10 @@ public class TramiteDetalleResponse {
 
     private String localDireccion;
     private String localNombreTitular;
+    private String localCups;
+    private String localLocalidad;
+    private String localProvincia;
+    private String localCp;
 
     // Fechas Contrato
     private LocalDate fechaInicio;

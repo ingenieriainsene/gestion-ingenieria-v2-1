@@ -7,5 +7,6 @@ import java.util.List;
 
 @Repository
 public interface LegalizacionBTRepository extends JpaRepository<LegalizacionBT, Long> {
-    List<LegalizacionBT> findByLocalIdLocalOrderByFechaAltaDesc(Long idLocal);
+    List<LegalizacionBT> findByIdLocalOrderByFechaAltaDesc(Long idLocal);
+    List<LegalizacionBT> findByIdTramite(Long idTramite);
 }

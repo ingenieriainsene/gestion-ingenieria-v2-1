@@ -64,6 +64,7 @@ export interface Local {
 export interface LegalizacionBT {
     idLegalizacion?: number;
     idLocal?: number;
+    idTramite?: number;
     fechaAlta?: string;
     fechaLegalizacion?: string;
     datosJson?: string;
@@ -260,6 +261,10 @@ export interface TramiteDetalleResponse {
     clienteDni?: string;
     localDireccion?: string;
     localNombreTitular?: string;
+    localCups?: string;
+    localLocalidad?: string;
+    localProvincia?: string;
+    localCp?: string;
     fechaInicio?: string;
     fechaVencimiento?: string;
     facturado?: boolean;
@@ -599,6 +604,9 @@ export class LegalizacionBTService {
     constructor(private api: ApiService) { }
     getByLocal(idLocal: number): Observable<LegalizacionBT[]> {
         return this.api.get<LegalizacionBT[]>(`${this.endpoint}/local/${idLocal}`);
+    }
+    getByTramite(idTramite: number): Observable<LegalizacionBT[]> {
+        return this.api.get<LegalizacionBT[]>(`${this.endpoint}/tramite/${idTramite}`);
     }
     create(idLocal: number, data: LegalizacionBT): Observable<LegalizacionBT> {
         return this.api.post<LegalizacionBT>(`${this.endpoint}/local/${idLocal}`, data);
