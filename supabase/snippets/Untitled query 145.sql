@@ -1674,9 +1674,9 @@ ALTER TABLE legalizaciones_bt ADD COLUMN IF NOT EXISTS id_tramite BIGINT;
 -- ==========================================================
 
 -- 1. Enums
-CREATE TYPE employee_status AS ENUM ('ACTIVO', 'INACTIVO');
-CREATE TYPE absence_type AS ENUM ('VACACIONES', 'BAJA_MEDICA', 'ASUNTOS_PROPIOS');
-CREATE TYPE absence_status AS ENUM ('PENDIENTE', 'APROBADA', 'RECHAZADA');
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'employee_status') THEN CREATE TYPE employee_status AS ENUM ('ACTIVO', 'INACTIVO'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'absence_type') THEN CREATE TYPE absence_type AS ENUM ('VACACIONES', 'BAJA_MEDICA', 'ASUNTOS_PROPIOS'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'absence_status') THEN CREATE TYPE absence_status AS ENUM ('PENDIENTE', 'APROBADA', 'RECHAZADA'); END IF; END $$;
 
 -- 2. Tabla: empleados
 CREATE TABLE IF NOT EXISTS empleados (
@@ -1732,3 +1732,19 @@ CREATE TRIGGER update_saldo_vacaciones_trigger
 AFTER UPDATE ON ausencias
 FOR EACH ROW
 EXECUTE FUNCTION trg_update_saldos_vacaciones();
+
+-- ==========================================================
+-- MODULO CONTROL HORARIO (FICHAJES)
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS fichajes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    empleado_id UUID NOT NULL REFERENCES empleados(id) ON DELETE CASCADE,
+    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+    hora_entrada TIME NOT NULL,
+    hora_salida TIME,
+    minutos_pausa INT DEFAULT 0,
+    estado VARCHAR(20) CHECK (estado IN ('TRABAJANDO', 'EN_PAUSA', 'FINALIZADO')) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT unique_fichaje_dia UNIQUE (empleado_id, fecha)
+);

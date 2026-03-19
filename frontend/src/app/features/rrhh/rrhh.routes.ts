@@ -3,9 +3,11 @@ import { RrhhDashboardComponent } from './rrhh-dashboard.component';
 import { EmpleadoListaComponent } from './empleado-lista.component';
 import { PortalEmpleadoComponent } from './portal-empleado.component';
 import { adminGuard } from '../../core/admin.guard';
+import { ControlHorarioComponent } from './control-horario.component';
 
 export const RRHHRoutes: Routes = [
   { path: '', component: RrhhDashboardComponent },
   { path: 'empleados', component: EmpleadoListaComponent, canActivate: [adminGuard] },
-  { path: 'mi-portal', component: PortalEmpleadoComponent }
+  { path: 'mi-portal', component: PortalEmpleadoComponent },
+  { path: 'control-horario', component: ControlHorarioComponent, canActivate: [adminGuard] }
 ];

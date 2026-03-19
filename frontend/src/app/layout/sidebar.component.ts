@@ -2,6 +2,7 @@ import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { FichajeWidgetComponent } from '../features/rrhh/fichaje-widget.component';
 
 interface NavItem {
   label: string;
@@ -19,7 +20,7 @@ interface NavCategory {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, FichajeWidgetComponent],
   template: `
     <div class="sidebar" [class.collapsed]="collapsed" *ngIf="auth.isLoggedIn()">
       <div class="sidebar-header">
@@ -60,6 +61,11 @@ interface NavCategory {
       </nav>
 
       <div class="sidebar-footer">
+        <!-- Widget Control Horario -->
+        <div class="px-3 mb-2" *ngIf="!collapsed">
+           <app-fichaje-widget></app-fichaje-widget>
+        </div>
+
         <div class="user-display" *ngIf="username">
           <span class="footer-icon">👤</span>
           <span class="user-name">{{ username }}</span>
@@ -484,7 +490,8 @@ export class SidebarComponent implements OnInit {
       icon: '👥',
       items: [
         { label: 'Gestión Empleados', route: '/rrhh/empleados', icon: '👤' },
-        { label: 'Mi Portal (Ausencias)', route: '/rrhh/mi-portal', icon: '📅' }
+        { label: 'Mi Portal (Ausencias)', route: '/rrhh/mi-portal', icon: '📅' },
+        { label: 'Control Horario', route: '/rrhh/control-horario', icon: '⏱️' }
       ]
     },
     {
