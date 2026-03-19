@@ -43,6 +43,7 @@ import { ProveedorService } from '../../services/proveedor.service';
         <tr>
           <th>FECHA REGISTRO</th>
           <th>INTERVENCIÓN</th>
+          <th class="col-tipo">TIPO</th>
           <th>COMENTARIO</th>
           <th class="col-tecnico">TÉCNICO</th>
           <th>PROVEEDOR</th>
@@ -75,6 +76,16 @@ import { ProveedorService } from '../../services/proveedor.service';
               class="header-input"
               placeholder="# intervención"
             />
+          </th>
+          <th>
+            <select
+              [(ngModel)]="filtroTipo"
+              (change)="aplicarFiltro()"
+              class="header-input"
+            >
+              <option [ngValue]="null">Todos</option>
+              <option *ngFor="let t of tiposIntervencion" [ngValue]="t">{{ t }}</option>
+            </select>
           </th>
           <th>
             <input
@@ -146,6 +157,7 @@ import { ProveedorService } from '../../services/proveedor.service';
             </a>
             <span *ngIf="!s.idTramite">—</span>
           </td>
+          <td data-label="Tipo">{{ s.tipoTramite || '—' }}</td>
           <td data-label="Comentario">{{ s.comentario || '—' }}</td>
           <td data-label="Técnico" class="col-tecnico">{{ s.nombreAsignado || '—' }}</td>
           <td data-label="Proveedor">{{ s.nombreProveedor || '—' }}</td>
@@ -259,6 +271,7 @@ import { ProveedorService } from '../../services/proveedor.service';
     }
     .btn-clear:hover { background: #dc2626; }
 
+    .col-tipo { width: 120px; }
     .col-tecnico { width: 140px; }
 
     .urg-badge {
@@ -335,8 +348,10 @@ export class SeguimientoListComponent implements OnInit {
   fechaFin: string = '';
   soloUrgentes = false;
   filtroTramite: string = '';
+  filtroTipo: string | null = null;
   filtroComentario: string = '';
   filtroFechaProx: string = '';
+  tiposIntervencion: string[] = [];
 
   constructor(
     private seguimientoService: SeguimientoService,
@@ -366,13 +381,23 @@ export class SeguimientoListComponent implements OnInit {
     this.seguimientoService.getAll(estado).subscribe({
       next: (list) => {
         this.seguimientos = list || [];
+        this.extraerTiposTramite();
         this.aplicarFiltro();
       },
       error: () => {
         this.seguimientos = [];
+        this.extraerTiposTramite();
         this.aplicarFiltro();
       },
     });
+  }
+
+  extraerTiposTramite(): void {
+    const tipos = new Set<string>();
+    this.seguimientos.forEach(s => {
+      if (s.tipoTramite) tipos.add(s.tipoTramite);
+    });
+    this.tiposIntervencion = Array.from(tipos).sort();
   }
 
   aplicarFiltro(): void {
@@ -410,6 +435,11 @@ export class SeguimientoListComponent implements OnInit {
       res = res.filter(s => (s.idTramite ? String(s.idTramite) : '').includes(tramTerm));
     }
 
+    // Tipo de Intervención
+    if (this.filtroTipo) {
+      res = res.filter(s => s.tipoTramite === this.filtroTipo);
+    }
+
     // Filtro por comentario
     const comentarioTerm = this.filtroComentario.trim().toLowerCase();
     if (comentarioTerm) {
@@ -445,6 +475,7 @@ export class SeguimientoListComponent implements OnInit {
     this.fechaFin = '';
     this.soloUrgentes = false;
     this.filtroTramite = '';
+    this.filtroTipo = null;
     this.filtroComentario = '';
     this.filtroFechaProx = '';
     this.aplicarFiltro();

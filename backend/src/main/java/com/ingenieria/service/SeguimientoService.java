@@ -71,6 +71,8 @@ public class SeguimientoService {
             res.setNombreProveedor(s.getProveedor().getNombreComercial());
         }
 
+        res.setTipoTramite(s.getTramite() != null ? s.getTramite().getTipoTramite() : null);
+
         // Mapeo de listas múltiples
         if (s.getTecnicosInstaladores() != null) {
             res.setIdsTecnicosInstaladores(s.getTecnicosInstaladores().stream()

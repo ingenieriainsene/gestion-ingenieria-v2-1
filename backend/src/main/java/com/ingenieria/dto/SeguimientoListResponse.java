@@ -29,4 +29,5 @@ public class SeguimientoListResponse {
     private java.util.List<String> nombresTecnicosInstaladores;
     private java.util.List<Long> idsUsuariosAsignados;
     private java.util.List<String> nombresUsuariosAsignados;
+    private String tipoTramite;
 }

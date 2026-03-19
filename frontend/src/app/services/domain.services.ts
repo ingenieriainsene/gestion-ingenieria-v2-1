@@ -218,6 +218,7 @@ export interface Seguimiento {
     nombresTecnicosInstaladores?: string[];
     idsUsuariosAsignados?: number[];
     nombresUsuariosAsignados?: string[];
+    tipoTramite?: string;
 }
 
 export interface Cita {
