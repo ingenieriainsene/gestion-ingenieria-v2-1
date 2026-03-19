@@ -8,10 +8,13 @@ import com.ingenieria.dto.TramiteVentaResponse;
 import com.ingenieria.model.Contrato;
 import com.ingenieria.model.Presupuesto;
 import com.ingenieria.model.Tramite;
+import com.ingenieria.model.TecnicoInstalador;
 import com.ingenieria.repository.ContratoRepository;
 import com.ingenieria.repository.PresupuestoRepository;
 import com.ingenieria.repository.TramiteRepository;
+import com.ingenieria.repository.TecnicoInstaladorRepository;
 import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ public class TramiteService {
     private final AuditoriaService auditoriaService;
     private final ContratoRepository contratoRepository;
     private final PresupuestoRepository presupuestoRepository;
+    private final TecnicoInstaladorRepository tecnicoInstaladorRepository;
 
     @Transactional(readOnly = true)
     public List<Tramite> findAll() {
@@ -82,6 +86,7 @@ public class TramiteService {
         resp.setFechaInicio(c.getFechaInicio());
         resp.setFechaVencimiento(c.getFechaVencimiento());
         resp.setFacturado(t.getFacturado());
+        resp.setInstaladores(new ArrayList<>(t.getInstaladores()));
         return resp;
     }
 
@@ -365,5 +370,25 @@ public class TramiteService {
                 saved.getDetalleSeguimiento(),
                 saved.getFechaCreacion(),
                 saved.getFechaSeguimiento());
+    }
+
+    @Transactional
+    public Tramite asignarInstalador(Long idTramite, Long idInstalador) {
+        Tramite t = tramiteRepository.findById(idTramite)
+                .orElseThrow(() -> new RuntimeException("Trámite no encontrado"));
+        TecnicoInstalador ins = tecnicoInstaladorRepository.findById(idInstalador)
+                .orElseThrow(() -> new RuntimeException("Instalador no encontrado"));
+
+        t.getInstaladores().add(ins);
+        return tramiteRepository.save(t);
+    }
+
+    @Transactional
+    public Tramite desvincularInstalador(Long idTramite, Long idInstalador) {
+        Tramite t = tramiteRepository.findById(idTramite)
+                .orElseThrow(() -> new RuntimeException("Trámite no encontrado"));
+
+        t.getInstaladores().removeIf(ins -> ins.getIdTecnicoInstalador().equals(idInstalador));
+        return tramiteRepository.save(t);
     }
 }

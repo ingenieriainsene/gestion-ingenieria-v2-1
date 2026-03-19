@@ -1304,4 +1304,59 @@ export class TramiteDetalleComponent implements OnInit {
       Swal.fire('Actualizada', 'La intervención se ha marcado como facturada.', 'success');
     });
   }
+
+  asignarInstalador(event: any) {
+    const idInstalador = Number(event.target.value);
+    if (!idInstalador || !this.idTramite) return;
+
+    // Evitar duplicados localmente
+    const existe = this.detalle?.instaladores?.some(i => i.idTecnicoInstalador === idInstalador);
+    if (existe) {
+      Swal.fire('Aviso', 'Este instalador ya está asignado.', 'info');
+      event.target.value = '';
+      return;
+    }
+
+    this.tramiteService.asignarInstalador(this.idTramite, idInstalador).subscribe({
+      next: () => {
+        const ins = this.instaladores.find(i => i.idTecnicoInstalador === idInstalador);
+        if (ins && this.detalle) {
+          if (!this.detalle.instaladores) this.detalle.instaladores = [];
+          this.detalle.instaladores.push({
+            idTecnicoInstalador: ins.idTecnicoInstalador!,
+            nombre: ins.nombre,
+            telefono: ins.telefono
+          });
+        }
+        event.target.value = '';
+        Swal.fire({ title: 'Asignado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+      },
+      error: (e) => {
+        Swal.fire('Error', 'No se pudo asignar.', 'error');
+      }
+    });
+  }
+
+  quitarInstalador(idInstalador: number) {
+    if (!this.idTramite) return;
+
+    Swal.fire({
+      title: '¿Quitar instalador?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, quitar',
+      confirmButtonColor: '#1e293b',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.tramiteService.desvincularInstalador(this.idTramite!, idInstalador).subscribe({
+          next: () => {
+            if (this.detalle?.instaladores) {
+              this.detalle.instaladores = this.detalle.instaladores.filter(i => i.idTecnicoInstalador !== idInstalador);
+            }
+            Swal.fire({ title: 'Eliminado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+          }
+        });
+      }
+    });
+  }
 }

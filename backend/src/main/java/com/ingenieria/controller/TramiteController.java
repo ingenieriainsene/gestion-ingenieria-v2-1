@@ -135,4 +135,14 @@ public class TramiteController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/{id}/instaladores/{idInstalador}")
+    public ResponseEntity<Tramite> asignarInstalador(@PathVariable Long id, @PathVariable Long idInstalador) {
+        return ResponseEntity.ok(tramiteService.asignarInstalador(id, idInstalador));
+    }
+
+    @DeleteMapping("/{id}/instaladores/{idInstalador}")
+    public ResponseEntity<Tramite> desvincularInstalador(@PathVariable Long id, @PathVariable Long idInstalador) {
+        return ResponseEntity.ok(tramiteService.desvincularInstalador(id, idInstalador));
+    }
 }

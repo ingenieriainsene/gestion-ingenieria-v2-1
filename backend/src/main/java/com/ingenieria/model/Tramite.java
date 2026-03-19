@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,7 +18,7 @@ import lombok.AllArgsConstructor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "contrato")
+@ToString(exclude = { "contrato", "instaladores" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "TRAMITES_CONTRATO")
@@ -32,6 +34,14 @@ public class Tramite {
     @JoinColumn(name = "id_contrato", nullable = false)
     @JsonIgnore
     private Contrato contrato;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "tramite_instaladores",
+        joinColumns = @JoinColumn(name = "id_tramite"),
+        inverseJoinColumns = @JoinColumn(name = "id_tecnico_instalador")
+    )
+    private Set<TecnicoInstalador> instaladores = new HashSet<>();
 
     @Column(name = "tipo_tramite", nullable = false, length = 255)
     private String tipoTramite;

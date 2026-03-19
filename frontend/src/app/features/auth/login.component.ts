@@ -19,11 +19,10 @@ export class LoginComponent implements OnInit {
   showPassword = signal(false);
   isLoading = signal(false);
   loginStatus = signal<'idle' | 'error' | 'success'>('idle');
-  serverStatus = signal<'checking' | 'online' | 'offline'>('checking');
 
   loginForm = this.fb.group({
     username: ['', [Validators.required]],
-    password: ['', [Validators.required, Validators.minLength(4)]] // Reducido a 4 para coincidir con admin123 si es necesario, aunque admin123 tiene 8
+    password: ['', [Validators.required, Validators.minLength(4)]]
   });
 
   ngOnInit() {
@@ -31,15 +30,10 @@ export class LoginComponent implements OnInit {
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/']);
     }
-    this.checkServer();
-  }
-
-  checkServer() {
-    this.serverStatus.set('checking');
-    // Usamos el nuevo endpoint público de ping
+    // "Silent wake-up" para despertar el servidor de Render al cargar la página
     this.authService.ping().subscribe({
-      next: () => this.serverStatus.set('online'),
-      error: () => this.serverStatus.set('offline')
+      next: () => console.log('[Auth] Server is awake'),
+      error: () => console.warn('[Auth] Server cold start or unreachable')
     });
   }
 

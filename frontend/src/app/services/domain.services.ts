@@ -261,6 +261,7 @@ export interface TramiteDetalleResponse {
     fechaInicio?: string;
     fechaVencimiento?: string;
     facturado?: boolean;
+    instaladores?: { idTecnicoInstalador: number; nombre: string; telefono?: string }[];
 }
 
 export interface Proveedor {
@@ -532,6 +533,14 @@ export class TramiteService {
                 idContrato: t.idContrato ?? t.contrato?.idContrato
             })))
         );
+    }
+
+    asignarInstalador(idTramite: number, idInstalador: number): Observable<any> {
+        return this.api.post(`${this.endpoint}/${idTramite}/instaladores/${idInstalador}`, {});
+    }
+
+    desvincularInstalador(idTramite: number, idInstalador: number): Observable<any> {
+        return this.api.delete(`${this.endpoint}/${idTramite}/instaladores/${idInstalador}`);
     }
 }
 

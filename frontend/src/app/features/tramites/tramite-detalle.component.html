@@ -95,7 +95,43 @@
       </div>
     </div>
     <div class="summary-right-column">
-      <!-- Espacio reservado para futuras funcionalidades -->
+      <!-- Equipo de Instalación -->
+      <div class="contract-summary-card">
+        <div class="card-header-compact">
+          <h3 class="title-small">👷 EQUIPO DE INSTALACIÓN</h3>
+        </div>
+        
+        <div class="installers-list-container mt-3">
+          <div *ngIf="detalle.instaladores && detalle.instaladores.length > 0; else noInstallers" class="assigned-installers">
+            <div *ngFor="let ins of detalle.instaladores" class="installer-pill-item">
+              <div class="ins-info">
+                <span class="ins-name">{{ ins.nombre }}</span>
+                <small class="ins-phone" *ngIf="ins.telefono">{{ ins.telefono }}</small>
+              </div>
+              <button class="btn-remove-ins" (click)="quitarInstalador(ins.idTecnicoInstalador)" title="Quitar">✕</button>
+            </div>
+          </div>
+          <ng-template #noInstallers>
+            <div class="empty-installers-msg">
+              <span class="icon">ℹ️</span> Sin instaladores asignados
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="add-installer-box mt-4">
+          <label class="form-label-small">Añadir Instalador</label>
+          <div class="input-wrapper small-input">
+            <span class="input-icon">➕</span>
+            <select class="form-control" (change)="asignarInstalador($event)">
+              <option value="">-- Seleccionar --</option>
+              <option *ngFor="let i of instaladores" [value]="i.idTecnicoInstalador">
+                {{ i.nombre }}
+              </option>
+            </select>
+          </div>
+          <p class="help-text-micro">Selecciona un instalador de la lista para asociarlo a esta intervención.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -818,7 +854,7 @@
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input type="text" class="search-input" placeholder="Buscar por nombre, CIF o razón social..."
-            [(ngModel)]="proveedorQuery" (ngModelChange)="filtrarProveedores()" autofocus />
+            [(ngModel)]="proveedorQuery" (ngModelChange)="filtrarProveedores()" [ngModelOptions]="{standalone: true}" autofocus />
         </div>
         <div class="provider-list">
           <div class="provider-item" *ngFor="let p of proveedoresFiltrados" (click)="seleccionarProveedor(p)">

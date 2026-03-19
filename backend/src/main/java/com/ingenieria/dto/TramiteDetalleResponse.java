@@ -1,9 +1,11 @@
 package com.ingenieria.dto;
 
+import com.ingenieria.model.TecnicoInstalador;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -53,4 +55,6 @@ public class TramiteDetalleResponse {
 
     // Indicador de si la intervención está facturada
     private Boolean facturado;
+
+    private List<TecnicoInstalador> instaladores;
 }
