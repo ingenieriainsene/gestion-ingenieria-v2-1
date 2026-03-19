@@ -81,6 +81,26 @@
         <p class="text-slate-500 text-sm font-medium">Ingresa tus credenciales para acceder.</p>
       </div>
 
+      <!-- Mensaje de Estado del Servidor -->
+      <div class="mb-6 flex items-center justify-center">
+        @if (serverStatus() === 'checking') {
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 animate-pulse">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            Verificando conexión...
+          </div>
+        } @else if (serverStatus() === 'online') {
+          <div class="flex items-center gap-2 text-xs font-semibold text-green-600">
+            <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
+            Servidor Online
+          </div>
+        } @else {
+          <div class="flex items-center gap-2 text-xs font-semibold text-red-600 cursor-pointer" (click)="checkServer()">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            Servidor Offline (Click para reintentar)
+          </div>
+        }
+      </div>
+
       <!-- Mensajes de Estado -->
       @if (loginStatus() === 'error') {
         <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3 animate-fade-in">
@@ -88,8 +108,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div>
-            <h3 class="text-sm font-bold text-red-800">Acceso denegado</h3>
-            <p class="text-xs text-red-600 mt-1">El usuario o la contraseña son incorrectos.</p>
+            <h3 class="text-sm font-bold text-red-800">Error de Autenticación</h3>
+            <p class="text-xs text-red-600 mt-1">
+              No se pudo conectar o las credenciales fallaron. 
+              <br><b>Nota:</b> El primer intento puede tardar hasta 60s si el servidor estaba dormido.
+            </p>
           </div>
         </div>
       }

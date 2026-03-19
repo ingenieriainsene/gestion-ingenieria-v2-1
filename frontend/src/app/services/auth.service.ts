@@ -32,6 +32,10 @@ export class AuthService {
         );
     }
 
+    ping(): Observable<any> {
+        return this.api.get('public/ping');
+    }
+
     private heartbeatInterval: any;
     private startHeartbeat() {
         if (this.heartbeatInterval) return;

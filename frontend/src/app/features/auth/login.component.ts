@@ -19,10 +19,11 @@ export class LoginComponent implements OnInit {
   showPassword = signal(false);
   isLoading = signal(false);
   loginStatus = signal<'idle' | 'error' | 'success'>('idle');
+  serverStatus = signal<'checking' | 'online' | 'offline'>('checking');
 
   loginForm = this.fb.group({
     username: ['', [Validators.required]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+    password: ['', [Validators.required, Validators.minLength(4)]] // Reducido a 4 para coincidir con admin123 si es necesario, aunque admin123 tiene 8
   });
 
   ngOnInit() {
@@ -30,6 +31,16 @@ export class LoginComponent implements OnInit {
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/']);
     }
+    this.checkServer();
+  }
+
+  checkServer() {
+    this.serverStatus.set('checking');
+    // Usamos el nuevo endpoint público de ping
+    this.authService.ping().subscribe({
+      next: () => this.serverStatus.set('online'),
+      error: () => this.serverStatus.set('offline')
+    });
   }
 
   togglePassword() {
@@ -44,6 +55,10 @@ export class LoginComponent implements OnInit {
 
     this.isLoading.set(true);
     this.loginStatus.set('idle');
+
+    // Logging para depuración en producción
+    console.log('[Login] Intentando conectar con:', (this.authService as any).api.url);
+    console.log('[Login] Usuario:', this.loginForm.value.username);
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {

@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health/**").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
                         .anyRequest().permitAll())
                 // AuthTokenFilter dentro de la cadena de seguridad
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
@@ -76,6 +77,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of(
                 "https://*.up.railway.app",
                 "https://*.vercel.app",
+                "https://gestion-ingenieria-v2.vercel.app",
                 "http://localhost:4200",
                 "http://127.0.0.1:4200"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
