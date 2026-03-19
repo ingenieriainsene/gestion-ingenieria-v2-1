@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -53,6 +54,21 @@ public class LegalizacionBTService {
     @Transactional
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    @Transactional
+    public LegalizacionBT patchEstado(Long id, String nuevoEstado) {
+        LegalizacionBT leg = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Legalización no encontrada"));
+
+        leg.setEstado(nuevoEstado);
+        if ("Completado".equalsIgnoreCase(nuevoEstado)) {
+            leg.setFechaLegalizacion(LocalDate.now());
+        } else {
+            leg.setFechaLegalizacion(null);
+        }
+
+        return repository.save(leg);
     }
 
     public byte[] generarCiePdf(Long id) {

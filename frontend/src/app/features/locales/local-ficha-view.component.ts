@@ -232,8 +232,8 @@ export class LocalFichaViewComponent implements OnInit {
 
     const payloadCie: CieRequest = { ...this.cie };
     const nuevaLeg: LegalizacionBT = {
-      fechaLegalizacion: new Date().toISOString().split('T')[0],
-      datosJson: JSON.stringify(payloadCie)
+      datosJson: JSON.stringify(payloadCie),
+      estado: 'Pendiente'
     };
 
     this.legalizacionBTService.create(this.idLocal, nuevaLeg).subscribe({
@@ -252,7 +252,8 @@ export class LocalFichaViewComponent implements OnInit {
     event.stopPropagation();
     this.legalizacionBTService.getCertificadoPdf(idLeg).subscribe({
       next: (blob: Blob) => {
-        this.downloadBlob(blob, `Certificado-1699-${idLeg}.pdf`);
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
       },
       error: () => Swal.fire('Error', 'No se pudo generar el Certificado.', 'error')
     });
@@ -262,7 +263,8 @@ export class LocalFichaViewComponent implements OnInit {
     event.stopPropagation();
     this.legalizacionBTService.getCiePdf(idLeg).subscribe({
       next: (blob: Blob) => {
-        this.downloadBlob(blob, `CIE-legalizacion-${idLeg}.pdf`);
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
       },
       error: () => Swal.fire('Error', 'No se pudo generar el CIE.', 'error')
     });
@@ -304,7 +306,8 @@ export class LocalFichaViewComponent implements OnInit {
         const { tipoAutoconsumo, caracteristicas } = result.value;
         this.legalizacionBTService.getMtdPdf(idLeg, tipoAutoconsumo, caracteristicas).subscribe({
           next: (blob: Blob) => {
-            this.downloadBlob(blob, `MTD-legalizacion-${idLeg}.pdf`);
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
           },
           error: () => Swal.fire('Error', 'No se pudo generar la MTD.', 'error')
         });
@@ -327,11 +330,21 @@ export class LocalFichaViewComponent implements OnInit {
     if (!leg.datosJson) return;
     try {
       this.cie = JSON.parse(leg.datosJson);
-      this.mostrarHistorial = false;
       this.mostrarFormularioCie = true;
+      this.mostrarHistorial = false;
     } catch (e) {
-      console.error('Error al parsear datos de legalización', e);
+      console.error('Error parseando datos de legalización', e);
     }
+  }
+
+  cambiarEstadoLegalizacion(leg: LegalizacionBT, nuevoEstado: string): void {
+    if (!leg.idLegalizacion) return;
+    this.legalizacionBTService.patchEstado(leg.idLegalizacion, nuevoEstado).subscribe({
+      next: () => {
+        this.loadLegalizaciones();
+      },
+      error: () => Swal.fire('Error', 'No se pudo actualizar el estado.', 'error')
+    });
   }
 
   eliminarLegalizacion(id: number, event: Event): void {

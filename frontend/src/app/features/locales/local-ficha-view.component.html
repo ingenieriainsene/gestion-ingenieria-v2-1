@@ -121,8 +121,21 @@
             <tr *ngFor="let leg of legalizacionesHistory" (click)="verLegalizacion(leg)" class="history-row">
               <td>#{{ leg.idLegalizacion }}</td>
               <td>{{ leg.fechaAlta | date:'dd/MM/yyyy HH:mm' }}</td>
-              <td>{{ leg.fechaLegalizacion | date:'dd/MM/yyyy' }}</td>
-              <td><span class="badge badge-ok">Completado</span></td>
+              <td>{{ (leg.fechaLegalizacion | date:'dd/MM/yyyy') || '—' }}</td>
+              <td (click)="$event.stopPropagation()">
+                <select 
+                  class="status-select"
+                  [ngModel]="leg.estado || 'Pendiente'"
+                  (change)="cambiarEstadoLegalizacion(leg, $any($event.target).value)"
+                  [ngClass]="{
+                    'status-pending': (leg.estado || 'Pendiente') === 'Pendiente',
+                    'status-completed': leg.estado === 'Completado'
+                  }"
+                >
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Completado">Completado</option>
+                </select>
+              </td>
               <td class="td-actions">
                 <button class="btn-icon-download" (click)="descargarCieManual(leg.idLegalizacion!, $event)" title="Descargar CIE">📄 CIE</button>
                 <button class="btn-icon-download btn-mtd" (click)="descargarMtdManual(leg, $event)" title="Descargar MTD">📑 MTD</button>

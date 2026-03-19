@@ -1539,6 +1539,7 @@ CREATE TABLE IF NOT EXISTS legalizaciones_bt (
     fecha_alta TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     fecha_legalizacion DATE,
     datos_json TEXT, -- Almacena el estado completo del formulario CIE para recuperación
+    estado VARCHAR(50) DEFAULT 'Pendiente',
     CONSTRAINT fk_leg_local FOREIGN KEY (id_local) REFERENCES locales(id_local) ON DELETE CASCADE
 );
 
@@ -1663,3 +1664,4 @@ CREATE TABLE IF NOT EXISTS tramite_instaladores (
 CREATE INDEX IF NOT EXISTS idx_tramite_instaladores_tramite ON tramite_instaladores(id_tramite);
 CREATE INDEX IF NOT EXISTS idx_tramite_instaladores_instalador ON tramite_instaladores(id_tecnico_instalador);
 
+ALTER TABLE legalizaciones_bt ADD COLUMN IF NOT EXISTS estado VARCHAR(50) DEFAULT 'Pendiente';

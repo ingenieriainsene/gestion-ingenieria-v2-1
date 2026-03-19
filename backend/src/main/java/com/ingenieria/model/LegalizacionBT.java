@@ -36,10 +36,16 @@ public class LegalizacionBT {
     @Column(name = "datos_json", columnDefinition = "TEXT")
     private String datosJson;
 
+    @Column(name = "estado")
+    private String estado;
+
     @PrePersist
     protected void onCreate() {
         if (this.fechaAlta == null) {
             this.fechaAlta = LocalDateTime.now();
+        }
+        if (this.estado == null) {
+            this.estado = "Pendiente";
         }
     }
 }

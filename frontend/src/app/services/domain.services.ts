@@ -67,6 +67,7 @@ export interface LegalizacionBT {
     fechaAlta?: string;
     fechaLegalizacion?: string;
     datosJson?: string;
+    estado?: string;
 }
 
 export interface LegalizacionRequest {
@@ -620,6 +621,10 @@ export class LegalizacionBTService {
 
     getCertificadoPdf(id: number): Observable<Blob> {
         return this.api.getBlob(`${this.endpoint}/${id}/pdf/certificado`) as any;
+    }
+
+    patchEstado(id: number, estado: string): Observable<LegalizacionBT> {
+        return this.api.patch<LegalizacionBT>(`${this.endpoint}/${id}/estado`, estado);
     }
 }
 

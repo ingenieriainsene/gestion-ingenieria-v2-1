@@ -39,6 +39,13 @@ public class LegalizacionBTController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<LegalizacionBT> patchEstado(@PathVariable Long id, @RequestBody String nuevoEstado) {
+        // El body puede venir con comillas si es un String puro desde un cliente HTTP
+        String estadoLimpio = nuevoEstado.replace("\"", "");
+        return ResponseEntity.ok(service.patchEstado(id, estadoLimpio));
+    }
+
     @GetMapping("/{id}/pdf/cie")
     public ResponseEntity<byte[]> downloadCie(@PathVariable Long id) {
         byte[] pdf = service.generarCiePdf(id);
