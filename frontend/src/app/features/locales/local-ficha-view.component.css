@@ -456,26 +456,9 @@
   font-size: 0.9rem;
 }
 
-/* Areas Container Animation */
-.areas-container {
-  margin: 0 24px 20px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-  animation: slideDown 0.3s ease-out;
-  max-height: 420px;
-  overflow-y: auto;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Areas Funcionales Tab Content adjustments */
+.areas-tab-content {
+  animation: tabFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .badge-ver,
@@ -563,4 +546,300 @@
 
 .status-select:hover {
   filter: brightness(0.95);
+}
+/* Tabs Navigation - Ultra Premium Segmented Control */
+.tabs-header {
+  display: flex;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 5px;
+  border-radius: 16px;
+  margin: 30px 24px 24px;
+  border: 1px solid #e2e8f0;
+  width: fit-content;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(8px);
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 12px 28px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-btn:hover {
+  color: #334155;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.tab-btn.active {
+  color: #2563eb !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(-1px);
+  border: 1px solid rgba(37, 99, 235, 0.1);
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  background: #2563eb;
+  border-radius: 10px 10px 0 0;
+  opacity: 0.8;
+}
+
+/* Tab animations and sections */
+.fade-in {
+  animation: tabFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --- GESTIÃ“N DE ARCHIVOS PREMIUM --- */
+.upload-zone-premium {
+  background: white;
+  border: 2px dashed #e2e8f0;
+  border-radius: 20px;
+  padding: 2.5rem;
+  transition: all 0.3s;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.upload-zone-premium.dragging {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: scale(1.01);
+}
+
+.upload-zone-premium:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.upload-form-premium {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hidden-file-premium {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.btn-select-premium {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.8rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-select-premium:hover {
+  background: #e2e8f0;
+}
+
+.btn-upload-premium {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s;
+}
+
+.btn-upload-premium:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-upload-premium:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.file-count-premium {
+  font-size: 0.85rem;
+  color: #10b981;
+  font-weight: 700;
+}
+
+.drag-hint {
+  margin-top: 1rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+/* Files Grid Premium */
+.files-grid-premium-revamped {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.file-card-premium-revamped {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.file-card-premium-revamped:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
+  border-color: #3b82f6;
+}
+
+.file-icon-bg-premium {
+  width: 56px;
+  height: 56px;
+  background: #eff6ff;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.file-card-premium-revamped:hover .file-icon-bg-premium {
+  background: #3b82f6;
+  color: white;
+}
+
+.file-icon-large-premium {
+  font-size: 1.5rem;
+}
+
+.file-info-premium-revamped {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name-premium {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.file-meta-premium {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.file-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.btn-file-action {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-file-action:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-file-action.delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+.empty-files-premium {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #f8fafc;
+  border-radius: 20px;
+  border: 1px dashed #e2e8f0;
+  color: #94a3b8;
+}
+
+.empty-icon-sub {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+
+.header-with-subtitle h2 {
+  margin-bottom: 4px;
+}
+
+.section-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+  font-weight: 500;
 }

@@ -101,6 +101,22 @@ public class TramiteService {
     }
 
     @Transactional(readOnly = true)
+    public List<TramiteContratoResponse> findAllByLocalId(Long idLocal) {
+        return tramiteRepository.findByContrato_Local_IdLocalOrderByFechaCreacionDesc(idLocal).stream()
+                .map(t -> new TramiteContratoResponse(
+                        t.getIdTramite(),
+                        t.getContrato() != null ? t.getContrato().getIdContrato() : null,
+                        t.getTipoTramite(),
+                        t.getEstado(),
+                        t.getDetalleSeguimiento(),
+                        t.getFechaCreacion(),
+                        t.getFechaSeguimiento(),
+                        t.getFechaEjecucion(),
+                        t.getTecnicoAsignado()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<Tramite> findVentasPendientes() {
         return tramiteRepository.findByEstadoOrderByFechaCreacionDesc("Pendiente");
     }

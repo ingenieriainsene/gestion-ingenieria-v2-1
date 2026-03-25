@@ -80,15 +80,6 @@
         </div>
       </div>
     </div>
-
-    <div class="info-card action-card" (click)="toggleAreasFuncionales()">
-      <h3>Gestión Técnica</h3>
-      <div class="action-card-content">
-        <span class="action-icon">{{ areasFuncionalesVisible ? '📂' : '📁' }}</span>
-        <span class="action-text">Áreas Funcionales</span>
-        <span class="toggle-arrow">{{ areasFuncionalesVisible ? '▲' : '▼' }}</span>
-      </div>
-    </div>
   </div>
 
   <!-- Nuevo Panel Consolidado de Legalización BT -->
@@ -174,48 +165,173 @@
     </div>
   </div>
 
-  <div *ngIf="areasFuncionalesVisible && idLocal" class="areas-container">
-    <app-area-funcional-editor [idLocal]="idLocal"></app-area-funcional-editor>
+
+  <div class="tabs-header">
+    <button class="tab-btn" [class.active]="activeTab === 'contratos'" (click)="setTab('contratos')">
+      📋 CONTRATOS
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'intervenciones'" (click)="setTab('intervenciones')">
+      🛠️ INTERVENCIONES
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'areas'" (click)="setTab('areas')">
+      🌍 ÁREAS FUNCIONALES
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'archivos'" (click)="setTab('archivos')">
+      📂 ARCHIVOS
+    </button>
   </div>
 
-  <section class="ficha-section">
-    <div class="section-header">
-      <h2>📋 Historial de Contratos</h2>
-    </div>
-    <div class="table-wrap">
-      <table class="ficha-table table-card">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>TIPO CONTRATO</th>
-            <th>DIRECCIÓN</th>
-            <th>TITULAR</th>
-            <th>VENCIMIENTO</th>
-            <th>ESTADO</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="let c of contratos"
-            class="row-card"
-            (click)="irAContrato(c)"
-            style="cursor:pointer;"
-          >
-            <td data-label="ID"><strong>#{{ c.idContrato }}</strong></td>
-            <td data-label="Tipo">{{ c.tipoContrato || '—' }}</td>
-            <td data-label="Dirección">{{ direccionLocalContrato(c) }}</td>
-            <td data-label="Titular">{{ titularContrato(c) }}</td>
-            <td data-label="Vencimiento">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
-            <td data-label="Estado"><span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">{{ vigente(c) ?
-                'Vigente' : 'Vencido' }}</span></td>
-          </tr>
-          <tr *ngIf="contratos.length === 0">
-            <td colspan="7" class="empty-cell">No hay contratos registrados.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <div *ngIf="activeTab === 'contratos'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <h2>📋 Historial de Contratos</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="ficha-table table-card">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>TIPO CONTRATO</th>
+              <th>DIRECCIÓN</th>
+              <th>TITULAR</th>
+              <th>VENCIMIENTO</th>
+              <th>ESTADO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let c of contratos"
+              class="row-card"
+              (click)="irAContrato(c)"
+              style="cursor:pointer;"
+            >
+              <td data-label="ID"><strong>#{{ c.idContrato }}</strong></td>
+              <td data-label="Tipo">{{ c.tipoContrato || '—' }}</td>
+              <td data-label="Dirección">{{ direccionLocalContrato(c) }}</td>
+              <td data-label="Titular">{{ titularContrato(c) }}</td>
+              <td data-label="Vencimiento">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Estado"><span class="badge" [class.badge-ok]="vigente(c)" [class.badge-pend]="!vigente(c)">{{ vigente(c) ?
+                  'Vigente' : 'Vencido' }}</span></td>
+            </tr>
+            <tr *ngIf="contratos.length === 0">
+              <td colspan="7" class="empty-cell">No hay contratos registrados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div *ngIf="activeTab === 'intervenciones'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <h2>🛠️ Historial de Intervenciones</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="ficha-table table-card">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>TIPO TRÁMITE</th>
+              <th>FECHA SEGUIMIENTO</th>
+              <th>TÉCNICO</th>
+              <th>ESTADO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of intervenciones" class="row-card" (click)="irATramite(t)" style="cursor:pointer;">
+              <td data-label="ID"><strong>#{{ t.idTramite }}</strong></td>
+              <td data-label="Tipo">{{ t.tipoTramite }}</td>
+              <td data-label="Fecha">{{ t.fechaSeguimiento | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Técnico">{{ t.tecnicoAsignado || '—' }}</td>
+              <td data-label="Estado">
+                <span class="badge" 
+                  [class.badge-ok]="t.estado === 'Terminado' || t.estado === 'Completado'" 
+                  [class.badge-pend]="t.estado === 'Pendiente' || t.estado === 'Anulado'"
+                  [style.background-color]="t.estado === 'En proceso' ? '#fef3c7' : ''"
+                  [style.color]="t.estado === 'En proceso' ? '#92400e' : ''"
+                >
+                  {{ t.estado }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="intervenciones.length === 0">
+              <td colspan="5" class="empty-cell">No hay intervenciones registradas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div *ngIf="activeTab === 'areas'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <h2>🌍 Áreas Funcionales del Local</h2>
+        <button type="button" class="btn-primary" (click)="nuevaArea()">
+          + Nueva Área
+        </button>
+      </div>
+      <div class="areas-tab-content" style="padding: 10px 0;">
+        <app-area-funcional-editor *ngIf="idLocal" [idLocal]="idLocal"></app-area-funcional-editor>
+      </div>
+    </section>
+  </div>
+
+  <div *ngIf="activeTab === 'archivos'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <div class="header-with-subtitle">
+          <h2>📂 Documentación del Local</h2>
+          <p class="section-subtitle">Gestión centralizada de archivos y documentos técnicos</p>
+        </div>
+      </div>
+
+      <div class="upload-zone-premium" 
+           [class.dragging]="isDragging"
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)">
+        <div class="upload-form-premium">
+          <div class="file-input-wrapper-premium">
+            <input type="file" (change)="onFileChange($event)" multiple id="fileInputLocal" class="hidden-file-premium" />
+            <label for="fileInputLocal" class="btn-select-premium">📁 Seleccionar Archivos</label>
+            <span class="file-count-premium" *ngIf="filesToUpload.length">{{ filesToUpload.length }} seleccionados</span>
+          </div>
+          <button type="button" class="btn-upload-premium" [disabled]="!filesToUpload.length" (click)="subirArchivos()">
+            ⬆️ Subir documentos
+          </button>
+        </div>
+        <p class="drag-hint">o arrastra los archivos aquí para subirlos automáticamente.</p>
+      </div>
+
+      <div class="files-grid-premium-revamped mt-4">
+        <div *ngFor="let f of archivos" class="file-card-premium-revamped">
+          <div class="file-icon-bg-premium" (click)="verArchivo(f)" style="cursor: pointer;">
+            <span class="file-icon-large-premium">{{ getIconoArchivo(f) }}</span>
+          </div>
+          <div class="file-info-premium-revamped">
+            <span class="file-name-premium" title="{{ f.nombreOriginal }}">{{ f.nombreOriginal }}</span>
+            <div class="file-meta-premium">
+              <span class="file-date-premium">{{ f.fechaCreacion | date:'dd/MM/yyyy' }}</span>
+              <span class="separator">•</span>
+              <span class="file-size-premium">{{ formatSize(f.tamanoBytes) }}</span>
+            </div>
+            <div class="file-card-actions">
+              <button class="btn-file-action" (click)="descargarArchivo(f)" title="Descargar">📥</button>
+              <button class="btn-file-action delete" (click)="eliminarArchivo(f)" title="Eliminar">🗑️</button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="archivos.length === 0" class="empty-files-premium">
+          <div class="empty-icon-sub">📂</div>
+          <p>No hay documentos asociados a este local.</p>
+          <small>Sube planos, boletines o contratos relacionados.</small>
+        </div>
+      </div>
+    </section>
+  </div>
 
 </div>
 

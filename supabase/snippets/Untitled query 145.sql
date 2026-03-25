@@ -1654,6 +1654,7 @@ INSERT INTO tecnicos_instaladores (nombre, telefono, activo) VALUES
 ('Luis Rodríguez', '600555666', FALSE)
 ON CONFLICT (nombre) DO NOTHING;
 
+
 -- 6.7 NUEVA TABLA PARA ASOCIAR INSTALADORES A TRAMITES (Intervenciones)
 CREATE TABLE IF NOT EXISTS tramite_instaladores (
     id_tramite BIGINT NOT NULL,
@@ -1666,8 +1667,6 @@ CREATE TABLE IF NOT EXISTS tramite_instaladores (
 CREATE INDEX IF NOT EXISTS idx_tramite_instaladores_tramite ON tramite_instaladores(id_tramite);
 CREATE INDEX IF NOT EXISTS idx_tramite_instaladores_instalador ON tramite_instaladores(id_tecnico_instalador);
 
-ALTER TABLE legalizaciones_bt ADD COLUMN IF NOT EXISTS estado VARCHAR(50) DEFAULT 'Pendiente';
-ALTER TABLE legalizaciones_bt ADD COLUMN IF NOT EXISTS id_tramite BIGINT;
 
 -- ==========================================================
 -- MODULO RRHH
@@ -1748,3 +1747,10 @@ CREATE TABLE IF NOT EXISTS fichajes (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT unique_fichaje_dia UNIQUE (empleado_id, fecha)
 );
+
+-- ==========================================================
+-- DATOS DE PRUEBA RRHH
+-- ==========================================================
+INSERT INTO empleados (id, nombre_completo, dni_nie, fecha_alta, puesto, estado)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Administrador Jefe', '00000000T', CURRENT_DATE, 'Administrador', 'ACTIVO')
+ON CONFLICT (dni_nie) DO NOTHING;

@@ -34,6 +34,11 @@ public class TramiteController {
         return tramiteService.findByContratoId(id);
     }
 
+    @GetMapping("/local/{id}")
+    public List<com.ingenieria.dto.TramiteContratoResponse> getByLocal(@PathVariable Long id) {
+        return tramiteService.findAllByLocalId(id);
+    }
+
     @GetMapping("/ventas-pendientes")
     public List<TramiteVentaResponse> getVentasPendientes() {
         return tramiteService.findVentasPendientesResponse();

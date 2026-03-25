@@ -8,7 +8,6 @@
   <div class="header-section">
     <h1>EXPEDIENTE TÉCNICO 👤</h1>
     <div class="ficha-actions">
-      <span class="link-archivos link-disabled" title="Próximamente">📂 Archivos Cliente</span>
       <a [routerLink]="['/clientes', idCliente, 'editar']" class="link-editar">✏️ Editar</a>
       <a routerLink="/clientes" class="link-volver">Volver</a>
     </div>
@@ -67,6 +66,9 @@
     </button>
     <button class="tab-btn" [class.active]="activeTab === 'presupuestos'" (click)="setTab('presupuestos')">
       💰 Presupuestos
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'archivos'" (click)="setTab('archivos')">
+      📂 Archivos
     </button>
   </div>
 
@@ -201,6 +203,61 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+  </div>
+
+  <div *ngIf="activeTab === 'archivos'" class="fade-in">
+    <section class="ficha-section">
+      <div class="section-header">
+        <div class="header-with-subtitle">
+          <h2>📂 Documentación del Cliente</h2>
+          <p class="section-subtitle">Expediente digital, documentos de identidad y contratos</p>
+        </div>
+      </div>
+
+      <div class="upload-zone-premium" 
+           [class.dragging]="isDragging"
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)">
+        <div class="upload-form-premium">
+          <div class="file-input-wrapper-premium">
+            <input type="file" (change)="onFileChange($event)" multiple id="fileInputCliente" class="hidden-file-premium" />
+            <label for="fileInputCliente" class="btn-select-premium">📁 Seleccionar Archivos</label>
+            <span class="file-count-premium" *ngIf="filesToUpload.length">{{ filesToUpload.length }} seleccionados</span>
+          </div>
+          <button type="button" class="btn-upload-premium" [disabled]="!filesToUpload.length" (click)="subirArchivos()">
+            ⬆️ Subir documentos
+          </button>
+        </div>
+        <p class="drag-hint">o arrastra los archivos aquí para subirlos automáticamente.</p>
+      </div>
+
+      <div class="files-grid-premium-revamped mt-4">
+        <div *ngFor="let f of archivos" class="file-card-premium-revamped">
+          <div class="file-icon-bg-premium" (click)="verArchivo(f)" style="cursor: pointer;">
+            <span class="file-icon-large-premium">{{ getIconoArchivo(f) }}</span>
+          </div>
+          <div class="file-info-premium-revamped">
+            <span class="file-name-premium" title="{{ f.nombreOriginal }}">{{ f.nombreOriginal }}</span>
+            <div class="file-meta-premium">
+              <span class="file-date-premium">{{ f.fechaCreacion | date:'dd/MM/yyyy' }}</span>
+              <span class="separator">•</span>
+              <span class="file-size-premium">{{ formatSize(f.tamanoBytes) }}</span>
+            </div>
+            <div class="file-card-actions">
+              <button class="btn-file-action" (click)="descargarArchivo(f)" title="Descargar">📥</button>
+              <button class="btn-file-action delete" (click)="eliminarArchivo(f)" title="Eliminar">🗑️</button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="archivos.length === 0" class="empty-files-premium">
+          <div class="empty-icon-sub">📂</div>
+          <p>No hay documentos asociados a este cliente.</p>
+          <small>Sube DNI, contratos firmados o fichas de cliente.</small>
+        </div>
       </div>
     </section>
   </div>

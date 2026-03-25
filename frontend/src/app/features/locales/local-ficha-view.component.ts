@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LocalService, ContratoService, LegalizacionRequest, CieRequest, LegalizacionBT, LegalizacionBTService } from '../../services/domain.services';
+import { LocalService, ContratoService, TramiteService, LegalizacionRequest, CieRequest, LegalizacionBT, LegalizacionBTService } from '../../services/domain.services';
 import { AuditStampComponent } from '../../layout/audit-stamp.component';
-import type { Local, Contrato, Cliente } from '../../services/domain.services';
+import type { Local, Contrato, Cliente, Tramite } from '../../services/domain.services';
 import Swal from 'sweetalert2';
 
 import { AreaFuncionalEditorComponent } from './area-funcional-editor.component';
+import { GestorDocumentalService, ArchivoAdjuntoDTO } from '../../services/gestor-documental.service';
 
 @Component({
   selector: 'app-local-ficha-view',
@@ -17,11 +18,20 @@ import { AreaFuncionalEditorComponent } from './area-funcional-editor.component'
   styleUrls: ['./local-ficha-view.component.css', './premium-form.css'],
 })
 export class LocalFichaViewComponent implements OnInit {
+  @ViewChild(AreaFuncionalEditorComponent) areasEditor?: AreaFuncionalEditorComponent;
+
   local: Local | null = null;
   contratos: Contrato[] = [];
+  intervenciones: Tramite[] = [];
   loading = true;
   idLocal: number | null = null;
-  areasFuncionalesVisible = false;
+  activeTab: 'contratos' | 'intervenciones' | 'areas' | 'archivos' = 'contratos';
+  
+  // Gestión de Archivos
+  archivos: ArchivoAdjuntoDTO[] = [];
+  filesToUpload: File[] = [];
+  nombreVisibleUpload = '';
+  isDragging = false;
 
   // Refactor Legalización BT
   legalizacionesHistory: LegalizacionBT[] = [];
@@ -36,7 +46,9 @@ export class LocalFichaViewComponent implements OnInit {
     private router: Router,
     private localService: LocalService,
     private contratoService: ContratoService,
-    private legalizacionBTService: LegalizacionBTService
+    private tramiteService: TramiteService,
+    private legalizacionBTService: LegalizacionBTService,
+    private gestorDocumentalService: GestorDocumentalService
   ) { }
 
   ngOnInit(): void {
@@ -73,6 +85,16 @@ export class LocalFichaViewComponent implements OnInit {
       error: () => { },
     });
     this.loadLegalizaciones();
+    this.loadIntervenciones();
+    this.cargarArchivos();
+  }
+
+  loadIntervenciones(): void {
+    if (!this.idLocal) return;
+    this.tramiteService.getByLocal(this.idLocal).subscribe({
+      next: (list: Tramite[]) => this.intervenciones = list,
+      error: () => { }
+    });
   }
 
   loadLegalizaciones(): void {
@@ -81,6 +103,131 @@ export class LocalFichaViewComponent implements OnInit {
       next: (list) => this.legalizacionesHistory = list,
       error: () => { }
     });
+  }
+
+  // --- Gestión de Archivos (Gestor Documental) ---
+  cargarArchivos(): void {
+    if (!this.idLocal) return;
+    this.gestorDocumentalService.listar('LOCAL', this.idLocal).subscribe({
+      next: (list) => this.archivos = list || [],
+      error: () => { }
+    });
+  }
+
+  onFileChange(event: any): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.filesToUpload = Array.from(input.files);
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging = false;
+    const files = event.dataTransfer?.files ? Array.from(event.dataTransfer.files) : [];
+    if (files.length) {
+      this.filesToUpload = files;
+    }
+  }
+
+  subirArchivos(): void {
+    if (!this.idLocal || !this.filesToUpload.length) return;
+    
+    this.loading = true;
+    const uploads = this.filesToUpload.map(f => 
+      this.gestorDocumentalService.subir('LOCAL', this.idLocal!, f)
+    );
+
+    Promise.all(uploads.map(u => u.toPromise()))
+      .then(() => {
+        Swal.fire('Subido', 'Archivos guardados correctamente.', 'success');
+        this.filesToUpload = [];
+        this.nombreVisibleUpload = '';
+        this.cargarArchivos();
+        this.loading = false;
+      })
+      .catch(() => {
+        this.loading = false;
+        Swal.fire('Error', 'No se pudieron subir los archivos.', 'error');
+      });
+  }
+
+  descargarArchivo(a: ArchivoAdjuntoDTO): void {
+    this.gestorDocumentalService.descargar(a.idArchivo, true).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = a.nombreOriginal || 'archivo';
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => Swal.fire('Error', 'No se pudo descargar el archivo.', 'error')
+    });
+  }
+
+  verArchivo(a: ArchivoAdjuntoDTO): void {
+    this.gestorDocumentalService.descargar(a.idArchivo, false).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+      },
+      error: () => Swal.fire('Error', 'No se pudo abrir el archivo.', 'error')
+    });
+  }
+
+  eliminarArchivo(a: ArchivoAdjuntoDTO): void {
+    Swal.fire({
+      title: '¿Eliminar archivo?',
+      text: a.nombreOriginal,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.gestorDocumentalService.eliminar(a.idArchivo).subscribe({
+          next: () => {
+            Swal.fire('Eliminado', 'Archivo borrado.', 'success');
+            this.cargarArchivos();
+          },
+          error: () => Swal.fire('Error', 'No se pudo eliminar.', 'error')
+        });
+      }
+    });
+  }
+
+  getIconoArchivo(f: ArchivoAdjuntoDTO): string {
+    const ext = f.nombreOriginal?.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return '📕';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return '🖼️';
+    if (['doc', 'docx'].includes(ext || '')) return '📘';
+    if (['xls', 'xlsx'].includes(ext || '')) return '📗';
+    if (ext === 'zip' || ext === 'rar') return '📦';
+    return '📄';
+  }
+
+  formatSize(bytes?: number | null): string {
+    if (!bytes) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let idx = 0;
+    while (size >= 1024 && idx < units.length - 1) {
+      size /= 1024;
+      idx++;
+    }
+    return `${size.toFixed(1)} ${units[idx]}`;
   }
 
   private getEmptyCie(): CieRequest {
@@ -197,13 +344,25 @@ export class LocalFichaViewComponent implements OnInit {
     return l?.cliente?.idCliente ?? l?.idCliente ?? null;
   }
 
-  toggleAreasFuncionales(): void {
-    this.areasFuncionalesVisible = !this.areasFuncionalesVisible;
-  }
+
 
   irAContrato(c: Contrato): void {
     if (!c.idContrato) return;
     this.router.navigate(['/contratos', c.idContrato]);
+  }
+
+  irATramite(t: Tramite): void {
+    if (!t.idTramite) return;
+    this.router.navigate(['/tramite-detalle', t.idTramite]);
+  }
+
+  nuevaArea(): void {
+    this.areasEditor?.addArea();
+  }
+
+  setTab(tab: 'contratos' | 'intervenciones' | 'areas' | 'archivos'): void {
+    this.activeTab = tab;
+    if (tab === 'archivos') this.cargarArchivos();
   }
 
   // Lógica Legalización BT

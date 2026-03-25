@@ -14,9 +14,6 @@ import Swal from 'sweetalert2';
       <div class="lines-section">
         <div class="lines-header">
           <h3>🏗️ Áreas Funcionales</h3>
-          <button type="button" class="btn-create-small" (click)="addArea()">
-            + Nueva Área
-          </button>
         </div>
 
         <div class="table-responsive">

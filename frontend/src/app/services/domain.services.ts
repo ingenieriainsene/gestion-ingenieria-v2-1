@@ -478,6 +478,14 @@ export class TramiteService {
             })))
         );
     }
+    getByLocal(idLocal: number): Observable<Tramite[]> {
+        return this.api.get<any[]>(`${this.endpoint}/local/${idLocal}`).pipe(
+            map((lista: any[]) => lista.map((t: any) => ({
+                ...t,
+                idContrato: t.idContrato ?? t.contrato?.idContrato
+            })))
+        );
+    }
     getById(id: number): Observable<Tramite> {
         return this.api.get<any>(`${this.endpoint}/${id}`).pipe(
             map((t: any) => ({
