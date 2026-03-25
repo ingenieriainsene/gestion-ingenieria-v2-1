@@ -62,7 +62,7 @@ public class Tramite {
     private Boolean facturado = false;
 
     @Column(name = "detalle_seguimiento", columnDefinition = "TEXT")
-    private String detalleSeguimiento;
+    private String descripcion;
 
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

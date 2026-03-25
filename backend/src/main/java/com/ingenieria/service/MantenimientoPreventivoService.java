@@ -443,7 +443,7 @@ public class MantenimientoPreventivoService {
                             ? ((TreeMap<LocalDate, List<ContratoMantenimientoTarea>>) agrupadas).firstKey()
                             : LocalDate.now();
                     t.setFechaSeguimiento(fecha);
-                    t.setDetalleSeguimiento(buildResumenTareas(agrupadas));
+                    t.setDescripcion(buildResumenTareas(agrupadas));
                     return tramiteRepo.save(t);
                 });
     }

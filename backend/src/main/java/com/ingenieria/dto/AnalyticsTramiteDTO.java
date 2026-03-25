@@ -40,5 +40,5 @@ public class AnalyticsTramiteDTO {
     /** Técnico asignado (campo legacy en TRAMITES_CONTRATO). */
     private String tecnicoAsignado;
 
-    private String detalleSeguimiento;
+    private String descripcion;
 }

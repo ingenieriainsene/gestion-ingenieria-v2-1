@@ -192,7 +192,7 @@ export interface Tramite {
     modificadoPor?: string;
     fechaModificacion?: string | Date;
     esUrgente?: boolean;
-    detalleSeguimiento?: string;
+    descripcion?: string;
     fechaEjecucion?: string | Date;
     facturado?: boolean;
 }
@@ -241,7 +241,7 @@ export interface TramiteDetalleResponse {
     idLocal?: number;
     tipoTramite: string;
     estado?: string;
-    detalleSeguimiento?: string;
+    descripcion?: string;
     fechaCreacion?: string;
     fechaSeguimiento?: string;
     fechaEjecucion?: string;
@@ -373,21 +373,21 @@ export class ContratoService {
      * Añadir a Ventas: crea intervención con estado Pendiente para el contrato.
      * El trámite aparece en Ventas Pendientes.
      */
-    anadirAVentas(idContrato: number, payload: { tipoTramite: string; detalleSeguimiento?: string }): Observable<Tramite> {
+    anadirAVentas(idContrato: number, payload: { tipoTramite: string; descripcion?: string }): Observable<Tramite> {
         return this.api.post<Tramite>(`${this.endpoint}/${idContrato}/anadir-a-ventas`, payload);
     }
 
     /**
      * POST /api/contratos/{id}/tramites – crea intervención Pendiente (replica gestionar_contrato.php).
      */
-    crearTramiteForContrato(idContrato: number, payload: { tipoTramite: string; detalleSeguimiento?: string }): Observable<Tramite> {
+    crearTramiteForContrato(idContrato: number, payload: { tipoTramite: string; descripcion?: string }): Observable<Tramite> {
         return this.api.post<Tramite>(`${this.endpoint}/${idContrato}/tramites`, payload);
     }
 
     /**
      * Alias para añadir intervención (Añadir a ventas). Delega en crearTramiteForContrato.
      */
-    addIntervencion(idContrato: number, datos: { tipoTramite: string; detalleSeguimiento?: string }): Observable<Tramite> {
+    addIntervencion(idContrato: number, datos: { tipoTramite: string; descripcion?: string }): Observable<Tramite> {
         return this.crearTramiteForContrato(idContrato, datos);
     }
 
@@ -426,7 +426,7 @@ export interface TramiteListResponse {
     tecnicoAsignado?: string;
     nombreCliente?: string;
     direccionLocal?: string;
-    detalleSeguimiento?: string;
+    descripcion?: string;
     facturado?: boolean;
 }
 
@@ -507,7 +507,7 @@ export class TramiteService {
             estado: data.estado,
             fechaSeguimiento: data.fechaSeguimiento,
             esUrgente: data.esUrgente,
-            detalleSeguimiento: data.detalleSeguimiento,
+            descripcion: data.descripcion,
             contrato: { idContrato: data.idContrato }
         };
         return this.api.post<Tramite>(this.endpoint, payload);

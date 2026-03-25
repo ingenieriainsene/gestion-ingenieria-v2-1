@@ -171,6 +171,7 @@
           <thead>
             <tr>
               <th>ID / REF</th>
+              <th>DESCRIPCIÓN</th>
               <th>FECHA</th>
               <th>ESTADO</th>
               <th>TIPO</th>
@@ -188,6 +189,7 @@
                 <strong>#{{ p.idPresupuesto }}</strong>
                 <div *ngIf="p.codigoReferencia" class="sub-text">{{ p.codigoReferencia }}</div>
               </td>
+              <td data-label="Descripción">{{ p.descripcion || '—' }}</td>
               <td data-label="Fecha">{{ p.fecha | date:'dd/MM/yyyy' }}</td>
               <td data-label="Estado">
                 <span class="badge" [class.badge-ok]="p.estado === 'Aceptado'"

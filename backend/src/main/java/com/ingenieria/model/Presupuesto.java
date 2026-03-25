@@ -66,6 +66,9 @@ public class Presupuesto {
     @Column(name = "tipo_presupuesto", length = 255)
     private String tipoPresupuesto;
 
+    @Column(columnDefinition = "TEXT")
+    private String descripcion;
+
     @Column(name = "fecha_aceptacion")
     private OffsetDateTime fechaAceptacion;
 

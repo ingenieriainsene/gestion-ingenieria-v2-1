@@ -149,7 +149,7 @@ public class AnalyticsService {
                 cl != null ? cl.getDni() : null,
                 l != null ? l.getDireccionCompleta() : null,
                 t.getTecnicoAsignado(),
-                t.getDetalleSeguimiento());
+                t.getDescripcion());
     }
 
     // ────────────────────────────────────────

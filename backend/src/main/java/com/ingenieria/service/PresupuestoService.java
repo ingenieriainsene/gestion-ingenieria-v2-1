@@ -96,6 +96,7 @@ public class PresupuestoService {
         p.setFecha(dto.getFecha() != null ? dto.getFecha() : LocalDate.now());
         p.setEstado(dto.getEstado() != null ? dto.getEstado() : "Borrador");
         p.setTipoPresupuesto(normalizeTipo(dto.getTipoPresupuesto()));
+        p.setDescripcion(dto.getDescripcion());
 
         if ("Aceptado".equalsIgnoreCase(p.getEstado()) && dto.getFechaAceptacion() == null) {
             p.setFechaAceptacion(OffsetDateTime.now(ZoneId.of("Europe/Madrid")));
@@ -158,6 +159,7 @@ public class PresupuestoService {
         } else if (p.getTipoPresupuesto() == null || p.getTipoPresupuesto().isBlank()) {
             p.setTipoPresupuesto("Obra");
         }
+        p.setDescripcion(dto.getDescripcion());
 
         p.setFechaAceptacion(dto.getFechaAceptacion());
         if ("Aceptado".equalsIgnoreCase(p.getEstado()) && p.getFechaAceptacion() == null) {
@@ -271,7 +273,7 @@ public class PresupuestoService {
         t.setTipoTramite(savedContrato.getTipoContrato());
         t.setEstado("Pendiente");
         t.setFechaCreacion(java.time.LocalDateTime.now(java.time.ZoneId.of("Europe/Madrid")));
-        t.setDetalleSeguimiento("Nueva venta generada desde presupuesto #" + p.getIdPresupuesto());
+        t.setDescripcion("Nueva venta generada desde presupuesto #" + p.getIdPresupuesto());
 
         Tramite savedTramite = tramiteRepository.save(t);
 
@@ -325,6 +327,7 @@ public class PresupuestoService {
         dto.setFecha(p.getFecha());
         dto.setEstado(p.getEstado());
         dto.setTipoPresupuesto(normalizeTipo(p.getTipoPresupuesto()));
+        dto.setDescripcion(p.getDescripcion());
         dto.setFechaAceptacion(p.getFechaAceptacion());
         dto.setDiasValidez(p.getDiasValidez());
         dto.setTramiteId(p.getTramite() != null ? p.getTramite().getIdTramite() : null);
@@ -385,6 +388,7 @@ public class PresupuestoService {
                 p.getTotalConIva(),
                 p.getEstado(),
                 normalizeTipo(p.getTipoPresupuesto()),
+                p.getDescripcion(),
                 p.getFechaAceptacion(),
                 p.getDiasValidez(),
                 p.getCliente() != null ? p.getCliente().getIdCliente() : null,

@@ -16,7 +16,7 @@ import { TramiteService, Tramite } from '../../services/domain.services';
       <a *ngFor="let t of tramites" [routerLink]="['/contratos', idContrato, 'tramites', t.idTramite]" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
         <div>
            <h5 class="mb-1">{{ t.tipoTramite }}</h5>
-           <p class="mb-1 text-muted">{{ t.detalleSeguimiento }}</p>
+           <p class="mb-1 text-muted">{{ t.descripcion }}</p>
         </div>
         <span class="badge" [ngClass]="{'bg-success': t.estado === 'Terminado', 'bg-warning': t.estado === 'Pendiente', 'bg-danger': t.estado === 'Anulado'}">
             {{ t.estado }}

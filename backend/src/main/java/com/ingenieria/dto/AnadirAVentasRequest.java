@@ -9,5 +9,5 @@ import lombok.Data;
 @Data
 public class AnadirAVentasRequest {
     private String tipoTramite;
-    private String detalleSeguimiento;
+    private String descripcion;
 }

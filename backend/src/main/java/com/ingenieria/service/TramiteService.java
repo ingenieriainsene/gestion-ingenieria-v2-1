@@ -63,7 +63,7 @@ public class TramiteService {
         resp.setIdLocal(c.getLocal() != null ? c.getLocal().getIdLocal() : null);
         resp.setTipoTramite(t.getTipoTramite());
         resp.setEstado(t.getEstado());
-        resp.setDetalleSeguimiento(t.getDetalleSeguimiento());
+        resp.setDescripcion(t.getDescripcion());
         resp.setFechaCreacion(t.getFechaCreacion());
         resp.setFechaSeguimiento(t.getFechaSeguimiento());
         resp.setFechaEjecucion(t.getFechaEjecucion());
@@ -108,7 +108,7 @@ public class TramiteService {
                         t.getContrato() != null ? t.getContrato().getIdContrato() : null,
                         t.getTipoTramite(),
                         t.getEstado(),
-                        t.getDetalleSeguimiento(),
+                        t.getDescripcion(),
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento(),
                         t.getFechaEjecucion(),
@@ -129,7 +129,7 @@ public class TramiteService {
                         t.getContrato() != null ? t.getContrato().getIdContrato() : null,
                         t.getTipoTramite(),
                         t.getEstado(),
-                        t.getDetalleSeguimiento(),
+                        t.getDescripcion(),
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento()))
                 .collect(Collectors.toList());
@@ -145,7 +145,7 @@ public class TramiteService {
                         idContrato,
                         t.getTipoTramite(),
                         t.getEstado(),
-                        t.getDetalleSeguimiento(),
+                        t.getDescripcion(),
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento()))
                 .collect(Collectors.toList());
@@ -166,7 +166,7 @@ public class TramiteService {
                         idContrato,
                         t.getTipoTramite(),
                         t.getEstado(),
-                        t.getDetalleSeguimiento(),
+                        t.getDescripcion(),
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento(),
                         t.getFechaEjecucion(),
@@ -214,7 +214,7 @@ public class TramiteService {
                             t.getTecnicoAsignado(),
                             cliente,
                             local,
-                            t.getDetalleSeguimiento(),
+                            t.getDescripcion(),
                             t.getFacturado());
                 })
                 .collect(Collectors.toList());
@@ -238,7 +238,7 @@ public class TramiteService {
                         idContrato,
                         t.getTipoTramite(),
                         t.getEstado(),
-                        t.getDetalleSeguimiento(),
+                        t.getDescripcion(),
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento(),
                         t.getFechaEjecucion(),
@@ -273,8 +273,8 @@ public class TramiteService {
             t.setEsUrgente(body.getEsUrgente());
         if (body.getFacturado() != null)
             t.setFacturado(body.getFacturado());
-        if (body.getDetalleSeguimiento() != null)
-            t.setDetalleSeguimiento(body.getDetalleSeguimiento());
+        if (body.getDescripcion() != null)
+            t.setDescripcion(body.getDescripcion());
         if (body.getFechaSeguimiento() != null)
             t.setFechaSeguimiento(body.getFechaSeguimiento());
         if (body.getTipoTramite() != null)
@@ -353,7 +353,7 @@ public class TramiteService {
                 idContrato,
                 saved.getTipoTramite(),
                 saved.getEstado(),
-                saved.getDetalleSeguimiento(),
+                saved.getDescripcion(),
                 saved.getFechaCreacion(),
                 saved.getFechaSeguimiento());
     }
@@ -369,7 +369,7 @@ public class TramiteService {
         Tramite t = new Tramite();
         t.setContrato(c);
         t.setTipoTramite(req.getTipoTramite().trim());
-        t.setDetalleSeguimiento(req.getDetalleSeguimiento() != null ? req.getDetalleSeguimiento().trim() : null);
+        t.setDescripcion(req.getDescripcion() != null ? req.getDescripcion().trim() : null);
         t.setEstado("Pendiente");
         t.setFechaSeguimiento(LocalDate.now());
         t.setEsUrgente(false);
@@ -388,7 +388,7 @@ public class TramiteService {
                 c.getIdContrato(),
                 saved.getTipoTramite(),
                 saved.getEstado(),
-                saved.getDetalleSeguimiento(),
+                saved.getDescripcion(),
                 saved.getFechaCreacion(),
                 saved.getFechaSeguimiento());
     }

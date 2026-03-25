@@ -56,7 +56,7 @@ import Swal from 'sweetalert2';
           <tr>
             <th>ID</th>
             <th>CLIENTE</th>
-            <th>VIVIENDA</th>
+            <th>DESCRIPCIÓN</th>
             <th>FECHA</th>
             <th>ACEPTACIÓN</th>
             <th>TOTAL</th>
@@ -71,7 +71,7 @@ import Swal from 'sweetalert2';
               <strong [title]="p.idPresupuesto">{{ formatId(p.idPresupuesto) }}</strong>
             </td>
             <td data-label="Cliente">{{ p.clienteNombre || '—' }}</td>
-            <td data-label="Vivienda">{{ p.viviendaDireccion || '—' }}</td>
+            <td data-label="Descripción">{{ p.descripcion || '—' }}</td>
             <td data-label="Fecha">{{ p.fecha | date:'dd/MM/yyyy' }}</td>
             <td data-label="Aceptación">{{ p.estado === 'Aceptado' ? (p.fechaAceptacion | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
             <td data-label="Total">{{ p.total | number:'1.2-2' }} €</td>

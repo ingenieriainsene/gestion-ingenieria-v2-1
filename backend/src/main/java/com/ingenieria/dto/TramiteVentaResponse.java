@@ -16,7 +16,7 @@ public class TramiteVentaResponse {
     private Long idContrato;
     private String tipoTramite;
     private String estado;
-    private String detalleSeguimiento;
+    private String descripcion;
     /** Fecha de creación (auditoría). Para listado Ventas Pendientes. */
     private java.time.LocalDateTime fechaCreacion;
     /** Fecha de seguimiento (inicio). */

@@ -20,6 +20,6 @@ public class TramiteListResponse {
     private String tecnicoAsignado;
     private String nombreCliente;
     private String direccionLocal;
-    private String detalleSeguimiento;
+    private String descripcion;
     private Boolean facturado;
 }

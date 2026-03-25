@@ -19,6 +19,7 @@ public class PresupuestoDTO {
     private BigDecimal totalConIva;
     private String estado;
     private String tipoPresupuesto;
+    private String descripcion;
     private OffsetDateTime fechaAceptacion;
     private Integer diasValidez;
     private Long tramiteId;

@@ -162,7 +162,7 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
             <span class="badge-tipo">{{ t.tipoTramite }}</span>
           </td>
           <td data-label="Detalle">
-            {{ t.detalleSeguimiento || '—' }}
+            {{ t.descripcion || '—' }}
           </td>
           <td data-label="Técnico">{{ t.tecnicoAsignado || '—' }}</td>
           <td data-label="Facturada">
@@ -437,7 +437,7 @@ export class IntervencionListComponent implements OnInit {
 
     const detalleTerm = this.filtroDetalle.trim().toLowerCase();
     if (detalleTerm) {
-      temp = temp.filter(t => (t.detalleSeguimiento || '').toLowerCase().includes(detalleTerm));
+      temp = temp.filter(t => (t.descripcion || '').toLowerCase().includes(detalleTerm));
     }
 
     // Filter by general Search Term
@@ -448,7 +448,7 @@ export class IntervencionListComponent implements OnInit {
         const direccion = t.direccionLocal?.toLowerCase() ?? '';
         const tipo = t.tipoTramite?.toLowerCase() ?? '';
         const tecnico = t.tecnicoAsignado?.toLowerCase() ?? '';
-        const detalle = t.detalleSeguimiento?.toLowerCase() ?? '';
+        const detalle = t.descripcion?.toLowerCase() ?? '';
         return cliente.includes(term) || direccion.includes(term) || tipo.includes(term) || tecnico.includes(term) || detalle.includes(term);
       });
     }

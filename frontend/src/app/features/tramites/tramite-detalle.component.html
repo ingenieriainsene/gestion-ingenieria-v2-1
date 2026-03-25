@@ -96,12 +96,12 @@
           </div>
         </div>
 
-        <!-- Notas Técnicas añadidas a la tarjeta -->
+        <!-- Descripción añadida a la tarjeta -->
         <div class="form-row-inline mt-4">
           <div class="form-group mb-0 flex-grow">
-            <label class="form-label">Notas Técnicas</label>
-            <input type="text" class="form-control no-icon" formControlName="detalleSeguimiento"
-              placeholder="Notas específicas sobre esta intervención..." />
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-control no-icon" formControlName="descripcion"
+              placeholder="Descripción específica sobre esta intervención..." />
           </div>
         </div>
       </div>
@@ -387,13 +387,24 @@
             </div>
           </div>
 
+          <!-- Selector de Usuario (Desplegable Premium) -->
           <div class="form-field full-width">
-            <label>Técnicos Internos (Asignar)</label>
-            <div class="multi-select-box-premium">
-              <div *ngFor="let u of tecnicos" class="select-item-premium">
-                <input type="checkbox" (change)="toggleSelection('idsUsuariosAsignados', u.idUsuario!)"
-                  [checked]="formHito.get('idsUsuariosAsignados')?.value.includes(u.idUsuario)">
-                <span>{{ u.nombreUsuario }}</span>
+            <label>Usuario Asignado</label>
+            <div class="user-selector-container-premium">
+              <div class="search-and-select-hito">
+                <select class="form-select user-dropdown-hito" (change)="addUserHito($event)">
+                  <option value="">-- Seleccionar usuario para asignar --</option>
+                  <option *ngFor="let u of tecnicos" [value]="u.idUsuario">
+                    {{ u.nombreUsuario }} ({{ u.rol }})
+                  </option>
+                </select>
+              </div>
+
+              <div class="assigned-chips-hito mt-2" *ngIf="formHito.get('idsUsuariosAsignados')?.value.length">
+                <div *ngFor="let id of formHito.get('idsUsuariosAsignados')?.value" class="user-chip-hito">
+                  <span>{{ getNombreUsuario(id) }}</span>
+                  <button type="button" class="btn-remove-chip-hito" (click)="removeUserHito(id)">✕</button>
+                </div>
               </div>
             </div>
           </div>
@@ -525,6 +536,7 @@
             <thead>
               <tr>
                 <th>Referencia</th>
+                <th>Descripción</th>
                 <th>Fecha</th>
                 <th>Estado</th>
                 <th>Total</th>
@@ -538,6 +550,7 @@
                 <td data-label="Estado">
                   <span class="status-badge" [ngClass]="p.estado.toLowerCase()">{{ p.estado }}</span>
                 </td>
+                <td data-label="Descripción">{{ p.descripcion || '—' }}</td>
                 <td data-label="Total">{{ p.total | currency:'EUR' }}</td>
                 <td data-label="Acciones" class="actions-cell">
                   <a [routerLink]="['/presupuestos', p.idPresupuesto]" class="btn-icon-edit" title="Ver">👁️</a>

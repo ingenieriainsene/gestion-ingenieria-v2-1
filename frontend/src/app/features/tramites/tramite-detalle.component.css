@@ -2586,4 +2586,72 @@ details>summary::-webkit-details-marker {
 .btn-action-premium.cert {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
-}
+}
+/* User Selector & Chips Premium (Hitos) */
+.user-selector-container-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.user-dropdown-hito {
+  border-color: #3b82f6 !important;
+  background-color: #f8fafc !important;
+  font-weight: 500;
+}
+
+.assigned-chips-hito {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+}
+
+.user-chip-hito {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  animation: fadeInHito 0.2s ease-out;
+}
+
+.btn-remove-chip-hito {
+  background: #dbeafe;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  color: #2563eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-remove-chip-hito:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+@keyframes fadeInHito {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}

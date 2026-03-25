@@ -24,7 +24,7 @@ import { VentasService } from '../services/ventas.service';
           <span class="venta-estado">Pendiente</span>
         </div>
         <div class="venta-body">
-          <small>{{ v.detalleSeguimiento || 'Sin descripción' }}</small><br />
+          <small>{{ v.descripcion || 'Sin descripción' }}</small><br />
           <small>Contrato #{{ v.idContrato }}</small>
         </div>
         <div class="venta-actions">

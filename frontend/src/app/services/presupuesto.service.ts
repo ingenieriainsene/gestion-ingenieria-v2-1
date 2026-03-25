@@ -38,6 +38,7 @@ export interface PresupuestoDTO {
   totalConIva?: number;
   estado?: string;
   tipoPresupuesto?: string;
+  descripcion?: string;
   fechaAceptacion?: string;
   diasValidez?: number;
   tramiteId?: number;
@@ -55,6 +56,7 @@ export interface PresupuestoListItem {
   total: number;
   estado: string;
   tipoPresupuesto?: string;
+  descripcion?: string;
   fechaAceptacion?: string;
   diasValidez?: number;
   tramiteId?: number;

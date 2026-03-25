@@ -102,7 +102,7 @@ public class ContratoController {
     /**
      * Crea una nueva intervención (trámite) con estado "Pendiente" para el contrato.
      * Replica la ruta POST de gestionar_contrato.php (acciones_tramites crear).
-     * Body: { "tipoTramite": string, "detalleSeguimiento"?: string }
+     * Body: { "tipoTramite": string, "descripcion"?: string }
      */
     @PostMapping("/{id}/tramites")
     public ResponseEntity<?> crearTramite(@PathVariable Long id, @RequestBody AnadirAVentasRequest req) {

@@ -116,7 +116,7 @@ export class TramiteDetalleComponent implements OnInit {
       estado: ['Pendiente', Validators.required],
       esUrgente: [false],
       facturado: [false],
-      detalleSeguimiento: [''],
+      descripcion: [''],
       fechaSeguimiento: [''],
     });
     this.formHito = this.fb.group({
@@ -127,6 +127,7 @@ export class TramiteDetalleComponent implements OnInit {
       idsUsuariosAsignados: [[] as number[]],
       idProveedor: [null as number | null],
       proveedorLabel: [''],
+      idUsuarioAsignado: [null as number | null],
     });
     this.formCompra = this.fb.group({
       tipo: ['ALBARAN', Validators.required],
@@ -202,7 +203,7 @@ export class TramiteDetalleComponent implements OnInit {
           estado: d.estado || 'Pendiente',
           esUrgente: !!d.esUrgente,
           facturado: !!d.facturado,
-          detalleSeguimiento: d.detalleSeguimiento || '',
+          descripcion: d.descripcion || '',
           fechaSeguimiento: fStr || '',
         }, { emitEvent: false });
         this.isPatchingForm = false;
@@ -248,7 +249,7 @@ export class TramiteDetalleComponent implements OnInit {
   }
 
   cargarTecnicos() {
-    this.usuarioService.getTecnicos().subscribe({
+    this.usuarioService.getAll().subscribe({
       next: (list) => (this.tecnicos = list || []),
       error: () => { },
     });
@@ -1026,7 +1027,7 @@ export class TramiteDetalleComponent implements OnInit {
       estado: v.estado,
       esUrgente: v.esUrgente,
       facturado: v.facturado,
-      detalleSeguimiento: v.detalleSeguimiento || null,
+      descripcion: v.descripcion || null,
       fechaSeguimiento: v.fechaSeguimiento || null,
     };
     this.tramiteService.update(this.idTramite, tramitePayload).subscribe({
@@ -1134,13 +1135,30 @@ export class TramiteDetalleComponent implements OnInit {
     }
   }
 
-  toggleSelection(field: string, id: number) {
-    const arr = this.formHito.get(field)?.value as number[] || [];
-    if (arr.includes(id)) {
-      this.formHito.patchValue({ [field]: arr.filter(x => x !== id) });
-    } else {
-      this.formHito.patchValue({ [field]: [...arr, id] });
-    }
+  addUserHito(event: any) {
+    const id = Number(event.target.value);
+    if (!id) return;
+
+    // Establecemos tanto el idUsuarioAsignado (principal) como la lista (compatibilidad)
+    this.formHito.patchValue({
+      idUsuarioAsignado: id,
+      idsUsuariosAsignados: [id]
+    });
+
+    // Reset dropdown
+    event.target.value = '';
+  }
+
+  removeUserHito(id: number) {
+    this.formHito.patchValue({
+      idUsuarioAsignado: null,
+      idsUsuariosAsignados: []
+    });
+  }
+
+  getNombreUsuario(id: number): string {
+    const u = this.tecnicos.find(user => (user.idUsuario ?? (user as any).id) === id);
+    return u ? u.nombreUsuario : 'Usuario';
   }
 
   editarHito(h: Seguimiento) {
@@ -1162,6 +1180,7 @@ export class TramiteDetalleComponent implements OnInit {
       idsTecnicosInstaladores: h.idsTecnicosInstaladores || [],
       idProveedor: h.idProveedor ?? null,
       proveedorLabel: h.nombreProveedor || '',
+      idUsuarioAsignado: h.idUsuarioAsignado,
     });
   }
 
@@ -1183,6 +1202,7 @@ export class TramiteDetalleComponent implements OnInit {
       idsUsuariosAsignados: v.idsUsuariosAsignados || [],
       idsTecnicosInstaladores: v.idsTecnicosInstaladores || [],
       idProveedor: finalIdProveedor ?? undefined,
+      idUsuarioAsignado: v.idUsuarioAsignado
     };
 
     if (this.editingHitoId) {

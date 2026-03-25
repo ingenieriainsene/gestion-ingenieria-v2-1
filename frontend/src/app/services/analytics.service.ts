@@ -19,7 +19,7 @@ export interface AnalyticsTramite {
     dniCliente?: string;
     direccionLocal?: string;
     tecnicoAsignado?: string;
-    detalleSeguimiento?: string;
+    descripcion?: string;
 }
 
 export interface PageResponse<T> {

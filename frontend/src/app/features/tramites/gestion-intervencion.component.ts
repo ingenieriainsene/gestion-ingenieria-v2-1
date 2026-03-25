@@ -73,7 +73,7 @@ interface ArchivoTramite {
         <div class="row g-3" style="margin-top:0.5rem;">
           <div class="col-md-6">
             <label class="form-label" style="font-size:0.7rem; font-weight:800; color:#64748b;">📝 OBSERVACIONES TÉCNICAS</label>
-            <textarea class="form-control" formControlName="detalleSeguimiento" rows="2"
+            <textarea class="form-control" formControlName="descripcion" rows="2"
                       placeholder="Notas del trámite..." style="border:1px solid #cbd5e1; border-radius:8px;"></textarea>
           </div>
           <div class="col-md-4">
@@ -128,14 +128,25 @@ interface ArchivoTramite {
               </label>
             </div>
 
+            <!-- Selector de Usuarios (Desplegable Premium) -->
             <div class="form-field full-width">
-               <label>Técnicos Internos (Asignar)</label>
-               <div class="multi-select-box">
-                  <div *ngFor="let u of tecnicosDisponibles" class="select-item">
-                    <input type="checkbox" (change)="toggleSelection('idsUsuariosAsignados', u.idUsuario!)" 
-                           [checked]="form.get('idsUsuariosAsignados')?.value.includes(u.idUsuario)">
-                    <span>{{ u.nombreUsuario }}</span>
-                  </div>
+               <label>Usuario Asignado</label>
+               <div class="user-selector-container">
+                 <div class="search-and-select">
+                   <select class="form-select user-dropdown" (change)="addUser($event)">
+                     <option value="">-- Seleccionar usuario para asignar --</option>
+                     <option *ngFor="let u of usuariosFiltrados" [value]="u.idUsuario">
+                       {{ u.nombreUsuario }} ({{ u.rol }})
+                     </option>
+                   </select>
+                 </div>
+                 
+                 <div class="assigned-chips mt-2" *ngIf="form.get('idsUsuariosAsignados')?.value.length">
+                    <div *ngFor="let id of form.get('idsUsuariosAsignados')?.value" class="user-chip">
+                      <span>{{ getNombreUsuario(id) }}</span>
+                      <button type="button" class="btn-remove-chip" (click)="removeUser(id)">✕</button>
+                    </div>
+                 </div>
                </div>
             </div>
 
@@ -262,11 +273,22 @@ interface ArchivoTramite {
     }
     .form-field input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
     
-    .multi-select-box {
-      background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px;
-      max-height: 120px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;
+    /* User Selector & Chips */
+    .user-selector-container { display: flex; flex-direction: column; gap: 8px; }
+    .user-dropdown { 
+      border-color: #3b82f6 !important; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+      background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px;
     }
-    .select-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #1e293b; }
+    .assigned-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; padding: 10px; background: #fff; border: 1px dashed #cbd5e1; border-radius: 12px; }
+    .user-chip { 
+      display: flex; align-items: center; gap: 6px; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;
+      padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .btn-remove-chip { background: none; border: none; font-size: 1rem; color: #1e40af; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .btn-remove-chip:hover { color: #ef4444; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
     .btn-primary-premium {
       background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 10px;
@@ -381,6 +403,8 @@ export class GestionIntervencionComponent implements OnInit {
   idTramite: number | null = null;
 
   tecnicosDisponibles: any[] = [];
+  usuariosDisponibles: any[] = [];
+  usuariosFiltrados: any[] = [];
   instaladoresDisponibles: TecnicoInstalador[] = [];
 
   filesToUpload: File[] = [];
@@ -404,13 +428,14 @@ export class GestionIntervencionComponent implements OnInit {
       esUrgente: [false],
       estado: ['Pendiente'],
       idsUsuariosAsignados: [[]],
-      idsTecnicosInstaladores: [[]]
+      idsTecnicosInstaladores: [[]],
+      idUsuarioAsignado: [null]
     });
 
     this.estadoForm = this.fb.group({
       estado: ['Pendiente', Validators.required],
       esUrgente: [false],
-      detalleSeguimiento: [''],
+      descripcion: [''],
       fechaSeguimiento: ['']
     });
   }
@@ -441,7 +466,7 @@ export class GestionIntervencionComponent implements OnInit {
       this.estadoForm.patchValue({
         estado: t.estado || 'Pendiente',
         esUrgente: !!t.esUrgente,
-        detalleSeguimiento: t.detalleSeguimiento || '',
+        descripcion: t.descripcion || '',
         fechaSeguimiento: fStr || ''
       });
     });
@@ -459,8 +484,10 @@ export class GestionIntervencionComponent implements OnInit {
       .subscribe(data => this.archivos = data);
 
     // Fetch technicians and installers
+    // Fetch all application users
     this.usuarioService.getAll().subscribe(users => {
-      this.tecnicosDisponibles = users.filter(u => u.rol === 'TÉCNICO');
+      this.usuariosDisponibles = users;
+      this.usuariosFiltrados = users; // Or adjust filters if needed
     });
     this.instaladorService.getActivos().subscribe(inst => {
       this.instaladoresDisponibles = inst;
@@ -475,6 +502,32 @@ export class GestionIntervencionComponent implements OnInit {
         idsTecnicosInstaladores: []
       });
     }
+  }
+
+  addUser(event: any) {
+    const id = Number(event.target.value);
+    if (!id) return;
+    
+    // Establecemos tanto el idUsuarioAsignado (principal) como la lista (compatibilidad)
+    this.form.patchValue({
+      idUsuarioAsignado: id,
+      idsUsuariosAsignados: [id]
+    });
+    
+    // Reset dropdown
+    event.target.value = '';
+  }
+
+  removeUser(id: number) {
+    this.form.patchValue({
+      idUsuarioAsignado: null,
+      idsUsuariosAsignados: []
+    });
+  }
+
+  getNombreUsuario(id: number): string {
+    const u = this.usuariosDisponibles.find(user => user.idUsuario === id);
+    return u ? u.nombreUsuario : 'Usuario';
   }
 
   toggleSelection(controlName: string, id: number) {
@@ -513,11 +566,11 @@ export class GestionIntervencionComponent implements OnInit {
 
   guardarEstado() {
     if (!this.tramite || !this.idTramite) return;
-    const { estado, esUrgente, detalleSeguimiento, fechaSeguimiento } = this.estadoForm.value;
+    const { estado, esUrgente, descripcion, fechaSeguimiento } = this.estadoForm.value;
     const payload: Partial<Tramite> = {
       estado,
       esUrgente,
-      detalleSeguimiento: detalleSeguimiento || null,
+      descripcion: descripcion || null,
       fechaSeguimiento: fechaSeguimiento || null
     };
     this.tramiteService.update(this.idTramite, payload).subscribe(t => {

@@ -123,6 +123,20 @@ import Swal from 'sweetalert2';
                 <input type="number" class="form-control" formControlName="diasValidez" placeholder="Ej: 20" />
               </div>
             </div>
+
+            <div class="form-group" style="grid-column: 1 / -1; margin-top: 0.1rem;">
+              <label class="form-label">Descripción del presupuesto</label>
+              <div class="input-wrapper">
+                <span class="input-icon">📝</span>
+                <textarea 
+                  class="form-control" 
+                  formControlName="descripcion" 
+                  placeholder="Escribe una breve descripción del presupuesto..."
+                  rows="2"
+                  style="padding-left: 2.25rem; resize: vertical;"
+                ></textarea>
+              </div>
+            </div>
           </div>
 
           <!-- Líneas del Presupuesto -->
@@ -483,6 +497,7 @@ export class PresupuestoFormComponent implements OnInit {
       fecha: [new Date().toISOString().slice(0, 10), Validators.required],
       estado: ['Borrador'],
       tipoPresupuesto: ['Obra'],
+      descripcion: [''],
       fechaAceptacion: [null],
       diasValidez: [null],
       capitulos: this.fb.array([])
@@ -916,6 +931,7 @@ export class PresupuestoFormComponent implements OnInit {
           fecha: p.fecha,
           estado: p.estado || 'Borrador',
           tipoPresupuesto: p.tipoPresupuesto || 'Obra',
+          descripcion: p.descripcion || '',
           fechaAceptacion: p.fechaAceptacion ? p.fechaAceptacion.slice(0, 16) : (p.estado === 'Aceptado' ? this.formatLocalISO(new Date().toISOString()).slice(0, 16) : null),
           diasValidez: p.diasValidez || (p.estado === 'Aceptado' ? 20 : null)
         });
@@ -1102,6 +1118,7 @@ export class PresupuestoFormComponent implements OnInit {
       fecha: raw.fecha,
       estado: raw.estado,
       tipoPresupuesto: raw.tipoPresupuesto,
+      descripcion: raw.descripcion,
       fechaAceptacion: raw.fechaAceptacion ? this.formatLocalISO(raw.fechaAceptacion) : undefined,
       diasValidez: raw.diasValidez,
       tramiteId: this.tramiteId ?? undefined,

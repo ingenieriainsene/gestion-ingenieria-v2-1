@@ -104,7 +104,7 @@ import Swal from 'sweetalert2';
             <span class="badge-tipo">{{ t.tipoTramite }}</span>
           </td>
           <td data-label="Detalle">
-            {{ t.detalleSeguimiento || '—' }}
+            {{ t.descripcion || '—' }}
           </td>
           <td data-label="Fecha">
             <strong>{{ (t.fechaSeguimiento || t.fechaCreacion) | date:'dd/MM/yyyy' }}</strong>
@@ -327,7 +327,7 @@ export class VentasPendientesComponent implements OnInit {
         const cliente = (t.nombreCliente || '').toLowerCase?.() ?? '';
         const direccion = (t.direccionLocal || '').toLowerCase?.() ?? '';
         const tipo = t.tipoTramite?.toLowerCase() ?? '';
-        const detalle = t.detalleSeguimiento?.toLowerCase() ?? '';
+        const detalle = t.descripcion?.toLowerCase() ?? '';
         const contrato = t.idContrato ? String(t.idContrato) : '';
         return (
           cliente.includes(term) ||
@@ -347,7 +347,7 @@ export class VentasPendientesComponent implements OnInit {
 
     const detalleTerm = this.filtroDetalle.trim().toLowerCase();
     if (detalleTerm) {
-      temp = temp.filter(t => (t.detalleSeguimiento || '').toLowerCase().includes(detalleTerm));
+      temp = temp.filter(t => (t.descripcion || '').toLowerCase().includes(detalleTerm));
     }
 
     this.filtrados = temp;
@@ -385,7 +385,7 @@ export class VentasPendientesComponent implements OnInit {
         <div style="text-align:left; font-size:0.9rem;">
           <p><b>Contrato:</b> ${contratoLabel}</p>
           <p><b>Intervención:</b> ${t.tipoTramite || '—'}</p>
-          <p><b>Detalle / tarea:</b> ${t.detalleSeguimiento || '—'}</p>
+          <p><b>Detalle / tarea:</b> ${t.descripcion || '—'}</p>
           <p><b>Fecha venta:</b> ${fechaLabel}</p>
         </div>
         <p style="margin-top:10px; font-size:0.85rem; color:#64748b;">

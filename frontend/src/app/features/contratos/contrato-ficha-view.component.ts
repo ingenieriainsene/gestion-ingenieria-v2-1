@@ -90,7 +90,7 @@ import Swal from 'sweetalert2';
                   <option value="CE Previo">CE Previo</option>
                   <option value="CE Post">CE Post</option>
                 </select>
-                <input type="text" class="tramite-sel" formControlName="detalleSeguimiento" placeholder="Descripcion opcional...">
+                <input type="text" class="tramite-sel" formControlName="descripcion" placeholder="Descripcion opcional...">
                 <button type="submit" class="btn-add" [disabled]="nuevaIntervencionForm.invalid">Anadir a ventas</button>
               </form>
             </section>
@@ -131,7 +131,7 @@ import Swal from 'sweetalert2';
                 </div>
                 <div class="map-col">
                   <span class="map-label">Descripcion</span>
-                  <span class="map-data map-data-sm" [title]="ta.detalleSeguimiento || ''">{{ ta.detalleSeguimiento || '---' }}</span>
+                  <span class="map-data map-data-sm" [title]="ta.descripcion || ''">{{ ta.descripcion || '---' }}</span>
                 </div>
                 <div class="map-col">
                   <span class="map-label">Estado</span>
@@ -463,7 +463,7 @@ export class ContratoFichaViewComponent implements OnInit {
   ) {
     this.nuevaIntervencionForm = this.fb.group({
       tipoTramite: ['', Validators.required],
-      detalleSeguimiento: ['']
+      descripcion: ['']
     });
     this.obsForm = this.fb.group({
       observaciones: ['']
@@ -528,8 +528,8 @@ export class ContratoFichaViewComponent implements OnInit {
       return;
     }
     const id = this.contrato.idContrato!;
-    const { tipoTramite, detalleSeguimiento } = this.nuevaIntervencionForm.value;
-    const datos = { tipoTramite, detalleSeguimiento: detalleSeguimiento || undefined };
+    const { tipoTramite, descripcion } = this.nuevaIntervencionForm.value;
+    const datos = { tipoTramite, descripcion: descripcion || undefined };
 
     this.contratos.addIntervencion(id, datos).subscribe({
       next: () => {

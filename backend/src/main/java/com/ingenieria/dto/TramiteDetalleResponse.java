@@ -25,7 +25,7 @@ public class TramiteDetalleResponse {
     private Long idLocal;
     private String tipoTramite;
     private String estado;
-    private String detalleSeguimiento;
+    private String descripcion;
     private LocalDateTime fechaCreacion;
     private LocalDate fechaSeguimiento;
     private LocalDateTime fechaEjecucion;

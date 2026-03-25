@@ -90,6 +90,16 @@ import { FormsModule } from '@angular/forms';
         </div>
       </div>
 
+      <div class="description-section clickable" (click)="editarDescripcion()">
+        <div class="description-label">
+          DESCRIPCIÓN DEL PRESUPUESTO
+          <span class="edit-hint">✏️ Clic para editar</span>
+        </div>
+        <div class="description-text" [class.empty-placeholder]="!presupuesto.descripcion">
+          {{ presupuesto.descripcion || 'Haz clic aquí para añadir una descripción detallada al presupuesto...' }}
+        </div>
+      </div>
+
       <div class="compact-extra-info" *ngIf="presupuesto.estado === 'Aceptado'">
         <div class="extra-item">
           <strong>Fecha Aceptación:</strong> {{ (presupuesto.fechaAceptacion) ? (presupuesto.fechaAceptacion | date:'dd/MM/yyyy HH:mm') : 'Pendiente' }}
@@ -277,6 +287,51 @@ import { FormsModule } from '@angular/forms';
     .extra-item strong {
       color: #475569;
     }
+    .description-section {
+      padding: 15px 35px;
+      background: #fff;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 15px;
+    }
+    .description-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .description-text {
+      font-size: 0.95rem;
+      color: #334155;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .description-section.clickable {
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .description-section.clickable:hover {
+      background: #f8fafc;
+      border-color: #3b82f6;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .edit-hint {
+      font-size: 0.6rem;
+      color: #3b82f6;
+      margin-left: 10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .description-section.clickable:hover .edit-hint {
+      opacity: 1;
+    }
+    .empty-placeholder {
+      font-style: italic;
+      color: #94a3b8;
+    }
     .spinner-mini {
       width: 14px;
       height: 14px;
@@ -440,6 +495,48 @@ export class PresupuestoFichaViewComponent implements OnInit {
         Swal.fire('Error', msg, 'error');
       }
     });
+  }
+
+  async editarDescripcion(): Promise<void> {
+    if (!this.presupuesto?.idPresupuesto) return;
+    
+    const { value: text } = await Swal.fire({
+      title: 'Descripción del presupuesto',
+      input: 'textarea',
+      inputLabel: 'Introduce la descripción técnica o detalles adicionales del proyecto',
+      inputValue: this.presupuesto.descripcion || '',
+      inputPlaceholder: 'Ej: Instalación fotovoltaica 5kW con inversor Huawei...',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar cambios',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1e293b',
+      inputAttributes: {
+        'rows': '5'
+      }
+    });
+
+    if (text !== undefined) {
+      this.actualizandoEstado = true; // Reusing spinner logic if you want
+      const payload: PresupuestoDTO = { ...this.presupuesto, descripcion: text };
+      this.service.updateBudget(this.presupuesto.idPresupuesto, payload).subscribe({
+        next: (res) => {
+          this.presupuesto = res;
+          this.actualizandoEstado = false;
+          Swal.fire({
+            title: 'Descripción guardada',
+            icon: 'success',
+            toast: true,
+            position: 'top-end',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        },
+        error: () => {
+          this.actualizandoEstado = false;
+          Swal.fire('Error', 'No se pudo guardar la descripción. Por favor, inténtalo de nuevo.', 'error');
+        }
+      });
+    }
   }
 
   eliminar(): void {
