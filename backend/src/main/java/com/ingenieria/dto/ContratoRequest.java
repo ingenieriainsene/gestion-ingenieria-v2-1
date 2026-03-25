@@ -22,6 +22,14 @@ public class ContratoRequest {
     private String cePrevio;
     private String cePost;
     private Boolean enviadoCeePost;
+
+    private String formaPago;
+    private String nombreFinanciera;
+    private LocalDate fechaInicioFinanciacion;
+    private Double importeCuota;
+    private Double importeTotalFinanciado;
+    private Double porcentajeContado;
+
     private String licenciaObras;
     private Boolean mtd;
     private Boolean planos;

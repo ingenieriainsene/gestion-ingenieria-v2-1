@@ -164,6 +164,14 @@ export interface Contrato {
     cePost?: string;
     enviadoCeePost?: boolean;
     licenciaObras?: string;
+    
+    formaPago?: string;
+    nombreFinanciera?: string;
+    fechaInicioFinanciacion?: string;
+    importeCuota?: number;
+    importeTotalFinanciado?: number;
+    porcentajeContado?: number;
+
     mtd?: boolean;
     planos?: boolean;
     subvencionEstado?: string;

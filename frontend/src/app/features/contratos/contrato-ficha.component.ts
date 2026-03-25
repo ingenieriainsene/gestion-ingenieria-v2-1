@@ -28,8 +28,13 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
       </div>
 
       <div class="form-card">
+        <div class="tabs-container">
+          <div class="tab" [class.active]="activeTab === 'general'" (click)="activeTab = 'general'">Datos Generales</div>
+          <div class="tab" [class.active]="activeTab === 'tecnicos'" (click)="activeTab = 'tecnicos'">Datos Técnicos</div>
+          <div class="tab" [class.active]="activeTab === 'financiacion'" (click)="activeTab = 'financiacion'">Financiación</div>
+        </div>
         <form [formGroup]="form" (ngSubmit)="save()" class="modern-form">
-          <div class="form-grid">
+          <div class="form-grid" *ngIf="activeTab === 'general'">
             <!-- Cliente -->
             <div class="form-group">
               <div class="label-with-action">
@@ -143,12 +148,11 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
             </div>
           </div>
 
-          <div class="separator"></div>
-
-          <!-- Datos Técnicos (Checks) -->
-          <div class="form-row full-width">
-             <label class="form-label section-label">Datos Técnicos / Hitos</label>
-             <div class="checks-grid">
+          <!-- Pestaña Datos Técnicos -->
+          <div class="tab-content" *ngIf="activeTab === 'tecnicos'">
+            <div class="form-row full-width">
+               <label class="form-label section-label">Datos Técnicos / Hitos</label>
+               <div class="checks-grid">
                 <label class="check-pill"><input type="checkbox" formControlName="cePrevio"> CE Previo</label>
                 <label class="check-pill"><input type="checkbox" formControlName="mtd"> MTD</label>
                 <label class="check-pill"><input type="checkbox" formControlName="cePost"> CE Post</label>
@@ -158,11 +162,50 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
                 <label class="check-pill"><input type="checkbox" formControlName="subvencionEstado"> Subvención</label>
                 <label class="check-pill"><input type="checkbox" formControlName="libroEdifIncluido"> Libro Edificio</label>
              </div>
+            </div>
+          </div>
+
+          <!-- Pestaña Financiación -->
+          <div class="tab-content" *ngIf="activeTab === 'financiacion'">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Forma de Pago <span class="required">*</span></label>
+                <select class="form-control" formControlName="formaPago">
+                  <option value="Al contado">Al contado</option>
+                  <option value="Financiado">Financiado</option>
+                  <option value="Mixto">Mixto</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Conditional fields for Financiado / Mixto -->
+            <div class="form-grid" *ngIf="form.get('formaPago')?.value === 'Financiado' || form.get('formaPago')?.value === 'Mixto'" style="margin-top: 1.5rem;">
+              <div class="form-group">
+                <label class="form-label">Nombre Financiera</label>
+                <input type="text" class="form-control" formControlName="nombreFinanciera" placeholder="Ej. BBVA, Santander..." />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control" formControlName="fechaInicioFinanciacion" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Importe Cuota (€)</label>
+                <input type="number" step="0.01" class="form-control" formControlName="importeCuota" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Total Financiado (€)</label>
+                <input type="number" step="0.01" class="form-control" formControlName="importeTotalFinanciado" />
+              </div>
+              <div class="form-group" *ngIf="form.get('formaPago')?.value === 'Mixto'">
+                <label class="form-label">% Al Contado</label>
+                <input type="number" step="0.1" max="100" min="0" class="form-control" formControlName="porcentajeContado" />
+              </div>
+            </div>
           </div>
 
           <div class="separator"></div>
 
-          <!-- Observaciones -->
+          <!-- Observaciones (Shared) -->
           <div class="form-group full-width">
             <label class="form-label">Observaciones</label>
             <textarea class="form-control" formControlName="observaciones" rows="4" placeholder="Notas adicionales del contrato..."></textarea>
@@ -260,6 +303,35 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
       border: 1px solid #e2e8f0;
       box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
       padding: 2.5rem;
+    }
+
+    .tabs-container {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 2rem;
+    }
+    
+    .tab {
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .tab:hover {
+      color: #3b82f6;
+    }
+    
+    .tab.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+
+    .tab-content {
+      animation: fadeIn 0.3s ease-out;
     }
 
     .modern-form {
@@ -487,6 +559,7 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
   `]
 })
 export class ContratoFichaComponent implements OnInit {
+  activeTab: 'general' | 'tecnicos' | 'financiacion' = 'general';
   form: FormGroup;
   formNuevoCliente: FormGroup;
   formNuevoLocal: FormGroup;
@@ -538,7 +611,13 @@ export class ContratoFichaComponent implements OnInit {
       licenciaObras: [false],
       subvencionEstado: [false],
       libroEdifIncluido: [false],
-      estado: ['Activo']
+      estado: ['Activo'],
+      formaPago: ['Al contado'],
+      nombreFinanciera: [''],
+      fechaInicioFinanciacion: [''],
+      importeCuota: [0],
+      importeTotalFinanciado: [0],
+      porcentajeContado: [0]
     });
   }
 
@@ -606,7 +685,13 @@ export class ContratoFichaComponent implements OnInit {
           licenciaObras: c.licenciaObras === 'Concedida',
           subvencionEstado: c.subvencionEstado === 'Concedida',
           libroEdifIncluido: !!c.libroEdifIncluido,
-          estado: c.estado || 'Activo'
+          estado: c.estado || 'Activo',
+          formaPago: c.formaPago || 'Al contado',
+          nombreFinanciera: c.nombreFinanciera || '',
+          fechaInicioFinanciacion: this.formatDate(c.fechaInicioFinanciacion),
+          importeCuota: c.importeCuota || 0,
+          importeTotalFinanciado: c.importeTotalFinanciado || 0,
+          porcentajeContado: c.porcentajeContado || 0
         });
 
         // Filter locales for the loaded client if dependencies are ready
@@ -752,7 +837,13 @@ export class ContratoFichaComponent implements OnInit {
         enviadoCeePost: !!v.enviadoCeePost,
         licenciaObras: v.licenciaObras ? 'Concedida' : 'No requerida',
         subvencionEstado: v.subvencionEstado ? 'Concedida' : 'No solicitada',
-        libroEdifIncluido: !!v.libroEdifIncluido
+        libroEdifIncluido: !!v.libroEdifIncluido,
+        formaPago: v.formaPago,
+        nombreFinanciera: v.nombreFinanciera,
+        fechaInicioFinanciacion: v.fechaInicioFinanciacion || null,
+        importeCuota: v.importeCuota,
+        importeTotalFinanciado: v.importeTotalFinanciado,
+        porcentajeContado: v.porcentajeContado
       };
 
       if (this.idContrato) {

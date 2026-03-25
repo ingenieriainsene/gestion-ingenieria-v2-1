@@ -74,6 +74,40 @@ import Swal from 'sweetalert2';
             </div>
           </div>
 
+          <div class="panel-section panel-section-full">
+            <h3>Financiación</h3>
+            <div class="data-row" *ngIf="!contrato.formaPago || contrato.formaPago === 'Al contado'">
+                <span class="data-label">Forma de Pago:</span>
+                <span class="data-value">{{ contrato.formaPago || 'Al contado' }}</span>
+            </div>
+            <div class="grid-layout" *ngIf="contrato.formaPago && contrato.formaPago !== 'Al contado'">
+              <div class="data-row">
+                <span class="data-label">Forma de Pago:</span>
+                <span class="data-value">{{ contrato.formaPago }}</span>
+              </div>
+              <div class="data-row" *ngIf="contrato.nombreFinanciera">
+                <span class="data-label">Financiera:</span>
+                <span class="data-value">{{ contrato.nombreFinanciera }}</span>
+              </div>
+              <div class="data-row" *ngIf="contrato.fechaInicioFinanciacion">
+                <span class="data-label">Fecha Inicio:</span>
+                <span class="data-value">{{ contrato.fechaInicioFinanciacion | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="data-row" *ngIf="contrato.importeCuota">
+                <span class="data-label">Cuota:</span>
+                <span class="data-value">{{ contrato.importeCuota | currency:'EUR' }}</span>
+              </div>
+              <div class="data-row" *ngIf="contrato.importeTotalFinanciado">
+                <span class="data-label">Total Financiado:</span>
+                <span class="data-value">{{ contrato.importeTotalFinanciado | currency:'EUR' }}</span>
+              </div>
+              <div class="data-row" *ngIf="contrato.porcentajeContado">
+                <span class="data-label">% Contado:</span>
+                <span class="data-value">{{ contrato.porcentajeContado }}%</span>
+              </div>
+            </div>
+          </div>
+
           <div class="grid-layout-wrap">
           <div class="grid-layout">
             <section class="formulario-intervencion">

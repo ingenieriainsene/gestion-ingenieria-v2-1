@@ -60,6 +60,24 @@ public class Contrato {
     @Column(name = "enviado_cee_post")
     private Boolean enviadoCeePost;
 
+    @Column(name = "forma_pago")
+    private String formaPago;
+
+    @Column(name = "nombre_financiera")
+    private String nombreFinanciera;
+
+    @Column(name = "fecha_inicio_financiacion")
+    private LocalDate fechaInicioFinanciacion;
+
+    @Column(name = "importe_cuota")
+    private Double importeCuota;
+
+    @Column(name = "importe_total_financiado")
+    private Double importeTotalFinanciado;
+
+    @Column(name = "porcentaje_contado")
+    private Double porcentajeContado;
+
     @Column(name = "licencia_obras")
     private String licenciaObras;
 

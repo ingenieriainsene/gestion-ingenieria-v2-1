@@ -126,6 +126,14 @@ public class ContratoService {
         c.setCePrevio(req.getCePrevio());
         c.setCePost(req.getCePost());
         c.setEnviadoCeePost(req.getEnviadoCeePost());
+
+        c.setFormaPago(req.getFormaPago());
+        c.setNombreFinanciera(req.getNombreFinanciera());
+        c.setFechaInicioFinanciacion(req.getFechaInicioFinanciacion());
+        c.setImporteCuota(req.getImporteCuota());
+        c.setImporteTotalFinanciado(req.getImporteTotalFinanciado());
+        c.setPorcentajeContado(req.getPorcentajeContado());
+
         c.setLicenciaObras(req.getLicenciaObras());
         c.setMtd(req.getMtd());
         c.setPlanos(req.getPlanos());
