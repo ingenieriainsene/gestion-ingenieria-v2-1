@@ -102,11 +102,11 @@ public class PresupuestoController {
     }
 
     @PatchMapping("/{id}/estado")
-    public ResponseEntity<?> patchEstado(@PathVariable Long id, @RequestBody String nuevoEstado) {
+    public ResponseEntity<?> patchEstado(@PathVariable Long id, @RequestBody java.util.Map<String, Object> payload) {
         try {
-            // Remove quotes if present (standard for plain string bodies in JSON)
-            String estado = nuevoEstado.replace("\"", "");
-            return ResponseEntity.ok(service.patchEstado(id, estado));
+            String estado = (String) payload.get("estado");
+            Integer diasValidez = (Integer) payload.get("diasValidez");
+            return ResponseEntity.ok(service.patchEstado(id, estado, diasValidez));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -369,19 +369,62 @@ export class PresupuestoFichaViewComponent implements OnInit {
     });
   }
 
-  cambiarEstado(nuevoEstado: string): void {
+  async cambiarEstado(nuevoEstado: string): Promise<void> {
     if (!this.presupuesto?.idPresupuesto || this.actualizandoEstado) return;
     if (this.presupuesto.estado === nuevoEstado) return;
 
+    let diasValidez: number | undefined = undefined;
+
+    if (nuevoEstado === 'Aceptado') {
+      const { value: selectedDate } = await Swal.fire({
+        title: 'Fecha de Validez',
+        html: `
+          <p>El presupuesto se marcará como <strong>Aceptado</strong> hoy.</p>
+          <p>Por favor, selecciona hasta qué fecha es válido:</p>
+          <input type="date" id="swal-fecha-validez" class="swal2-input" 
+                 value="${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}">
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar Aceptación',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1e293b',
+        preConfirm: () => {
+          const input = document.getElementById('swal-fecha-validez') as HTMLInputElement;
+          if (!input.value) {
+            Swal.showValidationMessage('Debes seleccionar una fecha de validez');
+            return false;
+          }
+          return input.value;
+        }
+      });
+
+      if (!selectedDate) return; // Usuario canceló
+
+      // Calcular diferencia en días
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const validez = new Date(selectedDate);
+      validez.setHours(0, 0, 0, 0);
+
+      const diffTime = validez.getTime() - hoy.getTime();
+      diasValidez = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diasValidez < 0) {
+        Swal.fire('Error', 'La fecha de validez no puede ser anterior a hoy', 'error');
+        return;
+      }
+    }
+
     this.actualizandoEstado = true;
-    this.service.patchEstado(this.presupuesto.idPresupuesto, nuevoEstado).subscribe({
+    this.service.patchEstado(this.presupuesto.idPresupuesto, nuevoEstado, diasValidez).subscribe({
       next: (p) => {
         this.presupuesto = p;
         this.recalcularTotales();
         this.actualizandoEstado = false;
         Swal.fire({
           title: 'Estado actualizado',
-          text: `El presupuesto ha pasado a estado: ${nuevoEstado}`,
+          text: `El presupuesto ha pasado a estado: ${nuevoEstado}${diasValidez !== undefined ? ' con ' + diasValidez + ' días de validez' : ''}`,
           icon: 'success',
           toast: true,
           position: 'top-end',

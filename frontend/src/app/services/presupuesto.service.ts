@@ -98,8 +98,9 @@ export class PresupuestoService {
     return this.api.delete<void>(`${this.endpoint}/${id}`);
   }
 
-  patchEstado(id: number, estado: string): Observable<PresupuestoDTO> {
-    return this.api.patch<PresupuestoDTO>(`${this.endpoint}/${id}/estado`, estado);
+  patchEstado(id: number, estado: string, diasValidez?: number): Observable<PresupuestoDTO> {
+    const payload = { estado, diasValidez };
+    return this.api.patch<PresupuestoDTO>(`${this.endpoint}/${id}/estado`, payload);
   }
 
   convertirAContrato(id: number): Observable<number> {

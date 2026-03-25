@@ -58,6 +58,7 @@ import Swal from 'sweetalert2';
             <th>CLIENTE</th>
             <th>VIVIENDA</th>
             <th>FECHA</th>
+            <th>ACEPTACIÓN</th>
             <th>TOTAL</th>
             <th>ESTADO</th>
             <th>TIPO</th>
@@ -72,6 +73,7 @@ import Swal from 'sweetalert2';
             <td data-label="Cliente">{{ p.clienteNombre || '—' }}</td>
             <td data-label="Vivienda">{{ p.viviendaDireccion || '—' }}</td>
             <td data-label="Fecha">{{ p.fecha | date:'dd/MM/yyyy' }}</td>
+            <td data-label="Aceptación">{{ p.estado === 'Aceptado' ? (p.fechaAceptacion | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
             <td data-label="Total">{{ p.total | number:'1.2-2' }} €</td>
             <td data-label="Estado">
               <span class="badge" [ngClass]="getStatusClass(p.estado)">
@@ -85,7 +87,7 @@ import Swal from 'sweetalert2';
             </td>
           </tr>
           <tr *ngIf="filteredPresupuestos.length === 0">
-            <td colspan="8" style="text-align:center; padding:40px; color:#64748b;">
+            <td colspan="9" style="text-align:center; padding:40px; color:#64748b;">
               No se han encontrado presupuestos con los filtros aplicados.
             </td>
           </tr>

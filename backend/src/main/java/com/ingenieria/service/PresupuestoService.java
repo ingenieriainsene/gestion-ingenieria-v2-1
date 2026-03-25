@@ -189,7 +189,7 @@ public class PresupuestoService {
     }
 
     @Transactional
-    public PresupuestoDTO patchEstado(Long id, String nuevoEstado) {
+    public PresupuestoDTO patchEstado(Long id, String nuevoEstado, Integer diasValidez) {
         Presupuesto p = presupuestoRepository.findByIdWithLineas(id)
                 .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
 
@@ -199,13 +199,15 @@ public class PresupuestoService {
             if (p.getFechaAceptacion() == null) {
                 p.setFechaAceptacion(OffsetDateTime.now(ZoneId.of("Europe/Madrid")));
             }
-            if (p.getDiasValidez() == null) {
+            if (diasValidez != null) {
+                p.setDiasValidez(diasValidez);
+            } else if (p.getDiasValidez() == null) {
                 p.setDiasValidez(20);
             }
         }
 
         Presupuesto saved = presupuestoRepository.save(p);
-        log.info("[Presupuesto] Estado actualizado id={} nuevoEstado={}", id, nuevoEstado);
+        log.info("[Presupuesto] Estado actualizado id={} nuevoEstado={} diasValidez={}", id, nuevoEstado, p.getDiasValidez());
         return toDto(saved);
     }
 
