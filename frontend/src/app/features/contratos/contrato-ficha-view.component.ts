@@ -13,7 +13,9 @@ import Swal from 'sweetalert2';
   imports: [CommonModule, ReactiveFormsModule, RouterLink, AuditStampComponent, FileUploaderComponent],
   template: `
     <div *ngIf="contrato" class="main-container">
-      <app-audit-stamp [data]="contrato"></app-audit-stamp>
+      <div class="top-audit-area">
+        <app-audit-stamp [data]="contrato"></app-audit-stamp>
+      </div>
 
       <div class="gestion-container">
         <div class="header-section">
@@ -34,12 +36,6 @@ import Swal from 'sweetalert2';
           </div>
         </div>
 
-        <div class="filter-bar">
-          <span class="filter-label">Filtrar intervenciones:</span>
-          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'todos'" (click)="setFiltro('todos')">Todas</button>
-          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'mantenimiento'" (click)="setFiltro('mantenimiento')">Mantenimiento</button>
-          <button type="button" class="filter-chip" [class.active]="filtroTipo === 'otros'" (click)="setFiltro('otros')">Otras</button>
-        </div>
 
         <div class="panel-grid">
           <div class="panel-section">
@@ -177,14 +173,38 @@ import Swal from 'sweetalert2';
   `,
   styles: [`
     .main-container { max-width: 98%; width: 100%; margin: 0 auto; padding: 1rem; box-sizing: border-box; }
+    .top-audit-area {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
     .user-stamp {
-      text-align: right; font-size: 0.75rem; color: #64748b; margin-bottom: 15px;
-      background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; float: right;
+      font-size: 0.75rem; color: #64748b;
+      background: #f8fafc; padding: 8px 15px; border-radius: 8px; border: 1px solid #e2e8f0;
     }
     .gestion-container {
-      clear: both; margin-top: 20px; background: white; width: 100%; max-width: 98%;
+      background: white; width: 100%;
       border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid #1e293b;
       overflow: hidden; margin-bottom: 50px;
+    }
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 30px 40px;
+      background: linear-gradient(to right, #ffffff, #f8fafc);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .header-section h1 {
+      margin: 0;
+      color: #1e293b;
+      font-size: 2.2rem;
+      letter-spacing: -1px;
+    }
+    .header-section p {
+      margin: 5px 0 0;
+      color: #64748b;
+      font-weight: 500;
     }
     .info-header {
       display: none;
@@ -447,7 +467,6 @@ export class ContratoFichaViewComponent implements OnInit {
   ventas: Tramite[] = [];
   activas: Tramite[] = [];
   allTramites: Tramite[] = [];
-  filtroTipo: 'todos' | 'mantenimiento' | 'otros' = 'todos';
 
 
   nuevaIntervencionForm: FormGroup;
@@ -491,7 +510,13 @@ export class ContratoFichaViewComponent implements OnInit {
       next: (lista) => {
         const all = Array.isArray(lista) ? lista : [];
         this.allTramites = all;
-        this.aplicarFiltros();
+        
+        const e = (s: string | undefined) => (s || '').trim().toLowerCase();
+        this.ventas = all.filter(t => e(t.estado) === 'pendiente');
+        this.activas = all.filter(t => {
+          const est = e(t.estado);
+          return est === 'en proceso' || est === 'terminado' || est === 'anulado';
+        });
 
       },
       error: (err) => {
@@ -500,25 +525,6 @@ export class ContratoFichaViewComponent implements OnInit {
     });
   }
 
-  setFiltro(tipo: 'todos' | 'mantenimiento' | 'otros') {
-    this.filtroTipo = tipo;
-    this.aplicarFiltros();
-  }
-
-  private aplicarFiltros() {
-    const e = (s: string | undefined) => (s || '').trim().toLowerCase();
-    let list = this.allTramites;
-    if (this.filtroTipo === 'mantenimiento') {
-      list = list.filter(t => e(t.tipoTramite) === 'mantenimiento');
-    } else if (this.filtroTipo === 'otros') {
-      list = list.filter(t => e(t.tipoTramite) !== 'mantenimiento');
-    }
-    this.ventas = list.filter(t => e(t.estado) === 'pendiente');
-    this.activas = list.filter(t => {
-      const est = e(t.estado);
-      return est === 'en proceso' || est === 'terminado' || est === 'anulado';
-    });
-  }
 
 
 
