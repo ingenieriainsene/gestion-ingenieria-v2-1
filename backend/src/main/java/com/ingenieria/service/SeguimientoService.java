@@ -37,6 +37,8 @@ public class SeguimientoService {
     private ProveedorRepository proveedorRepo;
     @Autowired
     private TecnicoInstaladorRepository tecnicoInstaladorRepo;
+    @Autowired
+    private NotificacionService notificacionService;
 
     public List<Seguimiento> findByTramite(Long idTramite) {
         return seguimientoRepo.findByTramite_IdTramiteOrderByFechaRegistroDesc(idTramite);
@@ -46,12 +48,6 @@ public class SeguimientoService {
         return seguimientoRepo.findAll();
     }
 
-    /**
-     * Si el trámite no tiene hitos, crea el primero («Iniciar Actividad»). Luego
-     * devuelve la lista.
-     * Replica acciones_tramites.php?accion=iniciar_seguimiento (auto-crear al
-     * entrar al detalle).
-     */
     private static SeguimientoListResponse toListResponse(Seguimiento s) {
         SeguimientoListResponse res = new SeguimientoListResponse();
         res.setIdSeguimiento(s.getIdSeguimiento());
@@ -77,7 +73,6 @@ public class SeguimientoService {
 
         res.setTipoTramite(s.getTramite() != null ? s.getTramite().getTipoTramite() : null);
 
-        // Mapeo de listas múltiples
         if (s.getTecnicosInstaladores() != null) {
             res.setIdsTecnicosInstaladores(s.getTecnicosInstaladores().stream()
                     .map(TecnicoInstalador::getIdTecnicoInstalador)
@@ -125,7 +120,6 @@ public class SeguimientoService {
                 .findByTramite_IdTramiteOrderByFechaRegistroDesc(idTramite);
 
         if (existentes.isEmpty()) {
-            // No hay historial: creamos el hito de apertura estándar
             Tramite t = tramiteRepo.findById(idTramite)
                     .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + idTramite));
 
@@ -151,12 +145,9 @@ public class SeguimientoService {
             return;
         }
 
-        // Saneador: si por algún motivo hay seguimientos "en blanco" recién creados,
-        // nos aseguramos de que al menos uno tenga el comentario de apertura
-        // y eliminamos duplicados completamente vacíos.
         List<Seguimiento> blancos = existentes.stream()
                 .filter(s -> (s.getComentario() == null || s.getComentario().isBlank()))
-                .toList();
+                .collect(Collectors.toList());
 
         if (!blancos.isEmpty()) {
             Seguimiento principal = blancos.get(0);
@@ -172,7 +163,6 @@ public class SeguimientoService {
             seguimientoRepo.save(principal);
 
             if (blancos.size() > 1) {
-                // Eliminamos duplicados completamente vacíos (solo en el caso especial de alta)
                 blancos.stream().skip(1).forEach(seguimientoRepo::delete);
             }
         }
@@ -205,7 +195,6 @@ public class SeguimientoService {
         }
         s.setCreador(creador);
 
-        Usuario asignado;
         if (dto.getIdProveedor() != null) {
             Proveedor p = proveedorRepo.findById(dto.getIdProveedor())
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
@@ -219,7 +208,6 @@ public class SeguimientoService {
             s.setUsuarioAsignado(creador);
         }
 
-        // Handle multiple assignments if IDs are provided
         if (dto.getIdsTecnicosInstaladores() != null) {
             List<TecnicoInstalador> installers = tecnicoInstaladorRepo.findAllById(dto.getIdsTecnicosInstaladores());
             s.getTecnicosInstaladores().clear();
@@ -233,6 +221,21 @@ public class SeguimientoService {
         }
 
         Seguimiento saved = seguimientoRepo.save(s);
+        
+        String mensaje = "Nueva asignación: Seguimiento en Trámite #" + t.getIdTramite();
+        String link = "/tramite-detalle/" + t.getIdTramite();
+        
+        if (saved.getUsuarioAsignado() != null) {
+            notificacionService.crearNotificacion(saved.getUsuarioAsignado(), mensaje, link);
+        }
+        if (saved.getUsuariosAsignados() != null) {
+            for (Usuario u : saved.getUsuariosAsignados()) {
+                if (saved.getUsuarioAsignado() == null || !u.getIdUsuario().equals(saved.getUsuarioAsignado().getIdUsuario())) {
+                    notificacionService.crearNotificacion(u, mensaje, link);
+                }
+            }
+        }
+
         return toListResponse(saved);
     }
 
@@ -254,12 +257,10 @@ public class SeguimientoService {
             s.setEstado(dto.getEstado());
         }
 
-        // Update relations if present
         if (dto.getIdProveedor() != null) {
             Proveedor p = proveedorRepo.findById(dto.getIdProveedor())
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
             s.setProveedor(p);
-            // If checking logic requires changing assigned user when provider changes
         } else {
             s.setProveedor(null);
         }
@@ -270,7 +271,6 @@ public class SeguimientoService {
             s.setUsuarioAsignado(u);
         }
 
-        // Handle multiple assignments update
         if (dto.getIdsTecnicosInstaladores() != null) {
             List<TecnicoInstalador> installers = tecnicoInstaladorRepo.findAllById(dto.getIdsTecnicosInstaladores());
             s.getTecnicosInstaladores().clear();
@@ -284,6 +284,22 @@ public class SeguimientoService {
         }
 
         Seguimiento saved = seguimientoRepo.save(s);
+
+        if (dto.getIdUsuarioAsignado() != null || (dto.getIdsUsuariosAsignados() != null && !dto.getIdsUsuariosAsignados().isEmpty())) {
+            String mensaje = "Actualización: Seguimiento en Trámite #" + saved.getTramite().getIdTramite();
+            String link = "/tramite-detalle/" + saved.getTramite().getIdTramite();
+            if (saved.getUsuarioAsignado() != null) {
+                notificacionService.crearNotificacion(saved.getUsuarioAsignado(), mensaje, link);
+            }
+            if (saved.getUsuariosAsignados() != null) {
+                for (Usuario u : saved.getUsuariosAsignados()) {
+                    if (saved.getUsuarioAsignado() == null || !u.getIdUsuario().equals(saved.getUsuarioAsignado().getIdUsuario())) {
+                        notificacionService.crearNotificacion(u, mensaje, link);
+                    }
+                }
+            }
+        }
+
         return toListResponse(saved);
     }
 

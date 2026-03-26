@@ -6,6 +6,7 @@ import lombok.Data;
 public class LoginRequest {
     private String username;
     private String password;
+    private boolean force;
 
     public String getUsername() {
         return username;
@@ -21,5 +22,13 @@ public class LoginRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isForce() {
+        return force;
+    }
+
+    public void setForce(boolean force) {
+        this.force = force;
     }
 }

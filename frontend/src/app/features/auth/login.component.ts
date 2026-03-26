@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-login',
@@ -18,7 +19,7 @@ export class LoginComponent implements OnInit {
 
   showPassword = signal(false);
   isLoading = signal(false);
-  loginStatus = signal<'idle' | 'error' | 'success'>('idle');
+  loginStatus = signal<'idle' | 'error' | 'success' | 'conflict'>('idle');
 
   loginForm = this.fb.group({
     username: ['', [Validators.required]],
@@ -41,7 +42,7 @@ export class LoginComponent implements OnInit {
     this.showPassword.update(v => !v);
   }
 
-  onSubmit() {
+  onSubmit(force: boolean = false) {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -50,14 +51,11 @@ export class LoginComponent implements OnInit {
     this.isLoading.set(true);
     this.loginStatus.set('idle');
 
-    // Logging para depuración en producción
-    console.log('[Login] Intentando conectar con:', (this.authService as any).api.url);
-    console.log('[Login] Usuario:', this.loginForm.value.username);
+    const credentials = { ...this.loginForm.value, force };
 
-    this.authService.login(this.loginForm.value).subscribe({
+    this.authService.login(credentials).subscribe({
       next: () => {
         this.loginStatus.set('success');
-        // Pequeño delay para mostrar el mensaje de éxito antes de navegar
         setTimeout(() => {
           this.isLoading.set(false);
           this.router.navigate(['/']);
@@ -65,13 +63,38 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.loginStatus.set('error');
-        console.error('[Login] Error:', err);
         
-        // Limpiar el estado de error después de unos segundos
-        setTimeout(() => {
-          this.loginStatus.set('idle');
-        }, 5000);
+        if (err.status === 409) {
+          this.loginStatus.set('conflict');
+          this.handleConcurrentSession();
+        } else {
+          this.loginStatus.set('error');
+          console.error('[Login] Error:', err);
+          setTimeout(() => {
+            this.loginStatus.set('idle');
+          }, 5000);
+        }
+      }
+    });
+  }
+
+  private handleConcurrentSession() {
+    Swal.fire({
+      title: 'Sesión Activa Detectada',
+      text: 'Actualmente tienes otra sesión abierta en este usuario. ¿Deseas cerrarla e iniciar sesión aquí?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Sí, cerrar otras sesiones',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      heightAuto: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.onSubmit(true); // Re-enviar con force=true
+      } else {
+        this.loginStatus.set('idle');
       }
     });
   }

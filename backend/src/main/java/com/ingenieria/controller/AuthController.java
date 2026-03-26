@@ -20,8 +20,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.userdetails.UserDetails;
-
+import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -67,21 +69,36 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(username, password));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = jwtUtils.generateJwtToken(authentication);
-
+            
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            Usuario usuario = usuarioRepository.findByNombreUsuario(userDetails.getUsername()).orElse(null);
+
+            // Control de sesiones simultáneas
+            if (usuario != null && !loginRequest.isForce()) {
+                Optional<AuditoriaSesion> sesionActual = auditoriaSesionRepository
+                        .findTopByIdUsuarioAndEstadoOrderByFechaInicioDesc(usuario.getIdUsuario(), "Conectado");
+                
+                if (sesionActual.isPresent()) {
+                    LocalDateTime ultima = sesionActual.get().getFechaUltimaActividad();
+                    if (ultima != null && Duration.between(ultima, LocalDateTime.now()).toMinutes() < 2) {
+                        log.info("[Auth] Bloqueando login por sesión activa para: {}", username);
+                        return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(Map.of("message", "SESSION_ALREADY_ACTIVE", "idUsuario", usuario.getIdUsuario()));
+                    }
+                }
+            }
+
+            String jwt = jwtUtils.generateJwtToken(authentication);
             String rol = userDetails.getAuthorities().iterator().next().getAuthority();
 
-            // Auditoría: no debe bloquear el login. Si falla, solo logueamos.
+            // Auditoría: cerrar sesiones anteriores 
             try {
-                Usuario usuario = usuarioRepository.findByNombreUsuario(userDetails.getUsername()).orElse(null);
                 if (usuario != null) {
-                    // Cerrar sesiones anteriores que hayan quedado abiertas ("zombis")
-                    log.info("[Auth] Cerrando sesiones previas para el usuario: {}", usuario.getNombreUsuario());
+                    log.info("[Auth] Iniciando sesión y cerrando previas para: {}", usuario.getNombreUsuario());
                     auditoriaSesionRepository.findAllByIdUsuarioAndEstado(usuario.getIdUsuario(), "Conectado")
                             .forEach(s -> {
                                 s.setEstado("Desconectado");
-                                s.setFechaFin(java.time.LocalDateTime.now());
+                                s.setFechaFin(LocalDateTime.now());
                                 auditoriaSesionRepository.save(s);
                             });
 

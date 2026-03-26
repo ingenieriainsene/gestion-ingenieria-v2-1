@@ -1761,3 +1761,15 @@ ON CONFLICT (dni_nie) DO NOTHING;
 ALTER TABLE TRAMITES_CONTRATO ADD COLUMN IF NOT EXISTS id_tramite_bloqueante BIGINT;
 ALTER TABLE TRAMITES_CONTRATO DROP CONSTRAINT IF EXISTS fk_tramite_bloqueante;
 ALTER TABLE TRAMITES_CONTRATO ADD CONSTRAINT fk_tramite_bloqueante FOREIGN KEY (id_tramite_bloqueante) REFERENCES TRAMITES_CONTRATO(id_tramite) ON DELETE SET NULL;
+
+-- ==========================================================
+-- SISTEMA DE NOTIFICACIONES
+-- ==========================================================
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id_notificacion BIGSERIAL PRIMARY KEY,
+    id_usuario BIGINT NOT NULL REFERENCES USUARIOS(id_usuario) ON DELETE CASCADE,
+    mensaje TEXT NOT NULL,
+    link TEXT,
+    leida BOOLEAN DEFAULT FALSE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
