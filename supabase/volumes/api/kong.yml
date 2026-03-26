@@ -1,0 +1,18 @@
+_format_version: "1.1"
+
+services:
+  # Ruta para la Autenticación (GoTrue)
+  - name: auth
+    url: http://gestion-auth:9999
+    routes:
+      - name: auth-route
+        paths:
+          - /auth/v1
+
+  # Ruta para la API de la Base de Datos (PostgREST)
+  - name: rest
+    url: http://gestion-rest:3000
+    routes:
+      - name: rest-route
+        paths:
+          - /rest/v1
