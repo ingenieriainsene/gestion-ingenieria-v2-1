@@ -1,6 +1,6 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://gestion-ingenieria-v2.onrender.com/api',
+    apiUrl: 'http://192.168.1.66:8082/api',
 
     supabase: {
         // URL de tu proyecto de Supabase en la nube
