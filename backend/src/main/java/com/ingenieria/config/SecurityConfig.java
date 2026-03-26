@@ -79,7 +79,9 @@ public class SecurityConfig {
                 "https://*.vercel.app",
                 "https://gestion-ingenieria-v2.vercel.app",
                 "http://localhost:4200",
-                "http://127.0.0.1:4200"));
+                "http://127.0.0.1:4200",
+                "http://192.168.1.66:8080",
+                "http://192.168.1.66"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
