@@ -21,4 +21,7 @@ public class TramiteVentaResponse {
     private java.time.LocalDateTime fechaCreacion;
     /** Fecha de seguimiento (inicio). */
     private java.time.LocalDate fechaSeguimiento;
+
+    private Long idTramiteBloqueante;
+    private String nombreTramiteBloqueante;
 }

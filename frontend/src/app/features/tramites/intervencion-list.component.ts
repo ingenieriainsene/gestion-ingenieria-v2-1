@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TramiteService, TramiteListResponse } from '../../services/domain.services';
 import { UsuarioService, Usuario } from '../../services/usuario.service';
+import { ApiService } from '../../services/api.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-intervencion-list',
@@ -12,6 +14,7 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
   template: `
     <div class="header-section">
       <h1>Intervenciones <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
+      <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
     </div>
 
     <div class="filters-container">
@@ -300,6 +303,24 @@ import { UsuarioService, Usuario } from '../../services/usuario.service';
     .status-badge.pendiente { background: #fee2e2; color: #b91c1c; }
     .status-badge.proceso { background: #ffedd5; color: #c2410c; }
     .status-badge.terminado { background: #dcfce7; color: #15803d; }
+
+    .btn-export {
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-export:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
     
     .badge-tipo {
       background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;
@@ -342,6 +363,7 @@ export class IntervencionListComponent implements OnInit {
   constructor(
     private tramiteService: TramiteService,
     private usuarioService: UsuarioService,
+    private api: ApiService,
     private router: Router
   ) { }
 
@@ -475,5 +497,31 @@ export class IntervencionListComponent implements OnInit {
       return;
     }
     this.router.navigate(['/tramite-detalle', t.idTramite]);
+  }
+
+  exportarPDF() {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/intervenciones').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-intervenciones-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
+    });
   }
 }

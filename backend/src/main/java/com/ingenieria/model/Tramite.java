@@ -12,13 +12,11 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@ToString(exclude = { "contrato", "instaladores" })
+@ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "TRAMITES_CONTRATO")
@@ -78,6 +76,12 @@ public class Tramite {
             estado = "Pendiente";
         }
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tramite_bloqueante")
+    @ToString.Exclude
+    @JsonIgnore
+    private Tramite tramiteBloqueante;
 
     // El concepto de "Venta Pendiente" se gestiona ahora a través del estado:
     // estado = "Pendiente" -> Venta Pendiente

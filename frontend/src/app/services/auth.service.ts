@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -10,6 +10,9 @@ export class AuthService {
     private endpoint = 'auth';
     private tokenKey = 'authToken';
     private roleKey = 'authRole';
+
+    private loggedInSubject = new BehaviorSubject<boolean>(this.hasValidToken());
+    public isLoggedIn$ = this.loggedInSubject.asObservable();
 
     constructor(private api: ApiService, private router: Router) {
         // Iniciar pulso si ya está logueado al cargar el servicio
@@ -23,10 +26,11 @@ export class AuthService {
             tap((response: any) => {
                 if (response.token) {
                     localStorage.setItem(this.tokenKey, response.token);
+                    if (response.rol) {
+                        localStorage.setItem(this.roleKey, response.rol);
+                    }
+                    this.loggedInSubject.next(true);
                     this.startHeartbeat();
-                }
-                if (response.rol) {
-                    localStorage.setItem(this.roleKey, response.rol);
                 }
             })
         );
@@ -72,25 +76,27 @@ export class AuthService {
             next: () => {
                 this.stopHeartbeat();
                 this.clearToken();
+                this.loggedInSubject.next(false);
                 this.router.navigate(['/login']);
             },
             error: () => {
                 // Incluso si falla, limpiamos el estado local
                 this.stopHeartbeat();
                 this.clearToken();
+                this.loggedInSubject.next(false);
                 this.router.navigate(['/login']);
             }
         });
     }
 
     getToken() {
-        const token = localStorage.getItem(this.tokenKey);
-        if (!token) return null;
-        if (this.isTokenExpired(token)) {
-            this.clearToken();
-            return null;
-        }
-        return token;
+        return localStorage.getItem(this.tokenKey);
+    }
+
+    private hasValidToken(): boolean {
+        const token = this.getToken();
+        if (!token) return false;
+        return !this.isTokenExpired(token);
     }
 
     getRole(): string | null {
@@ -98,11 +104,26 @@ export class AuthService {
     }
 
     isLoggedIn(): boolean {
-        return !!this.getToken();
+        return this.loggedInSubject.value;
+    }
+
+    /**
+     * Valida la sesión actual y actualiza el estado. 
+     * Llamar periódicamente o en navegación, NO en plantillas.
+     */
+    validateSession(): void {
+        const isValid = this.hasValidToken();
+        if (this.loggedInSubject.value !== isValid) {
+            this.loggedInSubject.next(isValid);
+            if (!isValid) {
+                this.clearToken();
+            }
+        }
     }
 
     forceLogout(): void {
         this.clearToken();
+        this.loggedInSubject.next(false);
         this.router.navigate(['/login']);
     }
 

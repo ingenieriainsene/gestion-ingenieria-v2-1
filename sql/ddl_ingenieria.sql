@@ -118,7 +118,9 @@ CREATE TABLE IF NOT EXISTS TRAMITES_CONTRATO (
     detalle_seguimiento TEXT NULL,
     fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     fecha_ejecucion TIMESTAMPTZ NULL,
-    CONSTRAINT fk_tramite_contrato FOREIGN KEY (id_contrato) REFERENCES contratos(id_contrato) ON DELETE CASCADE
+    id_tramite_bloqueante BIGINT NULL,
+    CONSTRAINT fk_tramite_contrato FOREIGN KEY (id_contrato) REFERENCES contratos(id_contrato) ON DELETE CASCADE,
+    CONSTRAINT fk_tramite_bloqueante FOREIGN KEY (id_tramite_bloqueante) REFERENCES TRAMITES_CONTRATO(id_tramite) ON DELETE SET NULL
 );
 
 
@@ -1754,3 +1756,8 @@ CREATE TABLE IF NOT EXISTS fichajes (
 INSERT INTO empleados (id, nombre_completo, dni_nie, fecha_alta, puesto, estado)
 VALUES ('00000000-0000-0000-0000-000000000001', 'Administrador Jefe', '00000000T', CURRENT_DATE, 'Administrador', 'ACTIVO')
 ON CONFLICT (dni_nie) DO NOTHING;
+
+-- ACTUALIZACIÓN: BLOQUEO DE TRÁMITES
+ALTER TABLE TRAMITES_CONTRATO ADD COLUMN IF NOT EXISTS id_tramite_bloqueante BIGINT;
+ALTER TABLE TRAMITES_CONTRATO DROP CONSTRAINT IF EXISTS fk_tramite_bloqueante;
+ALTER TABLE TRAMITES_CONTRATO ADD CONSTRAINT fk_tramite_bloqueante FOREIGN KEY (id_tramite_bloqueante) REFERENCES TRAMITES_CONTRATO(id_tramite) ON DELETE SET NULL;

@@ -1,10 +1,13 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { inject, Injector } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
-    // Usar localStorage directamente para el token para evitar circularidad DI con AuthService
-    const token = localStorage.getItem('authToken');
+    const injector = inject(Injector);
+    const auth = injector.get(AuthService);
+    const token = auth.getToken();
 
     if (token) {
         req = req.clone({
@@ -17,11 +20,9 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req).pipe(
         catchError((error) => {
             if (error?.status === 401 || error?.status === 403) {
-                // Evita dependencia circular con AuthService dentro del interceptor.
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('authRole');
+                // Si no estamos ya en login, forzamos salida para limpiar estado reactivo
                 if (!window.location.pathname.includes('/login')) {
-                    window.location.assign('/login');
+                    auth.forceLogout();
                 }
             }
             return throwError(() => error);

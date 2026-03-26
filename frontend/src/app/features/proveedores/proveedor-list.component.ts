@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProveedorService, ProveedorCreateRequest } from '../../services/proveedor.service';
+import { ApiService } from '../../services/api.service';
 import Swal from 'sweetalert2';
 
 /** Coincide con ProveedorListDTO del backend (camelCase). */
@@ -24,7 +25,10 @@ interface ProveedorRow {
   template: `
     <div class="header-section">
       <h1>Gestión de Proveedores <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
-      <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Proveedor</button>
+      <div class="header-actions">
+        <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
+        <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Proveedor</button>
+      </div>
     </div>
 
     <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 25px;">
@@ -127,6 +131,14 @@ interface ProveedorRow {
     </div>
   `,
   styles: [
+    `.header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }`,
+    `.header-actions { display: flex; gap: 12px; }`,
+    `.btn-export {
+      background: white; color: #475569; border: 1px solid #e2e8f0; padding: 10px 18px;
+      border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+    }`,
+    `.btn-export:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }`,
     `.muted { color: #94a3b8; }`,
     `.modal-form { max-width: 520px; text-align: left; width: 90%; }`,
     `.form-row { margin-bottom: 16px; }`,
@@ -194,6 +206,7 @@ export class ProveedorListComponent implements OnInit {
 
   constructor(
     private service: ProveedorService,
+    private api: ApiService,
     private fb: FormBuilder,
     private router: Router
   ) {
@@ -353,5 +366,31 @@ export class ProveedorListComponent implements OnInit {
       return;
     }
     this.router.navigate(['/proveedores', p.id]);
+  }
+
+  exportarPDF(): void {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/proveedores').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-proveedores-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
+    });
   }
 }

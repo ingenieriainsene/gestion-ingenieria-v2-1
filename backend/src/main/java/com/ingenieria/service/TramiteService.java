@@ -92,6 +92,8 @@ public class TramiteService {
         resp.setFechaVencimiento(c.getFechaVencimiento());
         resp.setFacturado(t.getFacturado());
         resp.setInstaladores(new ArrayList<>(t.getInstaladores()));
+        resp.setIdTramiteBloqueante(t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite() : null);
+        resp.setNombreTramiteBloqueante(t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getTipoTramite() : null);
         return resp;
     }
 
@@ -112,7 +114,9 @@ public class TramiteService {
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento(),
                         t.getFechaEjecucion(),
-                        t.getTecnicoAsignado()))
+                        t.getTecnicoAsignado(),
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite() : null,
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getTipoTramite() : null))
                 .collect(Collectors.toList());
     }
 
@@ -131,7 +135,9 @@ public class TramiteService {
                         t.getEstado(),
                         t.getDescripcion(),
                         t.getFechaCreacion(),
-                        t.getFechaSeguimiento()))
+                        t.getFechaSeguimiento(),
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite() : null,
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getTipoTramite() : null))
                 .collect(Collectors.toList());
     }
 
@@ -147,7 +153,9 @@ public class TramiteService {
                         t.getEstado(),
                         t.getDescripcion(),
                         t.getFechaCreacion(),
-                        t.getFechaSeguimiento()))
+                        t.getFechaSeguimiento(),
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite() : null,
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getTipoTramite() : null))
                 .collect(Collectors.toList());
     }
 
@@ -170,7 +178,9 @@ public class TramiteService {
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento(),
                         t.getFechaEjecucion(),
-                        t.getTecnicoAsignado()))
+                        t.getTecnicoAsignado(),
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite() : null,
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getTipoTramite() : null))
                 .collect(Collectors.toList());
     }
 
@@ -215,7 +225,9 @@ public class TramiteService {
                             cliente,
                             local,
                             t.getDescripcion(),
-                            t.getFacturado());
+                            t.getFacturado(),
+                            t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite() : null,
+                            t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getTipoTramite() : null);
                 })
                 .collect(Collectors.toList());
     }
@@ -242,7 +254,9 @@ public class TramiteService {
                         t.getFechaCreacion(),
                         t.getFechaSeguimiento(),
                         t.getFechaEjecucion(),
-                        t.getTecnicoAsignado()))
+                        t.getTecnicoAsignado(),
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite() : null,
+                        t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getTipoTramite() : null))
                 .collect(Collectors.toList());
     }
 
@@ -344,6 +358,16 @@ public class TramiteService {
             throw new IllegalArgumentException(
                     "Solo se puede generar un trámite en estado Pendiente. Estado actual: " + t.getEstado());
         }
+
+        // VALIDACIÓN DE BLOQUEO
+        if (t.getTramiteBloqueante() != null) {
+            String estadoBloqueante = t.getTramiteBloqueante().getEstado();
+            if (!"Terminado".equals(estadoBloqueante)) {
+                throw new IllegalStateException("No se puede generar este trámite porque depende de '" 
+                    + t.getTramiteBloqueante().getTipoTramite() + "' que aún no ha terminado (Estado: " + estadoBloqueante + ").");
+            }
+        }
+
         auditoriaService.registrarCambio("TRAMITES_CONTRATO", id, "estado", "Pendiente", "En proceso", usuarioBd);
         t.setEstado("En proceso");
         Tramite saved = tramiteRepository.save(t);
@@ -355,7 +379,9 @@ public class TramiteService {
                 saved.getEstado(),
                 saved.getDescripcion(),
                 saved.getFechaCreacion(),
-                saved.getFechaSeguimiento());
+                saved.getFechaSeguimiento(),
+                saved.getTramiteBloqueante() != null ? saved.getTramiteBloqueante().getIdTramite() : null,
+                saved.getTramiteBloqueante() != null ? saved.getTramiteBloqueante().getTipoTramite() : null);
     }
 
     @Transactional
@@ -390,7 +416,9 @@ public class TramiteService {
                 saved.getEstado(),
                 saved.getDescripcion(),
                 saved.getFechaCreacion(),
-                saved.getFechaSeguimiento());
+                saved.getFechaSeguimiento(),
+                null, 
+                null);
     }
 
     @Transactional
@@ -410,6 +438,37 @@ public class TramiteService {
                 .orElseThrow(() -> new RuntimeException("Trámite no encontrado"));
 
         t.getInstaladores().removeIf(ins -> ins.getIdTecnicoInstalador().equals(idInstalador));
+        return tramiteRepository.save(t);
+    }
+
+    /**
+     * Establece un trámite bloqueante para otro.
+     */
+    @Transactional
+    public Tramite condicionar(Long id, Long idBloqueante, String usuarioBd) {
+        Tramite t = tramiteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Trámite no encontrado: " + id));
+
+        Tramite bloqueante = null;
+        if (idBloqueante != null) {
+            bloqueante = tramiteRepository.findById(idBloqueante)
+                    .orElseThrow(() -> new RuntimeException("Trámite bloqueante no encontrado: " + idBloqueante));
+
+            if (t.getIdTramite().equals(idBloqueante)) {
+                throw new IllegalArgumentException("Un trámite no puede condicionarse a sí mismo.");
+            }
+            if (t.getContrato() == null || bloqueante.getContrato() == null ||
+                !t.getContrato().getIdContrato().equals(bloqueante.getContrato().getIdContrato())) {
+                throw new IllegalArgumentException("El trámite bloqueante debe pertenecer al mismo contrato.");
+            }
+        }
+
+        String viejo = t.getTramiteBloqueante() != null ? t.getTramiteBloqueante().getIdTramite().toString() : "ninguno";
+        String nuevo = idBloqueante != null ? idBloqueante.toString() : "ninguno";
+
+        auditoriaService.registrarCambio("TRAMITES_CONTRATO", id, "id_tramite_bloqueante", viejo, nuevo, usuarioBd);
+
+        t.setTramiteBloqueante(bloqueante);
         return tramiteRepository.save(t);
     }
 }

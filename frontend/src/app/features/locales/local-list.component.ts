@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LocalService, ClienteService, Local, Cliente } from '../../services/domain.services';
+import { ApiService } from '../../services/api.service';
 import { AutocompleteComponent } from '../../shared/components/autocomplete/autocomplete.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
@@ -15,7 +16,10 @@ import Swal from 'sweetalert2';
   template: `
     <div class="header-section">
       <h1>Gestión de Locales <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
-      <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Local</button>
+      <div class="header-actions">
+        <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
+        <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Local</button>
+      </div>
     </div>
 
     <div class="filter-card">
@@ -159,6 +163,15 @@ import Swal from 'sweetalert2';
     </div>
   `,
   styles: [`
+    .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .header-actions { display: flex; gap: 12px; }
+    .btn-export {
+      background: white; color: #475569; border: 1px solid #e2e8f0; padding: 10px 18px;
+      border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+    }
+    .btn-export:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+
     .header-bar {
       display: none;
     }
@@ -421,6 +434,7 @@ export class LocalListComponent implements OnInit {
   constructor(
     private service: LocalService,
     private clienteService: ClienteService,
+    private api: ApiService,
     private fb: FormBuilder,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -634,6 +648,32 @@ export class LocalListComponent implements OnInit {
     const rc14 = encodeURIComponent(normalized.substring(0, Math.min(14, normalized.length)));
     const url = `https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx?buscar=S&refcat=${rc14}`;
     window.open(url, '_blank');
+  }
+
+  exportarPDF() {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/locales').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-locales-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
+    });
   }
 
 }

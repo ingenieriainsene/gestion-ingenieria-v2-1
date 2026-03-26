@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { PresupuestoService, PresupuestoListItem } from '../../services/presupuesto.service';
+import { ApiService } from '../../services/api.service';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 
@@ -13,7 +14,10 @@ import Swal from 'sweetalert2';
   template: `
     <div class="header-section">
       <h1>GESTIÓN DE PRESUPUESTOS <span class="badge-contador" *ngIf="filteredPresupuestos">{{ filteredPresupuestos.length }} registros</span></h1>
-      <a routerLink="/presupuestos/nuevo" class="btn-primary">+ Nuevo Presupuesto</a>
+      <div class="header-actions">
+        <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
+        <a routerLink="/presupuestos/nuevo" class="btn-primary">+ Nuevo Presupuesto</a>
+      </div>
     </div>
 
     <div class="filter-card">
@@ -96,6 +100,15 @@ import Swal from 'sweetalert2';
     </div>
   `,
   styles: [`
+    .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .header-actions { display: flex; gap: 12px; }
+    .btn-export {
+      background: white; color: #475569; border: 1px solid #e2e8f0; padding: 10px 18px;
+      border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+    }
+    .btn-export:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+
     .header-container {
       display: none;
     }
@@ -287,6 +300,7 @@ export class PresupuestoListComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: PresupuestoService,
+    private api: ApiService,
     private router: Router,
     private fb: FormBuilder
   ) {
@@ -427,6 +441,32 @@ export class PresupuestoListComponent implements OnInit, OnDestroy {
           Swal.fire('Error', 'No se pudo eliminar el presupuesto.', 'error');
         }
       });
+    });
+  }
+
+  exportarPDF(): void {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/presupuestos').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-presupuestos-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
     });
   }
 }

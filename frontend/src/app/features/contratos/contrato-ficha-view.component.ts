@@ -139,6 +139,7 @@ import Swal from 'sweetalert2';
                     <span class="status-badge pendiente">Pendiente</span>
                   </div>
                   <div class="venta-actions">
+                    <button type="button" class="btn-condicionar" (click)="condicionar(t, $event)">Condicionar</button>
                     <button type="button" class="btn-primary btn-generar" (click)="generarIntervencion(t)">Generar</button>
                   </div>
                 </div>
@@ -398,6 +399,11 @@ import Swal from 'sweetalert2';
       padding: 6px 12px; font-size: 0.7rem; font-weight: bold; border-radius: 5px;
       text-decoration: none; text-align: center; cursor: pointer; border: none;
     }
+    .btn-condicionar {
+      padding: 6px 12px; font-size: 0.7rem; font-weight: bold; border-radius: 5px;
+      background: #3b82f6; color: white; border: none; cursor: pointer;
+    }
+    .btn-condicionar:hover { background: #2563eb; }
     .btn-gestionar, .btn-generar { background: #f1c40f; color: #1e293b; }
     .btn-icon { background: #1e293b; color: white; padding: 8px 12px; }
 
@@ -602,6 +608,55 @@ export class ContratoFichaViewComponent implements OnInit {
         console.error('Error al generar', err);
         const msg = typeof err?.error === 'string' ? err.error : (err?.error?.message ?? err?.message ?? 'No se pudo generar la intervencion.');
         Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
+  condicionar(t: Tramite, event: MouseEvent) {
+    event.stopPropagation();
+    
+    // Filtrar otros trámites del MISMO CONTRATO que pueden ser bloqueantes
+    // (Excluyendo el propio trámite y los que ya están terminados si se prefiere, 
+    // aunque lo ideal es permitir cualquiera y que el backend valide)
+    const opciones = this.allTramites
+      .filter(other => other.idTramite !== t.idTramite)
+      .reduce((acc, curr) => {
+        acc[curr.idTramite!] = `${curr.tipoTramite} (#${curr.idTramite}) - ${curr.estado}`;
+        return acc;
+      }, {} as any);
+
+    if (Object.keys(opciones).length === 0) {
+      Swal.fire('Sin opciones', 'No hay otros trámites en este contrato para establecer una condición.', 'info');
+      return;
+    }
+
+    Swal.fire({
+      title: 'Condicionar Intervención',
+      text: `Selecciona qué trámite debe terminarse antes de poder generar "${t.tipoTramite}":`,
+      input: 'select',
+      inputOptions: opciones,
+      inputPlaceholder: '-- Seleccionar Trámite Bloqueante --',
+      showCancelButton: true,
+      confirmButtonText: 'Establecer Condición',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        return new Promise((resolve) => {
+          if (value) resolve(null);
+          else resolve('Debes seleccionar un trámite');
+        });
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        this.tramites.condicionar(t.idTramite!, Number(result.value)).subscribe({
+          next: () => {
+            Swal.fire('Condicionado', 'Se ha establecido la dependencia correctamente.', 'success');
+            if (this.contrato?.idContrato) this.cargarDatos(this.contrato.idContrato);
+          },
+          error: (err) => {
+            console.error('Error al condicionar', err);
+            Swal.fire('Error', 'No se pudo establecer la condición.', 'error');
+          }
+        });
       }
     });
   }

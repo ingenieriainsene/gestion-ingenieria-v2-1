@@ -37,6 +37,10 @@ public class ProveedorService {
                 .collect(Collectors.toList());
     }
 
+    public List<Proveedor> findAll() {
+        return proveedorRepository.findAll(Sort.by(Sort.Direction.ASC, "nombreComercial"));
+    }
+
     private ProveedorListDTO convertirADTO(Proveedor p) {
         String tipo = (p.getEsAutonomo() != null && p.getEsAutonomo()) ? "AUTÓNOMO" : "EMPRESA";
         List<String> listaOficios = (p.getOficios() != null)

@@ -62,4 +62,6 @@ public class TramiteDetalleResponse {
     private Boolean facturado;
 
     private List<TecnicoInstalador> instaladores;
+    private Long idTramiteBloqueante;
+    private String nombreTramiteBloqueante;
 }

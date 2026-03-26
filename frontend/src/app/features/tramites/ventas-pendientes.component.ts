@@ -102,6 +102,9 @@ import Swal from 'sweetalert2';
           </td>
           <td data-label="Intervención">
             <span class="badge-tipo">{{ t.tipoTramite }}</span>
+            <div *ngIf="t.idTramiteBloqueante" class="dep-info">
+              <small>🔒 Depende de: <b>{{ t.nombreTramiteBloqueante }}</b></small>
+            </div>
           </td>
           <td data-label="Detalle">
             {{ t.descripcion || '—' }}
@@ -110,13 +113,22 @@ import Swal from 'sweetalert2';
             <strong>{{ (t.fechaSeguimiento || t.fechaCreacion) | date:'dd/MM/yyyy' }}</strong>
           </td>
           <td data-label="Acción" style="text-align:right;">
-            <button
-              type="button"
-              class="btn-generar"
-              (click)="generar(t, $event)"
-            >
-              Generar
-            </button>
+            <div class="actions-group">
+              <button
+                type="button"
+                class="btn-condicionar"
+                (click)="condicionar(t, $event)"
+              >
+                Condicionar
+              </button>
+              <button
+                type="button"
+                class="btn-generar"
+                (click)="generar(t, $event)"
+              >
+                Generar
+              </button>
+            </div>
           </td>
         </tr>
         <tr *ngIf="filtrados.length === 0">
@@ -233,6 +245,31 @@ import Swal from 'sweetalert2';
       .header-date-range {
         flex-direction: column;
       }
+    }
+    .actions-group {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .dep-info {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 0.75rem;
+    }
+    .btn-condicionar {
+      background: #f8fafc;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-condicionar:hover {
+      background: #e2e8f0;
+      color: #1e293b;
     }
   `]
 })
@@ -412,6 +449,57 @@ export class VentasPendientesComponent implements OnInit {
           this.cargar();
         }
       });
+    });
+  }
+
+  condicionar(t: any, event: Event): void {
+    event.stopPropagation();
+    if (!t.idContrato) return;
+
+    // Obtenemos todos los trámites del contrato para elegir el bloqueante
+    this.tramiteService.getByContrato(t.idContrato).subscribe({
+      next: (otros) => {
+        const opciones = otros
+          .filter(ot => ot.idTramite !== t.idTramite)
+          .map(ot => `<option value="${ot.idTramite}" ${ot.idTramite === t.idTramiteBloqueante ? 'selected' : ''}>${ot.tipoTramite} (${ot.estado})</option>`)
+          .join('');
+
+        Swal.fire({
+          title: 'Condicionar intervención',
+          html: `
+            <div style="text-align:left; font-size:0.9rem; margin-bottom:15px;">
+              <p>Selecciona qué intervención debe estar <b>Terminada</b> para poder generar "${t.tipoTramite}":</p>
+            </div>
+            <select id="swal-input-bloqueante" class="swal2-input" style="width:100%; box-sizing:border-box;">
+              <option value="">(Ninguna / Eliminar condición)</option>
+              ${opciones}
+            </select>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Guardar condición',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#1e293b',
+          preConfirm: () => {
+            const select = document.getElementById('swal-input-bloqueante') as HTMLSelectElement;
+            return select.value ? parseInt(select.value, 10) : null;
+          }
+        }).then(res => {
+          if (res.isConfirmed) {
+            this.tramiteService.condicionar(t.idTramite, res.value).subscribe({
+              next: () => {
+                Swal.fire('Guardado', 'La condición se ha actualizado correctamente.', 'success');
+                this.cargar();
+              },
+              error: (err) => {
+                Swal.fire('Error', err?.error || 'No se pudo establecer la condición.', 'error');
+              }
+            });
+          }
+        });
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudieron cargar las intervenciones del contrato.', 'error');
+      }
     });
   }
 

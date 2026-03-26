@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { ContratoService, Contrato, ClienteService, LocalService, Cliente, Local } from '../../services/domain.services';
+import { ApiService } from '../../services/api.service';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 
@@ -13,7 +14,10 @@ import Swal from 'sweetalert2';
   template: `
     <div class="header-section">
       <h1>Gestión de Contratos <span class="badge-contador" *ngIf="filteredContratos">{{ filteredContratos.length }} registros</span></h1>
-      <a routerLink="/contratos/nuevo" class="btn-primary">+ Nuevo Contrato</a>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
+        <a routerLink="/contratos/nuevo" class="btn-primary">+ Nuevo Contrato</a>
+      </div>
     </div>
 
     <div class="filter-card">
@@ -155,6 +159,24 @@ import Swal from 'sweetalert2';
     .btn-primary:hover {
       background: #334155;
       transform: translateY(-1px);
+    }
+
+    .btn-export {
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-export:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
     }
 
     .filter-card {
@@ -378,6 +400,7 @@ export class ContratoListComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: ContratoService,
+    private api: ApiService,
     private fb: FormBuilder,
     private router: Router
   ) {
@@ -498,6 +521,32 @@ export class ContratoListComponent implements OnInit, OnDestroy {
         },
         error: () => Swal.fire('Error', 'No se pudo eliminar el contrato.', 'error'),
       });
+    });
+  }
+
+  exportarPDF() {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/contratos').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-contratos-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
     });
   }
 }

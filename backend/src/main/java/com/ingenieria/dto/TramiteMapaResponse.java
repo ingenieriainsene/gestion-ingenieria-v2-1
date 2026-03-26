@@ -24,4 +24,6 @@ public class TramiteMapaResponse {
     private LocalDate fechaSeguimiento;
     private LocalDateTime fechaEjecucion;
     private String tecnicoAsignado;
+    private Long idTramiteBloqueante;
+    private String nombreTramiteBloqueante;
 }

@@ -4,6 +4,7 @@ import { RouterLink, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, of, Subscription } from 'rxjs';
 import { Cliente, ClienteService } from '../../services/domain.services';
+import { ApiService } from '../../services/api.service';
 import { environment } from '../../../environments/environments';
 import Swal from 'sweetalert2';
 
@@ -14,7 +15,10 @@ import Swal from 'sweetalert2';
   template: `
     <div class="header-section">
       <h1>Gestión de Clientes <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
-      <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Cliente</button>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
+        <button type="button" class="btn-primary" (click)="abrirModalNuevo()">+ Nuevo Cliente</button>
+      </div>
     </div>
 
     <div class="search-bar">
@@ -218,6 +222,24 @@ import Swal from 'sweetalert2';
     .btn-primary:hover { background: #334155; transform: translateY(-1px); }
     .btn-primary:active { transform: translateY(1px); }
 
+    .btn-export {
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-export:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
     /* Search Bar */
     .search-bar {
       display: flex;
@@ -420,6 +442,7 @@ export class ClienteListComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: ClienteService,
+    private api: ApiService,
     private fb: FormBuilder,
     private router: Router
   ) {
@@ -593,6 +616,32 @@ export class ClienteListComponent implements OnInit, OnDestroy {
         },
         error: () => Swal.fire('Error', 'No se pudo eliminar el cliente.', 'error'),
       });
+    });
+  }
+
+  exportarPDF() {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/clientes').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-clientes-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
     });
   }
 

@@ -203,6 +203,8 @@ export interface Tramite {
     descripcion?: string;
     fechaEjecucion?: string | Date;
     facturado?: boolean;
+    idTramiteBloqueante?: number;
+    nombreTramiteBloqueante?: string;
 }
 
 export interface Seguimiento {
@@ -436,6 +438,8 @@ export interface TramiteListResponse {
     direccionLocal?: string;
     descripcion?: string;
     facturado?: boolean;
+    idTramiteBloqueante?: number;
+    nombreTramiteBloqueante?: string;
 }
 
 export interface VentaDocumentoLineaDTO {
@@ -565,6 +569,11 @@ export class TramiteService {
 
     desvincularInstalador(idTramite: number, idInstalador: number): Observable<any> {
         return this.api.delete(`${this.endpoint}/${idTramite}/instaladores/${idInstalador}`);
+    }
+
+    condicionar(id: number, idBloqueante: number | null): Observable<Tramite> {
+        const url = idBloqueante ? `${this.endpoint}/${id}/condicionar?idBloqueante=${idBloqueante}` : `${this.endpoint}/${id}/condicionar`;
+        return this.api.patch<Tramite>(url, {});
     }
 }
 

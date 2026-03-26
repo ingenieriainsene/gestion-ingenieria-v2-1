@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { VentasService } from '../../services/ventas.service';
 import { Tramite } from '../../services/domain.services';
+import { ApiService } from '../../services/api.service';
 import { Subscription } from 'rxjs';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-ventas-pendientes-page',
@@ -12,8 +14,13 @@ import { Subscription } from 'rxjs';
   template: `
     <div class="page-container">
       <div class="page-header">
-        <h1>Ventas Pendientes</h1>
-        <p class="subtitle">Intervenciones con estado Pendiente. Gestiona desde la ficha del contrato.</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h1>Ventas Pendientes</h1>
+            <p class="subtitle">Intervenciones con estado Pendiente. Gestiona desde la ficha del contrato.</p>
+          </div>
+          <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
+        </div>
       </div>
       <div class="ventas-grid">
         <div *ngIf="ventas.length === 0" class="empty-state">
@@ -34,6 +41,12 @@ import { Subscription } from 'rxjs';
     .page-container { max-width: 900px; margin: 0 auto; padding: 24px; }
     .page-header { margin-bottom: 24px; }
     .page-header h1 { margin: 0 0 8px 0; color: #1e293b; font-size: 1.5rem; }
+    .btn-export {
+      background: white; color: #475569; border: 1px solid #e2e8f0; padding: 10px 18px;
+      border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+    }
+    .btn-export:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
     .subtitle { margin: 0; color: #64748b; font-size: 0.9rem; }
     .ventas-grid { display: flex; flex-direction: column; gap: 12px; }
     .empty-state { text-align: center; color: #94a3b8; padding: 48px 24px; background: #f8fafc; border-radius: 12px; border: 1px dashed #e2e8f0; }
@@ -60,7 +73,10 @@ export class VentasPendientesPageComponent implements OnInit, OnDestroy {
   ventas: Tramite[] = [];
   private sub: Subscription | null = null;
 
-  constructor(private ventasService: VentasService) {}
+  constructor(
+    private ventasService: VentasService,
+    private api: ApiService
+  ) {}
 
   ngOnInit() {
     this.ventasService.cargarTodasVentasPendientes();
@@ -69,5 +85,31 @@ export class VentasPendientesPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
+  }
+
+  exportarPDF(): void {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/ventas-pendientes').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-ventas-pendientes-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
+    });
   }
 }

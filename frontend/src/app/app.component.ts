@@ -9,7 +9,7 @@ import { AuthService } from './services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterOutlet, SidebarComponent],
   template: `
-    <ng-container *ngIf="auth.isLoggedIn(); else authless">
+    <div *ngIf="auth.isLoggedIn$ | async; else authless">
       <app-sidebar (collapsedChange)="sidebarCollapsed = $event"></app-sidebar>
 
       <div class="main-content" [class.expanded]="sidebarCollapsed">
@@ -23,7 +23,7 @@ import { AuthService } from './services/auth.service';
           <router-outlet></router-outlet>
         </div>
       </div>
-    </ng-container>
+    </div>
 
     <ng-template #authless>
       <router-outlet></router-outlet>

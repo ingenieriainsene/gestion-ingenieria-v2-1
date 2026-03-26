@@ -22,4 +22,6 @@ public class TramiteListResponse {
     private String direccionLocal;
     private String descripcion;
     private Boolean facturado;
+    private Long idTramiteBloqueante;
+    private String nombreTramiteBloqueante;
 }

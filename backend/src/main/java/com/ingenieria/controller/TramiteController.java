@@ -150,4 +150,19 @@ public class TramiteController {
     public ResponseEntity<Tramite> desvincularInstalador(@PathVariable Long id, @PathVariable Long idInstalador) {
         return ResponseEntity.ok(tramiteService.desvincularInstalador(id, idInstalador));
     }
+
+    /**
+     * Condiciona un trámite a otro.
+     */
+    @PatchMapping("/{id}/condicionar")
+    public ResponseEntity<Tramite> condicionar(
+            @PathVariable Long id,
+            @RequestParam(name = "idBloqueante", required = false) Long idBloqueante) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String usuarioBd = auth != null ? auth.getName() : "sistema";
+
+        Tramite actualizado = tramiteService.condicionar(id, idBloqueante, usuarioBd);
+        return ResponseEntity.ok(actualizado);
+    }
 }

@@ -5,6 +5,8 @@ import { Router, RouterLink } from '@angular/router';
 import { SeguimientoService, Seguimiento } from '../../services/domain.services';
 import { UsuarioService, Usuario } from '../../services/usuario.service';
 import { ProveedorService } from '../../services/proveedor.service';
+import { ApiService } from '../../services/api.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-seguimiento-list',
@@ -13,6 +15,7 @@ import { ProveedorService } from '../../services/proveedor.service';
   template: `
     <div class="header-section">
       <h1>Seguimientos <span class="badge-contador" *ngIf="filtrados">{{ filtrados.length }} registros</span></h1>
+      <button type="button" class="btn-export" (click)="exportarPDF()">📄 Exportar PDF</button>
     </div>
 
     <div class="filters-container">
@@ -178,6 +181,14 @@ import { ProveedorService } from '../../services/proveedor.service';
     </table>
   `,
   styles: [`
+    .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .btn-export {
+      background: white; color: #475569; border: 1px solid #e2e8f0; padding: 10px 18px;
+      border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+    }
+    .btn-export:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+
     .filters-container {
       background: #fff;
       border: 1px solid #e2e8f0;
@@ -357,6 +368,7 @@ export class SeguimientoListComponent implements OnInit {
     private seguimientoService: SeguimientoService,
     private usuarioService: UsuarioService,
     private proveedorService: ProveedorService,
+    private api: ApiService,
     private router: Router
   ) { }
 
@@ -486,5 +498,31 @@ export class SeguimientoListComponent implements OnInit {
       return;
     }
     this.router.navigate(['/tramite-detalle', s.idTramite]);
+  }
+
+  exportarPDF(): void {
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Espere un momento...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    this.api.getBlob('export/seguimientos').subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listado-seguimientos-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.close();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      }
+    });
   }
 }

@@ -42,6 +42,10 @@ public class SeguimientoService {
         return seguimientoRepo.findByTramite_IdTramiteOrderByFechaRegistroDesc(idTramite);
     }
 
+    public List<Seguimiento> findAll() {
+        return seguimientoRepo.findAll();
+    }
+
     /**
      * Si el trámite no tiene hitos, crea el primero («Iniciar Actividad»). Luego
      * devuelve la lista.
