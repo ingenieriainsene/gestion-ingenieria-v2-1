@@ -38,6 +38,7 @@ services:
     profiles: [ full ]
     environment:
       GOTRUE_EXTERNAL_URL: http://192.168.1.66:8000
+      API_EXTERNAL_URL: http://192.168.1.66:8000
       GOTRUE_DB_DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       GOTRUE_JWT_SECRET: ${JWT_SECRET}
       GOTRUE_JWT_EXP: ${JWT_EXPIRATION_MS}
