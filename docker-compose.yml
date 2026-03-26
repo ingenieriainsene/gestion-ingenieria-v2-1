@@ -39,12 +39,11 @@ services:
     environment:
       GOTRUE_EXTERNAL_URL: http://192.168.1.66:8000
       API_EXTERNAL_URL: http://192.168.1.66:8000
-      GOTRUE_DB_DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      GOTRUE_JWT_SECRET: ${JWT_SECRET}
-      GOTRUE_JWT_EXP: ${JWT_EXPIRATION_MS}
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:Ingenieria2026!@db:5432/gestion_ingenieria
+      GOTRUE_SITE_URL: http://192.168.1.66:8080
+      GOTRUE_JWT_SECRET: InseneSolarSeguridad2026_JWT_Secret_Key_Global
+      GOTRUE_JWT_EXP: 3600
       GOTRUE_DB_MAX_POOL_SIZE: 30
-      JWT_SECRET: ${JWT_SECRET}
-      DB_NAME: ${DB_NAME}
     networks:
       - gestion-net
 
@@ -59,11 +58,9 @@ services:
         condition: service_healthy
     profiles: [ full ]
     environment:
-      PGRST_DB_URI: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      PGRST_DB_URI: postgres://postgres:Ingenieria2026!@db:5432/gestion_ingenieria
       PGRST_DB_SCHEMA: public
-      PGRST_JWT_SECRET: ${JWT_SECRET}
-      JWT_SECRET: ${JWT_SECRET}
-      DB_NAME: ${DB_NAME}
+      PGRST_JWT_SECRET: InseneSolarSeguridad2026_JWT_Secret_Key_Global
     networks:
       - gestion-net
 
