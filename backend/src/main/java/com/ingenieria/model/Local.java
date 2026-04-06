@@ -64,6 +64,15 @@ public class Local {
     @Column(name = "direccion_completa", nullable = false, length = 255)
     private String direccionCompleta;
 
+    @Column(name = "codigo_postal", length = 10)
+    private String codigoPostal;
+
+    @Column(length = 100)
+    private String localidad;
+
+    @Column(length = 100)
+    private String provincia;
+
     private BigDecimal latitud;
     private BigDecimal longitud;
 

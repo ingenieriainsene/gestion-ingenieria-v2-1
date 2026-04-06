@@ -47,6 +47,14 @@
             >
               {{ local.direccionCompleta }}
             </a>
+            <span *ngIf="local.codigoPostal || local.localidad || local.provincia" class="address-details">
+              <br>
+              <small>
+                {{ local.codigoPostal }} 
+                {{ local.localidad ? (local.codigoPostal ? ' - ' : '') + local.localidad : '' }}
+                {{ local.provincia ? (local.localidad || local.codigoPostal ? ', ' : '') + local.provincia : '' }}
+              </small>
+            </span>
           </p>
           <ng-template #sinDireccion>
             <span class="muted">—</span>

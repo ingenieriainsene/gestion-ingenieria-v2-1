@@ -104,6 +104,9 @@ public class LocalService {
                         : null);
         if (req.getDireccionCompleta() != null)
             l.setDireccionCompleta(req.getDireccionCompleta());
+        l.setCodigoPostal(req.getCodigoPostal());
+        l.setLocalidad(req.getLocalidad());
+        l.setProvincia(req.getProvincia());
         l.setCups(req.getCups() != null && !req.getCups().isBlank() ? req.getCups() : null);
         l.setReferenciaCatastral(req.getReferenciaCatastral() != null && !req.getReferenciaCatastral().isBlank()
                 ? req.getReferenciaCatastral()

@@ -101,6 +101,9 @@ CREATE TABLE IF NOT EXISTS locales (
     cups VARCHAR(22),
     referencia_catastral VARCHAR(20) NOT NULL UNIQUE,
     direccion_completa VARCHAR(255) NOT NULL,
+    codigo_postal VARCHAR(10),
+    localidad VARCHAR(100),
+    provincia VARCHAR(100),
     latitud NUMERIC(10, 8),
     longitud NUMERIC(11, 8),
     creado_por VARCHAR(100),
@@ -381,3 +384,9 @@ ON CONFLICT (nombre_usuario) DO NOTHING;
 
 -- Finalizar script
 COMMIT;
+
+-- SECCIÓN 10: ALTER TABLES PARA PARCHES EXISTENTES
+-- Ejecutar estas líneas si la base de datos ya existe y solo se desea añadir las nuevas columnas de dirección
+-- ALTER TABLE locales ADD COLUMN IF NOT EXISTS codigo_postal VARCHAR(10);
+-- ALTER TABLE locales ADD COLUMN IF NOT EXISTS localidad VARCHAR(100);
+-- ALTER TABLE locales ADD COLUMN IF NOT EXISTS provincia VARCHAR(100);

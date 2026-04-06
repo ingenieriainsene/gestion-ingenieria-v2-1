@@ -50,6 +50,9 @@ export interface Local {
     cups?: string;
     referenciaCatastral?: string;
     direccionCompleta: string;
+    codigoPostal?: string;
+    localidad?: string;
+    provincia?: string;
     latitud?: number;
     longitud?: number;
     fechaAlta?: string;

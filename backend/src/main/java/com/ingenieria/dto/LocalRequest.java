@@ -13,6 +13,9 @@ public class LocalRequest {
     private String apellido1Titular;
     private String apellido2Titular;
     private String direccionCompleta;
+    private String codigoPostal;
+    private String localidad;
+    private String provincia;
     private String cups;
     private String referenciaCatastral;
 }

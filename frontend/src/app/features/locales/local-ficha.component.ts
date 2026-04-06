@@ -91,8 +91,33 @@ import Swal from 'sweetalert2';
                   id="direccionCompleta"
                   class="form-control"
                   formControlName="direccionCompleta"
-                  placeholder="Calle, número, piso, puerta, CP, ciudad..."
+                  placeholder="Calle, número, piso, puerta..."
                 />
+              </div>
+            </div>
+
+            <!-- Código Postal, Localidad, Provincia -->
+            <div class="address-grid full-width">
+              <div class="form-group">
+                <label class="form-label" for="codigoPostal">C.P.</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">📮</span>
+                  <input type="text" id="codigoPostal" class="form-control" formControlName="codigoPostal" placeholder="C.P." />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="localidad">Localidad</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">🏢</span>
+                  <input type="text" id="localidad" class="form-control" formControlName="localidad" placeholder="Localidad" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="provincia">Provincia</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">🗺️</span>
+                  <input type="text" id="provincia" class="form-control" formControlName="provincia" placeholder="Provincia" />
+                </div>
               </div>
             </div>
 
@@ -205,6 +230,19 @@ import Swal from 'sweetalert2';
       }
       .full-width {
         grid-column: span 2;
+      }
+      .address-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr 2fr;
+        gap: 1.5rem;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .address-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
       }
     }
 
@@ -345,6 +383,9 @@ export class LocalFichaComponent implements OnInit {
               apellido1Titular: l.apellido1Titular,
               apellido2Titular: l.apellido2Titular ?? '',
               direccionCompleta: l.direccionCompleta,
+              codigoPostal: l.codigoPostal ?? '',
+              localidad: l.localidad ?? '',
+              provincia: l.provincia ?? '',
               cups: l.cups ?? '',
               referenciaCatastral: l.referenciaCatastral ?? ''
             });
@@ -369,6 +410,9 @@ export class LocalFichaComponent implements OnInit {
       apellido1Titular: ['', Validators.required],
       apellido2Titular: [''],
       direccionCompleta: ['', Validators.required],
+      codigoPostal: [''],
+      localidad: [''],
+      provincia: [''],
       cups: [''],
       referenciaCatastral: ['', Validators.required]
     });
@@ -444,6 +488,9 @@ export class LocalFichaComponent implements OnInit {
       apellido1Titular: v.apellido1Titular,
       apellido2Titular: v.apellido2Titular || null,
       direccionCompleta: v.direccionCompleta,
+      codigoPostal: v.codigoPostal || null,
+      localidad: v.localidad || null,
+      provincia: v.provincia || null,
       cups: v.cups || null,
       referenciaCatastral: v.referenciaCatastral
     };
