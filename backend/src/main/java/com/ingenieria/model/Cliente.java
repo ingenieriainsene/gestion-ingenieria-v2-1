@@ -51,8 +51,11 @@ public class Cliente {
     @Column(name = "cuenta_bancaria", length = 34)
     private String cuentaBancaria;
 
-    @Column(length = 100)
+    @Column(name = "email", length = 100)
     private String email;
+
+    @Column(name = "descripcion", length = 255)
+    private String descripcion;
 
     @Column(name = "fecha_alta", insertable = false, updatable = false)
     private LocalDateTime fechaAlta;

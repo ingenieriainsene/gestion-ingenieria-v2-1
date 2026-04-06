@@ -184,6 +184,12 @@ CREATE TABLE IF NOT EXISTS contratos (
     modificado_por VARCHAR(100) NULL,
     fecha_modificacion TIMESTAMPTZ NULL,
     id_presupuesto_origen BIGINT NULL,
+    forma_pago VARCHAR(100),
+    nombre_financiera VARCHAR(100),
+    fecha_inicio_financiacion DATE,
+    importe_cuota NUMERIC(12, 2),
+    importe_total_financiado NUMERIC(12, 2),
+    porcentaje_contado NUMERIC(5, 2),
     CONSTRAINT fk_contrato_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
     CONSTRAINT fk_contrato_local FOREIGN KEY (id_local) REFERENCES locales(id_local) ON DELETE CASCADE,
     CONSTRAINT chk_periodo_contrato CHECK (fecha_vencimiento >= fecha_inicio)

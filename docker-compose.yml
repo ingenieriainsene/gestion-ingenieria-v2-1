@@ -13,8 +13,8 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-Ingenieria2026!}
       POSTGRES_DB: ${DB_NAME:-gestion_ingenieria}
-    ports:
-      - "${DB_PORT_HOST:-54322}:5432"
+    # ports:
+    #   - "${DB_PORT_HOST:-54323}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./sql/ddl_ingenieria.sql:/docker-entrypoint-initdb.d/init.sql
@@ -93,7 +93,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-gestion_ingenieria}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://gestion-db:5432/${DB_NAME:-gestion_ingenieria}
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-Ingenieria2026!}
       SERVER_PORT: 8080

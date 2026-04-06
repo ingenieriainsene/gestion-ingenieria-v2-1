@@ -14,12 +14,7 @@ export class AuthService {
     private loggedInSubject = new BehaviorSubject<boolean>(this.hasValidToken());
     public isLoggedIn$ = this.loggedInSubject.asObservable();
 
-    constructor(private api: ApiService, private router: Router) {
-        // Iniciar pulso si ya está logueado al cargar el servicio
-        if (this.isLoggedIn()) {
-            this.startHeartbeat();
-        }
-    }
+    constructor(private api: ApiService, private router: Router) { }
 
     login(credentials: any): Observable<any> {
         return this.api.post(`${this.endpoint}/login`, credentials).pipe(
