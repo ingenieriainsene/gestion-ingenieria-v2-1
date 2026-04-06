@@ -111,7 +111,7 @@ services:
   # DATABASE MANAGEMENT (Supabase Studio)
   # ==========================================
   studio:
-    image: supabase/dashboard:v0.23.03
+    image: supabase/studio:latest
     container_name: gestion-studio
     profiles: [ full ]
     ports:
