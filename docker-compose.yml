@@ -41,6 +41,7 @@ services:
       API_EXTERNAL_URL: http://192.168.1.66:8000
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@db:5432/${DB_NAME:-gestion_ingenieria}
+      GOTRUE_SITE_URL: http://192.168.1.66:8080
       GOTRUE_JWT_SECRET: InseneSolarSeguridad2026_JWT_Secret_Key_Global
     networks:
       - gestion-net
