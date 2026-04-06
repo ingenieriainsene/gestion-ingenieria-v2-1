@@ -22,5 +22,6 @@ services:
     url: http://backend:8080
     routes:
       - name: backend-route
+        strip_path: false
         paths:
           - /api
