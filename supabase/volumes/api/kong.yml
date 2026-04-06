@@ -16,3 +16,11 @@ services:
       - name: rest-route
         paths:
           - /rest/v1
+
+  # Ruta para el Backend (Spring Boot)
+  - name: backend
+    url: http://backend:8080
+    routes:
+      - name: backend-route
+        paths:
+          - /api
