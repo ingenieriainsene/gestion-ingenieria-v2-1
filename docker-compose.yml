@@ -16,7 +16,7 @@ services:
     # ports:
     #   - "${DB_PORT_HOST:-54323}:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - D:/Datos/gestion_db_data:/var/lib/postgresql/data
       - ./sql/ddl_ingenieria.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - gestion-net
@@ -137,8 +137,8 @@ services:
     networks:
       - gestion-net
 
-volumes:
-  db_data:
+# volumes:
+#   db_data:
 
 networks:
   gestion-net:
