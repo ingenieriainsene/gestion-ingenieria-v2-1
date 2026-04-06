@@ -25,3 +25,25 @@ services:
         strip_path: false
         paths:
           - /api
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - http://192.168.1.66:8080
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+      exposed_headers:
+        - Content-Range
+        - X-Total-Count
+      max_age: 3600
+      credentials: true
+
