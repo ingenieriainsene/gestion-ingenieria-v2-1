@@ -108,6 +108,23 @@ services:
           cpus: '1.0'
 
   # ==========================================
+  # DATABASE MANAGEMENT (Supabase Studio)
+  # ==========================================
+  studio:
+    image: supabase/dashboard:v0.23.03
+    container_name: gestion-studio
+    profiles: [ full ]
+    ports:
+      - "3001:3000"
+    environment:
+      API_EXTERNAL_URL: http://192.168.1.66:8000
+      SUPABASE_PUBLIC_URL: http://192.168.1.66:3001
+      DB_DATABASE_URL: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@gestion-db:5432/${DB_NAME:-gestion_ingenieria}
+    networks:
+      - gestion-net
+
+
+  # ==========================================
   # FRONTEND (Angular)
   # ==========================================
   frontend:
