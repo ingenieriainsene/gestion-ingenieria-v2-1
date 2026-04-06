@@ -59,6 +59,28 @@ import Swal from 'sweetalert2';
               </div>
             </div>
 
+            <!-- DNI -->
+            <div class="form-group">
+              <label class="form-label" for="dni">DNI / NIE <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">🆔</span>
+                <input
+                  type="text"
+                  id="dni"
+                  class="form-control"
+                  name="dni"
+                  [(ngModel)]="modelo.dni"
+                  required
+                  placeholder="ej. 12345678Z"
+                  #dniRef="ngModel"
+                  [class.is-invalid]="dniRef.touched && !validarDniNie(modelo.dni)"
+                />
+              </div>
+              <small class="error-text" *ngIf="dniRef.touched && modelo.dni && !validarDniNie(modelo.dni)">
+                Formato de DNI/NIE español inválido.
+              </small>
+            </div>
+
             <!-- Rol -->
             <div class="form-group">
               <label class="form-label" for="rol">Rol del Sistema <span class="required">*</span></label>
@@ -105,7 +127,7 @@ import Swal from 'sweetalert2';
             <button
               type="submit"
               class="btn-save"
-              [disabled]="formRef.invalid || (!esNuevo && !formRef.dirty && !passwordPlain)"
+              [disabled]="formRef.invalid || !validarDniNie(modelo.dni) || (!esNuevo && !formRef.dirty && !passwordPlain)"
             >
               {{ esNuevo ? 'Crear Usuario' : 'Guardar Cambios' }}
             </button>
@@ -298,6 +320,17 @@ import Swal from 'sweetalert2';
       background: #94a3b8;
     }
 
+    .error-text {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .is-invalid {
+      border-color: #ef4444 !important;
+      background-color: #fff1f2 !important;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -310,6 +343,7 @@ export class UsuarioFichaComponent implements OnInit {
   modelo: Usuario = {
     nombreUsuario: '',
     passwordHash: '',
+    dni: '',
     rol: 'TÉCNICO', // Default para nuevos usuarios
     email: '',
   };
@@ -333,6 +367,11 @@ export class UsuarioFichaComponent implements OnInit {
   }
 
   guardar(): void {
+    if (!this.validarDniNie(this.modelo.dni)) {
+      Swal.fire('Atención', 'El DNI/NIE introducido no es válido.', 'warning');
+      return;
+    }
+
     if (this.passwordPlain) {
       this.modelo.passwordHash = this.passwordPlain;
     }
@@ -356,9 +395,34 @@ export class UsuarioFichaComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        Swal.fire('Error', 'No se pudo guardar la información del usuario.', 'error');
+        const msg = err.error || 'No se pudo guardar la información del usuario.';
+        Swal.fire('Error', msg, 'error');
       }
     });
+  }
+
+  validarDniNie(input: string): boolean {
+    if (!input) return false;
+    const clean = input.toUpperCase().replace(/\s/g, '');
+    const dniRegex = /^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/;
+    const nieRegex = /^[XYZ][0-9]{7}[TRWAGMYFPDXBNJZSQVHLCKE]$/;
+
+    if (dniRegex.test(clean)) {
+      const numero = parseInt(clean.substring(0, 8), 10);
+      const letra = clean.charAt(8);
+      return "TRWAGMYFPDXBNJZSQVHLCKE".charAt(numero % 23) === letra;
+    }
+
+    if (nieRegex.test(clean)) {
+      const niePrefix = clean.charAt(0);
+      const numberPart = clean.substring(1, 8);
+      const letra = clean.charAt(8);
+      const prefix = niePrefix === 'X' ? '0' : niePrefix === 'Y' ? '1' : '2';
+      const numero = parseInt(prefix + numberPart, 10);
+      return "TRWAGMYFPDXBNJZSQVHLCKE".charAt(numero % 23) === letra;
+    }
+
+    return false;
   }
 }
 

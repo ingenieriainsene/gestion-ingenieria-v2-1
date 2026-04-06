@@ -36,12 +36,15 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> crearUsuario(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         if (usuario.getIdUsuario() != null) {
             usuario.setIdUsuario(null);
         }
+        if (usuario.getDni() == null || !validarDniNie(usuario.getDni())) {
+            return ResponseEntity.badRequest().body("DNI/NIE inválido o no proporcionado");
+        }
         if (usuario.getPasswordHash() == null || usuario.getPasswordHash().isBlank()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Password obligatoria");
         }
         if (!esHashBcrypt(usuario.getPasswordHash())) {
             usuario.setPasswordHash(passwordEncoder.encode(usuario.getPasswordHash()));
@@ -51,12 +54,16 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
         return usuarioRepository.findById(id)
                 .map(existing -> {
+                    if (usuario.getDni() == null || !validarDniNie(usuario.getDni())) {
+                        return ResponseEntity.badRequest().body("DNI/NIE inválido");
+                    }
                     existing.setNombreUsuario(usuario.getNombreUsuario());
                     existing.setEmail(usuario.getEmail());
                     existing.setRol(usuario.getRol());
+                    existing.setDni(usuario.getDni());
                     // Solo actualiza password si el usuario envía una nueva
                     if (usuario.getPasswordHash() != null && !usuario.getPasswordHash().isBlank()) {
                         String incoming = usuario.getPasswordHash();
@@ -65,6 +72,23 @@ public class UsuarioController {
                     return ResponseEntity.ok(usuarioRepository.save(existing));
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private boolean validarDniNie(String input) {
+        if (input == null) return false;
+        String clean = input.toUpperCase().replaceAll("\\s", "");
+        if (clean.matches("^[0-9]{8}[A-Z]$")) {
+            String sNúmero = clean.substring(0, 8);
+            char letra = clean.charAt(8);
+            return "TRWAGMYFPDXBNJZSQVHLCKE".charAt(Integer.parseInt(sNúmero) % 23) == letra;
+        } else if (clean.matches("^[XYZ][0-9]{7}[A-Z]$")) {
+            String sLetraInicial = clean.substring(0, 1);
+            String sNúmero = clean.substring(1, 8);
+            char letraFinal = clean.charAt(8);
+            String prefix = sLetraInicial.replace("X", "0").replace("Y", "1").replace("Z", "2");
+            return "TRWAGMYFPDXBNJZSQVHLCKE".charAt(Integer.parseInt(prefix + sNúmero) % 23) == letraFinal;
+        }
+        return false;
     }
 
     private boolean esHashBcrypt(String value) {

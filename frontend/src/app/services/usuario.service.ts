@@ -6,6 +6,7 @@ export interface Usuario {
   idUsuario?: number;
   nombreUsuario: string;
   passwordHash: string;
+  dni: string;
   rol: 'ADMIN' | 'TÉCNICO' | 'LECTURA';
   email?: string;
   fechaCreacion?: string;

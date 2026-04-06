@@ -42,6 +42,10 @@ import Swal from 'sweetalert2';
           
           <div class="card-body">
             <div class="info-row">
+              <span class="label">DNI/NIE:</span>
+              <span class="value">{{ u.dni }}</span>
+            </div>
+            <div class="info-row">
               <span class="label">Email:</span>
               <span class="value">{{ u.email || 'No registrado' }}</span>
             </div>

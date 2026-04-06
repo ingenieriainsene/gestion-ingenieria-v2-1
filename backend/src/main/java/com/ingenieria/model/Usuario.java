@@ -32,6 +32,9 @@ public class Usuario {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Column(nullable = false, unique = true, length = 15)
+    private String dni;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
     private Rol rol; // ADMIN, TÉCNICO, LECTURA

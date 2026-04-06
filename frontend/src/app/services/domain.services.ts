@@ -3,6 +3,16 @@ import { ApiService } from './api.service';
 import { Observable, map } from 'rxjs';
 
 // Interfaces matching DDL
+export interface Usuario {
+    idUsuario?: number;
+    nombreUsuario: string;
+    passwordHash?: string;
+    dni: string;
+    email: string;
+    rol: string;
+    fechaCreacion?: string;
+}
+
 export interface Cliente {
     idCliente?: number;
     nombre: string;
