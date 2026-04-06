@@ -11,7 +11,7 @@ services:
     profiles: [ dev, full ]
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Ingenieria2026!}
       POSTGRES_DB: ${DB_NAME:-gestion_ingenieria}
     ports:
       - "${DB_PORT_HOST:-54322}:5432"
@@ -39,7 +39,7 @@ services:
     environment:
       GOTRUE_EXTERNAL_URL: http://192.168.1.66:8000
       API_EXTERNAL_URL: http://192.168.1.66:8000
-      GOTRUE_DB_DATABASE_URL: postgres://postgres:Ingenieria2026!@db:5432/gestion_ingenieria
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@db:5432/${DB_NAME:-gestion_ingenieria}
       GOTRUE_JWT_SECRET: InseneSolarSeguridad2026_JWT_Secret_Key_Global
     networks:
       - gestion-net
@@ -55,7 +55,7 @@ services:
         condition: service_healthy
     profiles: [ full ]
     environment:
-      PGRST_DB_URI: postgres://postgres:Ingenieria2026!@db:5432/gestion_ingenieria
+      PGRST_DB_URI: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@db:5432/${DB_NAME:-gestion_ingenieria}
       PGRST_DB_SCHEMA: public
       PGRST_JWT_SECRET: InseneSolarSeguridad2026_JWT_Secret_Key_Global
     networks:
@@ -91,9 +91,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-gestion_ingenieria}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-Ingenieria2026!}
       SERVER_PORT: 8082
     ports:
       - "${BACKEND_PORT:-8082}:8082"

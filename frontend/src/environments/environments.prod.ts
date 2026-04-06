@@ -1,6 +1,6 @@
 export const environment = {
     production: true,
-    apiUrl: 'http://192.168.1.66:8082/api',
+    apiUrl: '/api',
 
     supabase: {
         // Redirige al puerto de Kong (8000) en el servidor local
