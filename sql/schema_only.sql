@@ -39,11 +39,16 @@ CREATE TABLE IF NOT EXISTS clientes (
     cuenta_bancaria VARCHAR(34),
     email VARCHAR(100),
     descripcion VARCHAR(255),
+    observaciones TEXT,
     creado_por VARCHAR(100) DEFAULT 'Sistema',
     modificado_por VARCHAR(100),
     fecha_alta TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     fecha_modificacion TIMESTAMPTZ
 );
+
+-- Refuerzo de esquema para entornos ya creados sin este campo
+ALTER TABLE clientes
+    ADD COLUMN IF NOT EXISTS observaciones TEXT;
 
 -- 2.3 Proveedores
 CREATE TABLE IF NOT EXISTS proveedores (

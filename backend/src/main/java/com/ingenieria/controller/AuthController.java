@@ -21,9 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
-import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -73,34 +71,13 @@ public class AuthController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             Usuario usuario = usuarioRepository.findByNombreUsuario(userDetails.getUsername()).orElse(null);
 
-            // Control de sesiones simultáneas
-            if (usuario != null && !loginRequest.isForce()) {
-                Optional<AuditoriaSesion> sesionActual = auditoriaSesionRepository
-                        .findTopByIdUsuarioAndEstadoOrderByFechaInicioDesc(usuario.getIdUsuario(), "Conectado");
-                
-                if (sesionActual.isPresent()) {
-                    LocalDateTime ultima = sesionActual.get().getFechaUltimaActividad();
-                    if (ultima != null && Duration.between(ultima, LocalDateTime.now()).toMinutes() < 2) {
-                        log.info("[Auth] Bloqueando login por sesión activa para: {}", username);
-                        return ResponseEntity.status(HttpStatus.CONFLICT)
-                                .body(Map.of("message", "SESSION_ALREADY_ACTIVE", "idUsuario", usuario.getIdUsuario()));
-                    }
-                }
-            }
-
             String jwt = jwtUtils.generateJwtToken(authentication);
             String rol = userDetails.getAuthorities().iterator().next().getAuthority();
 
-            // Auditoría: cerrar sesiones anteriores 
+            // Auditoría: registrar nueva sesión sin cerrar otras activas.
             try {
                 if (usuario != null) {
-                    log.info("[Auth] Iniciando sesión y cerrando previas para: {}", usuario.getNombreUsuario());
-                    auditoriaSesionRepository.findAllByIdUsuarioAndEstado(usuario.getIdUsuario(), "Conectado")
-                            .forEach(s -> {
-                                s.setEstado("Desconectado");
-                                s.setFechaFin(LocalDateTime.now());
-                                auditoriaSesionRepository.save(s);
-                            });
+                    log.info("[Auth] Registrando nueva sesión para: {}", usuario.getNombreUsuario());
 
                     String ip = resolveClientIp(request);
                     AuditoriaSesion sesion = new AuditoriaSesion();
@@ -140,8 +117,8 @@ public class AuthController {
             log.info("[Auth] Ejecutando logout para usuario: {}", username);
             usuarioRepository.findByNombreUsuario(username).ifPresent(usuario -> {
                 auditoriaSesionRepository
-                        .findAllByIdUsuarioAndEstado(usuario.getIdUsuario(), "Conectado")
-                        .forEach(sesion -> {
+                        .findTopByIdUsuarioAndEstadoOrderByFechaInicioDesc(usuario.getIdUsuario(), "Conectado")
+                        .ifPresent(sesion -> {
                             sesion.setEstado("Desconectado");
                             sesion.setFechaFin(java.time.LocalDateTime.now());
                             auditoriaSesionRepository.save(sesion);

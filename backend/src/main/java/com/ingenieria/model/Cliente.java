@@ -57,6 +57,9 @@ public class Cliente {
     @Column(name = "descripcion", length = 255)
     private String descripcion;
 
+    @Column(name = "observaciones", columnDefinition = "TEXT")
+    private String observaciones;
+
     @Column(name = "fecha_alta", insertable = false, updatable = false)
     private LocalDateTime fechaAlta;
 

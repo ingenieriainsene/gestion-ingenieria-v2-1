@@ -23,6 +23,7 @@ export interface Cliente {
     direccionFiscalCompleta?: string;
     codigoPostal?: string;
     cuentaBancaria?: string;
+    observaciones?: string;
     fechaAlta?: string;
     creadoPor?: string;
     modificadoPor?: string;

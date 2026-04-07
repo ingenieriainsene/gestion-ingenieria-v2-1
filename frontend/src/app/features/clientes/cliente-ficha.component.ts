@@ -143,6 +143,21 @@ import Swal from 'sweetalert2';
               </div>
             </div>
 
+            <!-- Observaciones -->
+            <div class="form-group full-width">
+              <label class="form-label" for="observaciones">Observaciones</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🗒️</span>
+                <textarea
+                  id="observaciones"
+                  class="form-control form-control-textarea"
+                  formControlName="observaciones"
+                  placeholder="Notas internas o datos relevantes del cliente"
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+
             <!-- Teléfonos Dinámicos -->
             <div class="form-group full-width">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
@@ -292,6 +307,13 @@ import Swal from 'sweetalert2';
       color: #1e293b;
     }
 
+    .form-control-textarea {
+      min-height: 92px;
+      resize: vertical;
+      line-height: 1.4;
+      padding-top: 0.75rem;
+    }
+
     .form-control:focus {
       outline: none;
       border-color: #3b82f6;
@@ -417,6 +439,7 @@ export class ClienteFichaComponent implements OnInit {
       direccionFiscalCompleta: [''],
       cuentaBancaria: [''],
       email: ['', Validators.email],
+      observaciones: [''],
       telefonos: this.fb.array([])
     });
   }

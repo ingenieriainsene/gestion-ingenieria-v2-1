@@ -19,13 +19,13 @@ public class SessionCleanupTask {
     private AuditoriaSesionRepository auditoriaSesionRepository;
 
     /**
-     * Limpia las sesiones que no han tenido actividad en los últimos 5 minutos.
-     * Se ejecuta cada minuto.
+     * Esta tarea queda desactivada por defecto para no cerrar sesiones automáticamente.
+     * Solo se activa si se configura explícitamente app.session.cleanup.cron.
      */
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "${app.session.cleanup.cron:-}")
     @Transactional
     public void cleanupZombieSessions() {
-        log.info("[Task] Verificando actividad de sesiones...");
+        log.info("[Task] Verificando actividad de sesiones (task opcional activada)...");
 
         LocalDateTime limit = LocalDateTime.now().minusMinutes(5);
 

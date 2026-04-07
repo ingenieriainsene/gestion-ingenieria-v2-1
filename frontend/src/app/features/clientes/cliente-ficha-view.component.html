@@ -54,6 +54,10 @@
       <h3>Fecha de alta</h3>
       <p>{{ cliente.fechaAlta ? (cliente.fechaAlta | date:'dd/MM/yyyy') : '—' }}</p>
     </div>
+    <div class="info-card info-card-lg">
+      <h3>Observaciones</h3>
+      <p>{{ cliente.observaciones || '—' }}</p>
+    </div>
   </div>
   <app-audit-stamp [data]="cliente"></app-audit-stamp>
 
