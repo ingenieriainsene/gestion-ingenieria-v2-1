@@ -38,3 +38,9 @@ Thumbs.db
 .env.local
 .env.*
 !.env.example
+
+# --- Datos sensibles ---
+sql/import_clientes.sql
+*.csv
+*.xlsx
+sql/cleanup_database.sql

@@ -13,10 +13,8 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-Ingenieria2026!}
       POSTGRES_DB: ${DB_NAME:-gestion_ingenieria}
-    # ports:
-    #   - "${DB_PORT_HOST:-54323}:5432"
     volumes:
-      - D:/Datos/gestion_db_data:/var/lib/postgresql/data
+      - ${DB_VOLUME_PATH:-D:/Datos/gestion_db_data}:/var/lib/postgresql/data
       - ./sql/ddl_ingenieria.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - gestion-net
@@ -37,11 +35,11 @@ services:
         condition: service_healthy
     profiles: [ full ]
     environment:
-      GOTRUE_EXTERNAL_URL: http://192.168.1.66:8000
-      API_EXTERNAL_URL: http://192.168.1.66:8000
+      GOTRUE_EXTERNAL_URL: http://${SERVER_IP:-192.168.1.66}:8000
+      API_EXTERNAL_URL: http://${SERVER_IP:-192.168.1.66}:8000
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@db:5432/${DB_NAME:-gestion_ingenieria}
-      GOTRUE_SITE_URL: http://192.168.1.66:8080
+      GOTRUE_SITE_URL: http://${SERVER_IP:-192.168.1.66}:8080
       GOTRUE_JWT_SECRET: InseneSolarSeguridad2026_JWT_Secret_Key_Global
     networks:
       - gestion-net
@@ -86,7 +84,7 @@ services:
   # ==========================================
   backend:
     build: ./backend
-    container_name: gestion-backend
+    container_name: gestion-back
     restart: always
     profiles: [ full ]
     depends_on:
@@ -108,37 +106,69 @@ services:
           cpus: '1.0'
 
   # ==========================================
+  # DATABASE METADATA (pg-meta) - Para que Studio pueda ejecutar SQL
+  # ==========================================
+  meta:
+    image: supabase/postgres-meta:v0.95.2
+    container_name: gestion-meta
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: [ full ]
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: ${DB_NAME:-gestion_ingenieria}
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${DB_PASSWORD:-Ingenieria2026!}
+      PG_META_DB_URL: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@db:5432/${DB_NAME:-gestion_ingenieria}?sslmode=disable
+    networks:
+      - gestion-net
+
+  # ==========================================
   # DATABASE MANAGEMENT (Supabase Studio)
   # ==========================================
   studio:
-    image: supabase/studio:latest
+    image: supabase/studio:2026.03.16-sha-5528817
     container_name: gestion-studio
     profiles: [ full ]
     ports:
       - "3001:3000"
     environment:
-      API_EXTERNAL_URL: http://192.168.1.66:8000
-      SUPABASE_PUBLIC_URL: http://192.168.1.66:3001
-      DB_DATABASE_URL: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@gestion-db:5432/${DB_NAME:-gestion_ingenieria}
+      API_EXTERNAL_URL: http://${SERVER_IP:-192.168.1.66}:8000
+      SUPABASE_PUBLIC_URL: http://${SERVER_IP:-192.168.1.66}:3001
+      SUPABASE_URL: http://kong:8000
+      DB_DATABASE_URL: postgres://postgres:${DB_PASSWORD:-Ingenieria2026!}@db:5432/${DB_NAME:-gestion_ingenieria}
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Ingenieria2026!}
+      POSTGRES_DB: ${DB_NAME:-gestion_ingenieria}
+      AUTH_JWT_SECRET: InseneSolarSeguridad2026_JWT_Secret_Key_Global
+      SUPABASE_ANON_KEY: InseneSolarSeguridad2026_JWT_Secret_Key_Global
+      SUPABASE_SERVICE_KEY: InseneSolarSeguridad2026_JWT_Secret_Key_Global
+      SNIPPETS_MANAGEMENT_FOLDER: /app/snippets
+      EDGE_FUNCTIONS_MANAGEMENT_FOLDER: /app/functions
+    volumes:
+      - ./supabase/snippets:/app/snippets
+      - ./supabase/functions:/app/functions
     networks:
       - gestion-net
-
 
   # ==========================================
   # FRONTEND (Angular)
   # ==========================================
   frontend:
     build: ./frontend
-    container_name: gestion-frontend
+    container_name: gestion-front
     restart: always
     profiles: [ full ]
     ports:
       - "${FRONTEND_PORT:-8080}:80"
     networks:
       - gestion-net
-
-# volumes:
-#   db_data:
 
 networks:
   gestion-net:
